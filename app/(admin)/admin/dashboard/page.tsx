@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { cookies } from 'next/headers'
 import { verifySessionToken } from '@/lib/session'
 import { createServiceClient } from '@/lib/supabase-server'

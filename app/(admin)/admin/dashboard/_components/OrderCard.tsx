@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
 type OrderItem = { name: string; qty: number; price: number }
@@ -42,12 +42,17 @@ const WAIT_OPTIONS = [10, 15, 20, 30, 40, 60]
 
 export default function OrderCard({ order }: { order: Order }) {
   const router = useRouter()
+  const [isPending, startTransition] = useTransition()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [waitMinutes, setWaitMinutes] = useState(15)
+
+  const isDisabled = loading || isPending
 
   async function handleAction(status: string) {
     setLoading(true)
-    await fetch(`/api/orders/${order.id}`, {
+    setError(null)
+    const res = await fetch(`/api/orders/${order.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -55,7 +60,15 @@ export default function OrderCard({ order }: { order: Order }) {
         ...(status === 'accepted' ? { waitMinutes } : {}),
       }),
     })
-    router.refresh()
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setError(data.error ?? '更新に失敗しました')
+      setLoading(false)
+      return
+    }
+    startTransition(() => {
+      router.refresh()
+    })
     setLoading(false)
   }
 
@@ -104,16 +117,20 @@ export default function OrderCard({ order }: { order: Order }) {
         </div>
       )}
 
+      {error && (
+        <p className="text-xs text-red-500">{error}</p>
+      )}
+
       {actions.length > 0 && (
         <div className="flex gap-2 pt-1">
           {actions.map(action => (
             <button
               key={action.status}
-              disabled={loading}
+              disabled={isDisabled}
               onClick={() => handleAction(action.status)}
               className={`flex-1 rounded-lg text-white text-sm font-semibold py-2 transition-colors disabled:opacity-50 ${action.color}`}
             >
-              {loading ? '処理中...' : action.label}
+              {isDisabled ? '処理中...' : action.label}
             </button>
           ))}
         </div>
