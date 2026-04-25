@@ -3,6 +3,7 @@ import { verifySessionToken } from '@/lib/session'
 import { createServiceClient } from '@/lib/supabase-server'
 import { logoutAction } from '@/app/actions/auth'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import OrderCard from './_components/OrderCard'
 
 export default async function DashboardPage() {
@@ -34,7 +35,12 @@ export default async function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-lg font-bold text-gray-900">注文管理</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-lg font-bold text-gray-900">注文管理</h1>
+            <Link href="/admin/menu" className="text-sm text-blue-500 hover:text-blue-700">
+              メニュー管理
+            </Link>
+          </div>
           <form action={logoutAction}>
             <button
               type="submit"
