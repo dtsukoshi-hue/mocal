@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { getSessionPayload } from '@/lib/session'
+import type { MenuItemInsert } from '@/lib/database.types'
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -41,7 +42,7 @@ export async function PATCH(
     return NextResponse.json({ error: '価格が不正です。' }, { status: 400 })
   }
 
-  const updateData: Record<string, unknown> = {}
+  const updateData: Partial<MenuItemInsert> = {}
   if (body.name !== undefined) updateData.name = body.name.trim()
   if (body.price !== undefined) updateData.price = body.price
   if (body.category !== undefined) updateData.category = body.category.trim() || null
