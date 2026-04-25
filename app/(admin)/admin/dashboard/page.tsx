@@ -7,6 +7,7 @@ import { logoutAction } from '@/app/actions/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import OrderCard from './_components/OrderCard'
+import RealtimeRefresher from './_components/RealtimeRefresher'
 
 export default async function DashboardPage() {
   const cookieStore = await cookies()
@@ -53,6 +54,8 @@ export default async function DashboardPage() {
           </form>
         </div>
       </header>
+
+      <RealtimeRefresher storeId={sessionData.storeId} />
 
       <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
         {(!orders || orders.length === 0) && (
