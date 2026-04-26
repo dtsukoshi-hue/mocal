@@ -8,6 +8,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import OrderCard from './_components/OrderCard'
 import RealtimeRefresher from './_components/RealtimeRefresher'
+import StoreToggle from './_components/StoreToggle'
 
 export default async function DashboardPage() {
   const cookieStore = await cookies()
@@ -18,40 +19,46 @@ export default async function DashboardPage() {
 
   const supabase = createServiceClient()
 
-  const { data: orders } = await supabase
-    .from('orders')
-    .select(`
-      id,
-      order_number,
-      status,
-      total_amount,
-      estimated_ready_at,
-      accepted_at,
-      created_at,
-      order_items(name, qty, price)
-    `)
-    .eq('store_id', sessionData.storeId)
-    .in('status', ['paid', 'accepted', 'preparing', 'ready'])
-    .order('created_at', { ascending: false })
+  const [{ data: store }, { data: orders }] = await Promise.all([
+    supabase.from('stores').select('is_open').eq('id', sessionData.storeId).single(),
+    supabase
+      .from('orders')
+      .select(`
+        id,
+        order_number,
+        status,
+        total_amount,
+        estimated_ready_at,
+        accepted_at,
+        created_at,
+        order_items(name, qty, price)
+      `)
+      .eq('store_id', sessionData.storeId)
+      .in('status', ['paid', 'accepted', 'preparing', 'ready'])
+      .order('created_at', { ascending: false }),
+  ])
 
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <h1 className="text-lg font-bold text-gray-900">注文管理</h1>
+            <StoreToggle isOpen={store?.is_open ?? true} />
+          </div>
+          <div className="flex items-center gap-4">
             <Link href="/admin/menu" className="text-sm text-blue-500 hover:text-blue-700">
               メニュー管理
             </Link>
+            <Link href="/admin/history" className="text-sm text-blue-500 hover:text-blue-700">
+              注文履歴
+            </Link>
+            <form action={logoutAction}>
+              <button type="submit" className="text-sm text-gray-500 hover:text-gray-700">
+                ログアウト
+              </button>
+            </form>
           </div>
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              className="text-sm text-gray-500 hover:text-gray-700"
-            >
-              ログアウト
-            </button>
-          </form>
         </div>
       </header>
 
