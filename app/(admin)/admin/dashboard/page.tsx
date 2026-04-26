@@ -9,6 +9,7 @@ import Link from 'next/link'
 import OrderCard from './_components/OrderCard'
 import RealtimeRefresher from './_components/RealtimeRefresher'
 import StoreToggle from './_components/StoreToggle'
+import PushSubscriber from './_components/PushSubscriber'
 
 export default async function DashboardPage() {
   const cookieStore = await cookies()
@@ -62,6 +63,7 @@ export default async function DashboardPage() {
         </div>
       </header>
 
+      <PushSubscriber />
       <RealtimeRefresher storeId={sessionData.storeId} />
 
       <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">

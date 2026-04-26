@@ -101,6 +101,15 @@ export type ProcessedWebhookEvent = {
   processed_at: string
 }
 
+export type PushSubscription = {
+  id: string
+  store_id: string
+  endpoint: string
+  p256dh: string
+  auth: string
+  created_at: string
+}
+
 // ------------------------------------------------------------
 // INSERT 用型（id / created_at を省略可能）
 // ------------------------------------------------------------
@@ -207,6 +216,12 @@ export type Database = {
         Row: ProcessedWebhookEvent
         Insert: Omit<ProcessedWebhookEvent, 'processed_at'> & { processed_at?: string }
         Update: Partial<ProcessedWebhookEvent>
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: PushSubscription
+        Insert: Omit<PushSubscription, 'id' | 'created_at'> & { id?: string; created_at?: string }
+        Update: Partial<Omit<PushSubscription, 'id'>>
         Relationships: []
       }
     }
