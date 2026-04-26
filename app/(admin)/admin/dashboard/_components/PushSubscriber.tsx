@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from 'react'
 
-function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
   const rawData = atob(base64)
-  const buffer = new ArrayBuffer(rawData.length)
-  const view = new Uint8Array(buffer)
-  for (let i = 0; i < rawData.length; i++) view[i] = rawData.charCodeAt(i)
-  return buffer
+  const uint8Array = new Uint8Array(rawData.length)
+  for (let i = 0; i < rawData.length; i++) uint8Array[i] = rawData.charCodeAt(i)
+  return uint8Array
 }
 
 export default function PushSubscriber() {
@@ -64,7 +63,8 @@ export default function PushSubscriber() {
 
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!) as any,
       })
 
       const res = await fetch('/api/push/subscribe', {
