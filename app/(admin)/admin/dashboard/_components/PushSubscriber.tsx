@@ -61,6 +61,10 @@ export default function PushSubscriber() {
         return
       }
 
+      // 古いサブスクリプションがあれば先に解除（VAPIDキー更新時に必要）
+      const existing = await reg.pushManager.getSubscription()
+      if (existing) await existing.unsubscribe()
+
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
