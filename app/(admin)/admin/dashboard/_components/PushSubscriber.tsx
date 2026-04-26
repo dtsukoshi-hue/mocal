@@ -20,10 +20,29 @@ export default function PushSubscriber() {
       setStatus('unsupported')
       return
     }
-    if (Notification.permission === 'granted') {
-      setStatus('subscribed')
-    } else if (Notification.permission === 'denied') {
+    if (Notification.permission === 'denied') {
       setStatus('denied')
+      return
+    }
+    // 許可済みでも実際にDBへサブスクリプションが登録されているか確認
+    if (Notification.permission === 'granted') {
+      navigator.serviceWorker.ready.then(reg =>
+        reg.pushManager.getSubscription()
+      ).then(sub => {
+        if (sub) {
+          // 既存サブスクリプションをDBに再登録（べき等）
+          fetch('/api/push/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(sub.toJSON()),
+          }).then(res => {
+            if (res.ok) setStatus('subscribed')
+          }).catch(() => setStatus('idle'))
+        }
+        // sub が null なら idle のまま → バナー表示してボタンを押させる
+      }).catch(() => {
+        // エラー時は idle のままバナーを表示
+      })
     }
   }, [])
 
