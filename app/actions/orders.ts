@@ -4,6 +4,8 @@ import { createClient } from '@supabase/supabase-js'
 import { createServiceClient } from '@/lib/supabase-server'
 import { createPayment } from '@/lib/payment'
 import type { Database } from '@/lib/database.types'
+import { headers } from 'next/headers'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 // 公開データ（店舗・メニュー）の読み込み用 anon key クライアント
 function createAnonClient() {
@@ -29,6 +31,9 @@ export async function createOrderAction(
   _prevState: OrderState,
   formData: FormData
 ): Promise<OrderState> {
+  const ip = (await headers()).get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
+  if (!checkRateLimit(`order:${ip}`, 10, 60_000)) return { error: 'リクエストが多すぎます。しばらく待ってから再試行してください。' }
+
   const storeId = formData.get('storeId')
   const pickupType = formData.get('pickupType')
   const itemsRaw = formData.get('items')
