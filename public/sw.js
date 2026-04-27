@@ -1,5 +1,6 @@
 self.addEventListener('push', (event) => {
-  const data = event.data?.json() ?? {}
+  let data = {}
+  try { data = event.data?.json() ?? {} } catch (_) {}
   const title = data.title ?? 'mocal'
   const options = {
     body: data.body ?? '',
