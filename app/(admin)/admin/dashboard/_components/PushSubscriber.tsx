@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
@@ -11,22 +11,18 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return uint8Array
 }
 
+// 初期状態をブラウザ機能から計算（useEffect 内 setState の代わり）
+function detectInitialStatus(): 'idle' | 'denied' | 'unsupported' {
+  if (typeof window === 'undefined') return 'idle'
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return 'unsupported'
+  if (typeof Notification !== 'undefined' && Notification.permission === 'denied') return 'denied'
+  return 'idle'
+}
+
 export default function PushSubscriber() {
-  const [status, setStatus] = useState<'idle' | 'subscribed' | 'denied' | 'unsupported'>('idle')
+  const [status, setStatus] = useState<'idle' | 'subscribed' | 'denied' | 'unsupported'>(detectInitialStatus)
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      setStatus('unsupported')
-      return
-    }
-    if (Notification.permission === 'denied') {
-      setStatus('denied')
-    }
-    // granted でも idle のままにしてバナーを表示する
-    // ボタンクリック時に古いサブスクリプションを解除して新規登録する
-  }, [])
 
   async function subscribe() {
     setLoading(true)

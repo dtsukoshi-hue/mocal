@@ -12,19 +12,6 @@ const stripeMock = vi.hoisted(() => ({
   refundsCreate: vi.fn(),
 }))
 
-const supabaseMock = vi.hoisted(() => {
-  // 軽量な query builder を作る。eq().single() / eq().select() などをチェイン可能に。
-  function createBuilder(opts: { selectResult?: unknown; updateResult?: unknown }) {
-    const builder: Record<string, unknown> = {}
-    builder.select = vi.fn().mockReturnValue(builder)
-    builder.eq = vi.fn().mockReturnValue(builder)
-    builder.single = vi.fn().mockResolvedValue(opts.selectResult ?? { data: null, error: null })
-    builder.update = vi.fn().mockReturnValue(builder)
-    return builder
-  }
-  return { createBuilder }
-})
-
 vi.mock('@/lib/session', () => ({
   getSessionPayload: sessionMock.getSessionPayload,
 }))

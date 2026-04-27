@@ -9,9 +9,12 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    "**/.next/**",          // worktree やネストした .next も無視
     "out/**",
     "build/**",
+    "**/.claude/**",        // worktree など内部 artifact を除外
     "next-env.d.ts",
+    "public/sw.js",         // SW は別 lint 対象（プレーン JS）
   ]),
 ]);
 

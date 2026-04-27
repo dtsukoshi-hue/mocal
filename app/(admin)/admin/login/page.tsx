@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 
 export default function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null)
@@ -37,12 +38,12 @@ export default function AdminLoginPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center space-y-4">
           <p className="text-green-600 font-bold text-lg">ログイン成功！</p>
-          <a
+          <Link
             href="/admin/dashboard"
             className="block w-full rounded-lg bg-orange-500 text-white font-semibold py-3 text-sm text-center hover:bg-orange-600"
           >
             ダッシュボードへ →
-          </a>
+          </Link>
         </div>
       </div>
     )
