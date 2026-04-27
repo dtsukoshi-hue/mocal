@@ -1,19 +1,68 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { headers } from 'next/headers'
+import { timingSafeEqual } from 'crypto'
 import { createSessionToken } from '@/lib/session'
+import { checkRateLimit } from '@/lib/rate-limit'
+import { logger } from '@/lib/logger'
+
+function safeEqual(a: string, b: string): boolean {
+  const ab = Buffer.from(a)
+  const bb = Buffer.from(b)
+  if (ab.length !== bb.length) {
+    timingSafeEqual(ab, ab)
+    return false
+  }
+  return timingSafeEqual(ab, bb)
+}
 
 export async function POST(req: NextRequest) {
-  const { email, password } = await req.json()
+  // ブルートフォース対策
+  const ip = (await headers()).get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
+  if (!checkRateLimit(`login-api:${ip}`, 5, 60_000)) {
+    logger.warn('login API rate limit exceeded', { ip })
+    return NextResponse.json(
+      { error: 'リクエストが多すぎます。しばらくしてから再試行してください。' },
+      { status: 429 }
+    )
+  }
+
+  let body: { email?: unknown; password?: unknown }
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'リクエストが不正です。' }, { status: 400 })
+  }
+
+  const { email, password } = body
+  if (typeof email !== 'string' || typeof password !== 'string') {
+    return NextResponse.json({ error: 'リクエストが不正です。' }, { status: 400 })
+  }
 
   const validEmail = process.env.ADMIN_EMAIL
   const validPassword = process.env.ADMIN_PASSWORD
   const storeId = process.env.ADMIN_STORE_ID
+  const sessionSecret = process.env.SESSION_SECRET
 
-  if (!validEmail || !validPassword || !storeId) {
-    return NextResponse.json({ error: 'サーバー設定エラー' }, { status: 500 })
+  if (!validEmail || !validPassword || !storeId || !sessionSecret) {
+    logger.error('login env not configured', {
+      hasEmail: !!validEmail,
+      hasPassword: !!validPassword,
+      hasStoreId: !!storeId,
+      hasSecret: !!sessionSecret,
+    })
+    return NextResponse.json({ error: '認証に失敗しました。' }, { status: 500 })
   }
 
-  if (email !== validEmail || password !== validPassword) {
-    return NextResponse.json({ error: 'メールアドレスまたはパスワードが正しくありません。' }, { status: 401 })
+  // 定数時間比較
+  const emailOk = safeEqual(email, validEmail)
+  const passOk = safeEqual(password, validPassword)
+
+  if (!emailOk || !passOk) {
+    logger.warn('login API failed', { ip })
+    return NextResponse.json(
+      { error: 'メールアドレスまたはパスワードが正しくありません。' },
+      { status: 401 }
+    )
   }
 
   const token = createSessionToken({
@@ -31,5 +80,6 @@ export async function POST(req: NextRequest) {
     maxAge: 7 * 24 * 60 * 60,
     path: '/',
   })
+  logger.info('login API success', { ip })
   return res
 }

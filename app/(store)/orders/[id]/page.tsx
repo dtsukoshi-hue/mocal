@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
-import type { Database } from '@/lib/database.types'
+import { createServiceClient } from '@/lib/supabase-server'
 import OrderStatusView from './_components/OrderStatusView'
 
 interface Props {
@@ -10,14 +9,13 @@ interface Props {
 export default async function OrderStatusPage({ params }: Props) {
   const { id } = await params
 
-  // UUID 形式チェック
+  // UUID 形式チェック（不正な ID で DB に問い合わせない）
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   if (!uuidRegex.test(id)) notFound()
 
-  const supabase = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  // ゲスト注文は RLS の SELECT ポリシーが無いため service_role を使用。
+  // UUID（122bit）を access token として扱い、最小フィールドのみクライアントへ渡す。
+  const supabase = createServiceClient()
 
   const { data: order } = await supabase
     .from('orders')

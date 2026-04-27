@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { getSessionPayload } from '@/lib/session'
+import { logger } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
   const session = await getSessionPayload()
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
     )
 
   if (error) {
-    console.error('[push/subscribe] upsert error:', error)
+    logger.error('push subscribe upsert error', { storeId: session.storeId, code: error.code })
     return NextResponse.json({ error: '登録に失敗しました。' }, { status: 500 })
   }
 

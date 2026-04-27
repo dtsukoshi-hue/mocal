@@ -1,19 +1,13 @@
 'use server'
 
-import { createClient } from '@supabase/supabase-js'
 import { createServiceClient } from '@/lib/supabase-server'
 import { createPayment } from '@/lib/payment'
-import type { Database } from '@/lib/database.types'
 import { headers } from 'next/headers'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { logger } from '@/lib/logger'
 
-// 公開データ（店舗・メニュー）の読み込み用 anon key クライアント
-function createAnonClient() {
-  return createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-}
+// ゲスト注文の INSERT は RLS のゲスト用 INSERT ポリシーが無いため service_role 必須。
+// ゲスト読み取りも同様に service_role を使い、UUID を access token として扱う。
 
 export type OrderState =
   | { error: string }
@@ -85,12 +79,11 @@ export async function createOrderAction(
   // ゲスト注文のため user_id は常に null（Supabase Auth は使用しない）
   const userId = null
 
-  // anon key で統一（読み書きともに RLS ポリシーで制御）
-  const anonClient = createAnonClient()
-  const supabase = anonClient
+  // RLS のゲスト用 INSERT ポリシーが無い & UUID/価格はサーバ側で再検証するため service_role を使用
+  const supabase = createServiceClient()
 
   // 1. 在庫・営業時間チェック
-  const { data: store } = await anonClient
+  const { data: store } = await supabase
     .from('stores')
     .select('is_open, wait_minutes, stripe_account_id')
     .eq('id', storeId)
@@ -101,7 +94,7 @@ export async function createOrderAction(
 
   // メニュー在庫チェック
   const menuItemIds = items.map(i => i.menuItemId)
-  const { data: menuItems } = await anonClient
+  const { data: menuItems } = await supabase
     .from('menu_items')
     .select('id, name, price, is_available')
     .in('id', menuItemIds)
@@ -178,7 +171,7 @@ export async function createOrderAction(
       .update({ stripe_payment_intent_id: payment.paymentIntentId })
       .eq('id', order.id)
     if (piError) {
-      console.error('[createOrderAction] stripe_payment_intent_id update error:', piError)
+      logger.error('stripe_payment_intent_id update error', { orderId: order.id, error: piError.message })
     }
   } catch {
     // PaymentIntent 作成失敗 → 注文をキャンセル

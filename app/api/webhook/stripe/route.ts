@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { stripe } from '@/lib/stripe'
 import { sendPushToStore } from '@/lib/push'
-import type { Database } from '@/lib/database.types'
+import { createServiceClient } from '@/lib/supabase-server'
+import { logger } from '@/lib/logger'
 
 // Stripe Webhook は rawBody（Buffer）が必要。JSON.parse 前に署名検証する
 export async function POST(request: NextRequest) {
@@ -23,10 +23,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '署名検証に失敗しました。' }, { status: 400 })
   }
 
-  const supabase = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  // 冪等性チェック・注文更新は内部処理のため service_role を使用（RLS バイパス）
+  const supabase = createServiceClient()
 
   // 冪等性チェック：同じイベントを2回処理しない
   const { error: dupError } = await supabase
@@ -37,7 +35,7 @@ export async function POST(request: NextRequest) {
     if (dupError.code === '23505') {
       return NextResponse.json({ received: true })
     }
-    console.error('[webhook] processed_webhook_events insert error:', dupError.code)
+    logger.error('processed_webhook_events insert error', { code: dupError.code, eventId: event.id })
     return NextResponse.json({ error: 'internal error' }, { status: 500 })
   }
 
@@ -95,7 +93,7 @@ export async function POST(request: NextRequest) {
           url: 'https://mocal-iota.vercel.app/admin/dashboard',
         })
       } catch (e) {
-        console.error('[webhook] push notification error:', e)
+        logger.error('push notification error', { orderId, error: String(e) })
       }
 
       break

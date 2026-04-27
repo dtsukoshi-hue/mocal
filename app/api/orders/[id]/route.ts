@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { getSessionPayload } from '@/lib/session'
 import { stripe } from '@/lib/stripe'
+import { logger } from '@/lib/logger'
+import {
+  ALL_ORDER_STATUSES,
+  isValidOrderStatusTransition,
+  isUuid,
+} from '@/lib/validation'
 import type { OrderStatus } from '@/lib/database.types'
 
 // 店舗が注文ステータスを更新するエンドポイント
@@ -19,8 +25,7 @@ export async function PATCH(
   }
 
   // UUID 形式チェック（不正なパスパラメータによるクエリを防ぐ）
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-  if (!uuidRegex.test(id)) {
+  if (!isUuid(id)) {
     return NextResponse.json({ error: '注文が見つかりません。' }, { status: 404 })
   }
 
@@ -34,10 +39,7 @@ export async function PATCH(
   const { status, waitMinutes } = body
 
   // status の入力バリデーション
-  const validStatuses: OrderStatus[] = [
-    'pending', 'paid', 'accepted', 'preparing', 'ready', 'completed', 'cancelled', 'refunded', 'no_show',
-  ]
-  if (!validStatuses.includes(status)) {
+  if (!ALL_ORDER_STATUSES.includes(status)) {
     return NextResponse.json({ error: 'ステータス値が不正です。' }, { status: 400 })
   }
 
@@ -60,15 +62,7 @@ export async function PATCH(
   }
 
   // ステータス遷移検証（仕様書 6.4 に基づく）
-  const validTransitions: Partial<Record<OrderStatus, OrderStatus[]>> = {
-    paid:      ['accepted', 'cancelled'],
-    accepted:  ['preparing', 'ready', 'cancelled'],
-    preparing: ['ready', 'cancelled'],
-    ready:     ['completed', 'no_show'],
-  }
-
-  const allowed = validTransitions[order.status as OrderStatus] ?? []
-  if (!allowed.includes(status)) {
+  if (!isValidOrderStatusTransition(order.status as OrderStatus, status)) {
     return NextResponse.json(
       { error: 'このステータスへの変更は現在許可されていません。' },
       { status: 422 }
@@ -101,7 +95,7 @@ export async function PATCH(
       await stripe.refunds.create({ charge: order.stripe_charge_id })
       updateData.status = 'refunded'
     } catch (e) {
-      console.error('[orders/cancel] Stripe refund error:', e)
+      logger.error('Stripe refund error', { orderId: id, chargeId: order.stripe_charge_id, error: String(e) })
       // 返金失敗時は cancelled のまま（手動対応）
     }
   }
