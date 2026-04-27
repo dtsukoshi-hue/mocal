@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { getSessionPayload } from '@/lib/session'
+import { stripe } from '@/lib/stripe'
 import type { OrderStatus } from '@/lib/database.types'
 
 // 店舗が注文ステータスを更新するエンドポイント
@@ -45,7 +46,7 @@ export async function PATCH(
   // 注文の所属店舗確認
   const { data: order } = await supabase
     .from('orders')
-    .select('id, status, store_id')
+    .select('id, status, store_id, stripe_charge_id')
     .eq('id', id)
     .single()
 
@@ -93,6 +94,17 @@ export async function PATCH(
   }
   if (status === 'ready') updateData.ready_at = now
   if (status === 'no_show') updateData.no_show_at = now
+
+  // キャンセル時：Stripe 返金を自動実行し refunded へ遷移
+  if (status === 'cancelled' && order.stripe_charge_id) {
+    try {
+      await stripe.refunds.create({ charge: order.stripe_charge_id })
+      updateData.status = 'refunded'
+    } catch (e) {
+      console.error('[orders/cancel] Stripe refund error:', e)
+      // 返金失敗時は cancelled のまま（手動対応）
+    }
+  }
 
   const { data: updated, error } = await supabase
     .from('orders')

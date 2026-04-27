@@ -41,34 +41,34 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg font-bold text-gray-900">注文管理</h1>
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-lg font-bold text-gray-900 shrink-0">注文管理</span>
             <StoreToggle isOpen={store?.is_open ?? true} />
           </div>
-          <div className="flex items-center gap-4">
-            <Link href="/admin/menu" className="text-sm text-blue-500 hover:text-blue-700">
-              メニュー管理
+          <nav className="flex items-center gap-1 shrink-0">
+            <Link href="/admin/menu" className="text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors">
+              メニュー
             </Link>
-            <Link href="/admin/history" className="text-sm text-blue-500 hover:text-blue-700">
-              注文履歴
+            <Link href="/admin/history" className="text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors">
+              履歴
             </Link>
             <form action={logoutAction}>
-              <button type="submit" className="text-sm text-gray-500 hover:text-gray-700">
+              <button type="submit" className="text-sm text-gray-400 hover:text-gray-600 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors">
                 ログアウト
               </button>
             </form>
-          </div>
+          </nav>
         </div>
       </header>
 
       <PushSubscriber />
       <RealtimeRefresher storeId={sessionData.storeId} />
 
-      <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+      <main className="max-w-4xl mx-auto px-4 py-6 space-y-3">
         {(!orders || orders.length === 0) && (
-          <div className="text-center text-gray-400 py-16 text-sm">
+          <div className="text-center text-gray-400 py-24 text-sm">
             現在、対応中の注文はありません
           </div>
         )}

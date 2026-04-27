@@ -47,48 +47,49 @@ export default async function HistoryPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/admin/dashboard" className="text-sm text-gray-500 hover:text-gray-700">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/admin/dashboard" className="text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors">
               ← 注文管理
             </Link>
             <h1 className="text-lg font-bold text-gray-900">注文履歴</h1>
           </div>
           <form action={logoutAction}>
-            <button type="submit" className="text-sm text-gray-500 hover:text-gray-700">
+            <button type="submit" className="text-sm text-gray-400 hover:text-gray-600 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors">
               ログアウト
             </button>
           </form>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6 space-y-3">
+      <main className="max-w-4xl mx-auto px-4 py-6 space-y-2">
         {(!orders || orders.length === 0) && (
-          <div className="text-center text-gray-400 py-16 text-sm">履歴がありません</div>
+          <div className="text-center text-gray-400 py-24 text-sm">履歴がありません</div>
         )}
 
         {orders?.map(order => (
-          <div key={order.id} className="bg-white rounded-xl shadow-sm p-4">
+          <div key={order.id} className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="font-bold text-gray-900">#{order.order_number}</span>
-                <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColor[order.status]}`}>
+                <span className="font-bold text-gray-900 text-sm">#{order.order_number}</span>
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusColor[order.status]}`}>
                   {statusLabel[order.status]}
                 </span>
-              </div>
-              <div className="text-right">
-                <p className="font-semibold text-gray-900">¥{order.total_amount.toLocaleString()}</p>
-                <p className="text-xs text-gray-400">
+                <span className="text-xs text-gray-400 hidden sm:block">
                   {new Date(order.created_at).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                </p>
+                </span>
               </div>
+              <span className="font-semibold text-gray-900 text-sm">¥{order.total_amount.toLocaleString()}</span>
             </div>
-            <ul className="mt-2 text-sm text-gray-500 space-y-0.5">
+            <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5">
               {order.order_items?.map((item, i) => (
-                <li key={i}>{item.name} × {item.qty}</li>
+                <span key={i} className="text-xs text-gray-500">{item.name} × {item.qty}</span>
               ))}
-            </ul>
+            </div>
+            <p className="text-xs text-gray-400 mt-1 sm:hidden">
+              {new Date(order.created_at).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            </p>
           </div>
         ))}
       </main>

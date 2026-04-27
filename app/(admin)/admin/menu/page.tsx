@@ -24,16 +24,16 @@ export default async function MenuPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/admin/dashboard" className="text-sm text-gray-500 hover:text-gray-700">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/admin/dashboard" className="text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors">
               ← 注文管理
             </Link>
             <h1 className="text-lg font-bold text-gray-900">メニュー管理</h1>
           </div>
           <form action={logoutAction}>
-            <button type="submit" className="text-sm text-gray-500 hover:text-gray-700">
+            <button type="submit" className="text-sm text-gray-400 hover:text-gray-600 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors">
               ログアウト
             </button>
           </form>
