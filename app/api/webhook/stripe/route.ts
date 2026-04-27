@@ -3,13 +3,12 @@ import { stripe } from '@/lib/stripe'
 import { sendPushToStore } from '@/lib/push'
 import { createServiceClient } from '@/lib/supabase-server'
 import { logger } from '@/lib/logger'
+import { getEnv } from '@/lib/env'
 
 // Stripe Webhook は rawBody（Buffer）が必要。JSON.parse 前に署名検証する
 export async function POST(request: NextRequest) {
   const sig = request.headers.get('stripe-signature')
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
-
-  if (!sig || !webhookSecret) {
+  if (!sig) {
     return NextResponse.json({ error: '署名が不正です。' }, { status: 400 })
   }
 
@@ -18,7 +17,7 @@ export async function POST(request: NextRequest) {
     // rawBody を Buffer として取得（JSON.parse 前）
     const rawBody = await request.arrayBuffer()
     const bodyBuffer = Buffer.from(rawBody)
-    event = stripe.webhooks.constructEvent(bodyBuffer, sig, webhookSecret)
+    event = stripe.webhooks.constructEvent(bodyBuffer, sig, getEnv('STRIPE_WEBHOOK_SECRET'))
   } catch {
     return NextResponse.json({ error: '署名検証に失敗しました。' }, { status: 400 })
   }

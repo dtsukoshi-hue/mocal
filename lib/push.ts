@@ -1,6 +1,7 @@
 import 'server-only'
 import webpush from 'web-push'
 import { createServiceClient } from '@/lib/supabase-server'
+import { getEnv } from './env'
 
 export async function sendPushToStore(
   storeId: string,
@@ -8,9 +9,9 @@ export async function sendPushToStore(
 ) {
   // ビルド時ではなくランタイムで VAPID を初期化
   webpush.setVapidDetails(
-    process.env.VAPID_SUBJECT!,
-    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-    process.env.VAPID_PRIVATE_KEY!
+    getEnv('VAPID_SUBJECT'),
+    getEnv('NEXT_PUBLIC_VAPID_PUBLIC_KEY'),
+    getEnv('VAPID_PRIVATE_KEY')
   )
 
   const supabase = createServiceClient()

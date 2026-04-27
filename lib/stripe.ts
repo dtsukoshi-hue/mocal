@@ -1,10 +1,7 @@
 import 'server-only'
 import Stripe from 'stripe'
+import { getEnv } from './env'
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY が設定されていません。')
-}
-
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+export const stripe = new Stripe(getEnv('STRIPE_SECRET_KEY'), {
   apiVersion: '2026-03-25.dahlia',
 })

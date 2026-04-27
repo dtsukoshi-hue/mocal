@@ -1,6 +1,7 @@
 import 'server-only'
 import { createHmac, timingSafeEqual } from 'crypto'
 import { cookies } from 'next/headers'
+import { getEnv } from './env'
 
 const COOKIE_NAME = 'admin_session'
 const MAX_AGE = 60 * 60 * 24 * 7 // 7日
@@ -13,8 +14,7 @@ export type SessionPayload = {
 }
 
 function sign(payload: string): string {
-  const secret = process.env.SESSION_SECRET!
-  return createHmac('sha256', secret).update(payload).digest('hex')
+  return createHmac('sha256', getEnv('SESSION_SECRET')).update(payload).digest('hex')
 }
 
 export function createSessionToken(payload: SessionPayload): string {
