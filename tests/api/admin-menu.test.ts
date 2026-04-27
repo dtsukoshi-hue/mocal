@@ -1,0 +1,200 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+const sessionMock = vi.hoisted(() => ({
+  getSessionPayload: vi.fn(),
+}))
+
+vi.mock('@/lib/session', () => ({
+  getSessionPayload: sessionMock.getSessionPayload,
+}))
+
+vi.mock('@/lib/supabase-server', () => ({
+  createServiceClient: vi.fn(),
+}))
+
+import { POST as menuPost } from '@/app/api/admin/menu/route'
+import { PATCH as menuPatch, DELETE as menuDelete } from '@/app/api/admin/menu/[id]/route'
+import { PATCH as storePatch } from '@/app/api/admin/store/route'
+import { createServiceClient } from '@/lib/supabase-server'
+
+const STORE_ID = '11111111-1111-4111-8111-111111111111'
+const ITEM_ID = '22222222-2222-4222-8222-222222222222'
+
+function req(method: string, url: string, body: unknown): Request {
+  return new Request(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: typeof body === 'string' ? body : JSON.stringify(body),
+  })
+}
+
+function ctxId(id: string) {
+  return { params: Promise.resolve({ id }) } as never
+}
+
+beforeEach(() => {
+  vi.clearAllMocks()
+})
+
+describe('POST /api/admin/menu', () => {
+  it('returns 401 without session', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue(null)
+    const res = await menuPost(req('POST', 'http://x', { name: 'A', price: 100 }) as never)
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 400 for empty name', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const res = await menuPost(req('POST', 'http://x', { name: '   ', price: 100 }) as never)
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 for negative price', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const res = await menuPost(req('POST', 'http://x', { name: 'A', price: -1 }) as never)
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 for non-integer price', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const res = await menuPost(req('POST', 'http://x', { name: 'A', price: 1.5 }) as never)
+    expect(res.status).toBe(400)
+  })
+
+  it('inserts item when valid', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const insert = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({ data: { id: 'new', name: 'A', price: 100 }, error: null }),
+      }),
+    })
+    vi.mocked(createServiceClient).mockReturnValue({
+      from: vi.fn().mockReturnValue({ insert }),
+    } as never)
+
+    const res = await menuPost(req('POST', 'http://x', { name: 'A', price: 100 }) as never)
+    expect(res.status).toBe(201)
+    // store_id がセッションから注入されているか
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({ store_id: STORE_ID, name: 'A', price: 100 })
+    )
+  })
+})
+
+describe('PATCH /api/admin/menu/[id]', () => {
+  it('returns 404 for invalid UUID', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const res = await menuPatch(req('PATCH', 'http://x', { name: 'A' }) as never, ctxId('not-uuid'))
+    expect(res.status).toBe(404)
+  })
+
+  it('returns 401 without session', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue(null)
+    const res = await menuPatch(req('PATCH', 'http://x', { name: 'A' }) as never, ctxId(ITEM_ID))
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 404 when item not found', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    vi.mocked(createServiceClient).mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+          }),
+        }),
+      }),
+    } as never)
+    const res = await menuPatch(req('PATCH', 'http://x', { name: 'A' }) as never, ctxId(ITEM_ID))
+    expect(res.status).toBe(404)
+  })
+
+  it('returns 403 when item belongs to another store', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    vi.mocked(createServiceClient).mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: { id: ITEM_ID, store_id: 'other-store' },
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    } as never)
+    const res = await menuPatch(req('PATCH', 'http://x', { name: 'A' }) as never, ctxId(ITEM_ID))
+    expect(res.status).toBe(403)
+  })
+
+  it('rejects empty name', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    vi.mocked(createServiceClient).mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: { id: ITEM_ID, store_id: STORE_ID },
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    } as never)
+    const res = await menuPatch(req('PATCH', 'http://x', { name: '   ' }) as never, ctxId(ITEM_ID))
+    expect(res.status).toBe(400)
+  })
+})
+
+describe('DELETE /api/admin/menu/[id]', () => {
+  it('returns 401 without session', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue(null)
+    const res = await menuDelete(req('DELETE', 'http://x', {}) as never, ctxId(ITEM_ID))
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 403 when item is from another store', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    vi.mocked(createServiceClient).mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: { id: ITEM_ID, store_id: 'other' },
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    } as never)
+    const res = await menuDelete(req('DELETE', 'http://x', {}) as never, ctxId(ITEM_ID))
+    expect(res.status).toBe(403)
+  })
+})
+
+describe('PATCH /api/admin/store', () => {
+  it('returns 401 without session', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue(null)
+    const res = await storePatch(req('PATCH', 'http://x', { is_open: true }) as never)
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 400 for non-boolean is_open', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const res = await storePatch(req('PATCH', 'http://x', { is_open: 'yes' }) as never)
+    expect(res.status).toBe(400)
+  })
+
+  it('updates store on valid request', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const update = vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ error: null }),
+    })
+    vi.mocked(createServiceClient).mockReturnValue({
+      from: vi.fn().mockReturnValue({ update }),
+    } as never)
+    const res = await storePatch(req('PATCH', 'http://x', { is_open: false }) as never)
+    expect(res.status).toBe(200)
+    expect(update).toHaveBeenCalledWith({ is_open: false })
+  })
+})
