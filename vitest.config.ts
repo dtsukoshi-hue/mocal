@@ -12,6 +12,24 @@ export default defineConfig({
         inline: ['server-only'],
       },
     },
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'json-summary'],
+      include: ['lib/**/*.ts', 'app/**/*.ts', 'app/**/*.tsx', 'proxy.ts'],
+      exclude: [
+        'lib/database.types.ts',
+        'app/**/_components/**',  // UI コンポーネントは別途 E2E 推奨
+        'app/**/page.tsx',        // ページは E2E 対象
+        'app/**/layout.tsx',
+        'app/manifest.ts',
+        'app/error.tsx',
+        'app/not-found.tsx',
+        'app/global-error.tsx',
+        'lib/stripe.ts',          // 単純なシングルトン
+        'lib/supabase-server.ts', // 単純なファクトリ
+        'lib/logger.ts',          // 単純な console ラッパー
+      ],
+    },
   },
   resolve: {
     alias: {

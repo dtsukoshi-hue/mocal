@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
         await sendPushToStore(order.store_id, {
           title: '🔔 新規注文が入りました',
           body: `注文 #${order.order_number} ¥${order.total_amount.toLocaleString()}`,
-          url: 'https://mocal-iota.vercel.app/admin/dashboard',
+          url: `${getEnv('NEXT_PUBLIC_APP_URL')}/admin/dashboard`,
         })
       } catch (e) {
         logger.error('push notification error', { orderId, error: String(e) })

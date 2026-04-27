@@ -13,6 +13,7 @@ const TEST_ENV: Record<string, string> = {
   NEXT_PUBLIC_VAPID_PUBLIC_KEY:  'test-vapid-public',
   VAPID_PRIVATE_KEY:             'test-vapid-private',
   VAPID_SUBJECT:                 'mailto:test@test.local',
+  NEXT_PUBLIC_APP_URL:           'http://localhost:3000',
 }
 
 for (const [k, v] of Object.entries(TEST_ENV)) {

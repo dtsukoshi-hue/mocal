@@ -18,6 +18,8 @@ const REQUIRED_VARS = [
   'NEXT_PUBLIC_VAPID_PUBLIC_KEY',
   'VAPID_PRIVATE_KEY',
   'VAPID_SUBJECT',
+  // 公開 URL（プッシュ通知のリンク先など）
+  'NEXT_PUBLIC_APP_URL',
 ] as const
 
 type RequiredVar = typeof REQUIRED_VARS[number]
