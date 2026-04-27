@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { createBrowserClient } from '@supabase/ssr'
 import type { Database, OrderStatus } from '@/lib/database.types'
+import { saveOrderToHistory } from '@/lib/order-history'
 
 type Order = {
   id: string
@@ -49,6 +51,11 @@ function getStepIndex(status: string): number {
 export default function OrderStatusView({ order: initialOrder }: Props) {
   const [order, setOrder] = useState(initialOrder)
 
+  // ブラウザの履歴に保存（再訪問時に /orders ページから一覧で見られるようにする）
+  useEffect(() => {
+    saveOrderToHistory(order.id)
+  }, [order.id])
+
   useEffect(() => {
     const supabase = createBrowserClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -81,9 +88,17 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="bg-white border-b border-gray-100 shadow-sm">
-        <div className="max-w-lg mx-auto px-4 py-4">
-          <p className="text-xs text-gray-400 mb-0.5">{order.stores?.name}</p>
-          <h1 className="text-lg font-bold text-gray-900">注文 #{order.order_number}</h1>
+        <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-xs text-gray-400 mb-0.5 truncate">{order.stores?.name}</p>
+            <h1 className="text-lg font-bold text-gray-900">注文 #{order.order_number}</h1>
+          </div>
+          <Link
+            href="/orders"
+            className="text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors shrink-0"
+          >
+            注文履歴
+          </Link>
         </div>
       </header>
 
