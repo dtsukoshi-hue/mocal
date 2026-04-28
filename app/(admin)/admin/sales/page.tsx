@@ -27,6 +27,8 @@ export default async function SalesPage({ searchParams }: Props) {
 
   const { range } = await searchParams
   const days = RANGE_DAYS[range ?? '30d'] ?? 30
+  // Server Component 内で「現在時刻」を取るのは意図的な副作用なので rule を無効化
+  // eslint-disable-next-line react-hooks/purity
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
 
   const supabase = createServiceClient()

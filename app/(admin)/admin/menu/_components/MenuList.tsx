@@ -9,6 +9,7 @@ type MenuItem = {
   price: number
   category: string | null
   emoji: string | null
+  image_url: string | null
   is_available: boolean
   sort_order: number
 }
@@ -75,6 +76,34 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
     if (!confirm('削除しますか？')) return
     setLoading(id)
     await fetch(`/api/admin/menu/${id}`, { method: 'DELETE' })
+    router.refresh()
+    setLoading(null)
+  }
+
+  async function uploadImage(id: string, file: File) {
+    setLoading(id)
+    setError(null)
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await fetch(`/api/admin/menu/${id}/image`, {
+      method: 'POST',
+      body: formData,
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setError(data.error ?? '画像のアップロードに失敗しました')
+      setLoading(null)
+      return
+    }
+    router.refresh()
+    setLoading(null)
+  }
+
+  async function removeImage(id: string) {
+    if (!confirm('画像を削除しますか？')) return
+    setLoading(id)
+    setError(null)
+    await fetch(`/api/admin/menu/${id}/image`, { method: 'DELETE' })
     router.refresh()
     setLoading(null)
   }
@@ -274,12 +303,60 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
                 </>
               ) : (
                 <>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {item.emoji && <span className="text-xl">{item.emoji}</span>}
-                      <p className="font-semibold text-gray-900">{item.name}</p>
+                  <div className="flex items-center gap-3">
+                    {/* 画像サムネイル */}
+                    <div className="shrink-0">
+                      {item.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={item.image_url}
+                          alt={item.name}
+                          className="w-16 h-16 rounded-lg object-cover bg-gray-100"
+                        />
+                      ) : (
+                        <label className="w-16 h-16 rounded-lg bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center text-xs text-gray-400 cursor-pointer hover:bg-gray-100 transition-colors">
+                          📷
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0]
+                              if (f) uploadImage(item.id, f)
+                            }}
+                          />
+                        </label>
+                      )}
                     </div>
-                    <span className="font-semibold text-gray-900">¥{item.price.toLocaleString()}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        {item.emoji && <span className="text-base">{item.emoji}</span>}
+                        <p className="font-semibold text-gray-900 truncate">{item.name}</p>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-0.5">¥{item.price.toLocaleString()}</p>
+                      {item.image_url && (
+                        <div className="flex gap-2 mt-1.5">
+                          <label className="text-xs text-blue-500 hover:text-blue-700 cursor-pointer">
+                            画像を変更
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp"
+                              className="hidden"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0]
+                                if (f) uploadImage(item.id, f)
+                              }}
+                            />
+                          </label>
+                          <button
+                            onClick={() => removeImage(item.id)}
+                            className="text-xs text-red-500 hover:text-red-700"
+                          >
+                            画像を削除
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <button

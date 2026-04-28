@@ -36,7 +36,7 @@ export default async function StorePage({ params }: Props) {
   // メニュー取得（提供可能なもののみ）
   const { data: menuItems } = await supabase
     .from('menu_items')
-    .select('id, name, price, category, emoji, is_available, sort_order')
+    .select('id, name, price, category, emoji, image_url, is_available, sort_order')
     .eq('store_id', storeId)
     .eq('is_available', true)
     .order('sort_order')

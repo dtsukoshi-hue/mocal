@@ -6,7 +6,7 @@ import Cart from './Cart'
 
 interface Props {
   store: Pick<Store, 'id' | 'name' | 'is_open' | 'wait_minutes'>
-  menuItems: Pick<MenuItem, 'id' | 'name' | 'price' | 'category' | 'emoji' | 'is_available' | 'sort_order'>[]
+  menuItems: Pick<MenuItem, 'id' | 'name' | 'price' | 'category' | 'emoji' | 'image_url' | 'is_available' | 'sort_order'>[]
 }
 
 export interface CartItem {
@@ -99,13 +99,23 @@ export default function MenuView({ store, menuItems }: Props) {
                     key={item.id}
                     onClick={() => store.is_open && addToCart(item)}
                     disabled={!store.is_open}
-                    className="w-full flex items-center justify-between bg-white rounded-xl px-4 py-3 shadow-sm text-left disabled:opacity-50 hover:bg-orange-50 transition-colors"
+                    className="w-full flex items-center justify-between bg-white rounded-xl px-3 py-3 shadow-sm text-left disabled:opacity-50 hover:bg-orange-50 transition-colors"
                   >
-                    <div className="flex items-center gap-3">
-                      {item.emoji && (
-                        <span className="text-2xl">{item.emoji}</span>
-                      )}
-                      <span className="text-sm font-medium text-gray-900">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {item.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={item.image_url}
+                          alt={item.name}
+                          className="w-14 h-14 rounded-lg object-cover bg-gray-100 shrink-0"
+                          loading="lazy"
+                        />
+                      ) : item.emoji ? (
+                        <span className="text-2xl w-14 h-14 flex items-center justify-center bg-gray-50 rounded-lg shrink-0">
+                          {item.emoji}
+                        </span>
+                      ) : null}
+                      <span className="text-sm font-medium text-gray-900 truncate">
                         {item.name}
                       </span>
                     </div>

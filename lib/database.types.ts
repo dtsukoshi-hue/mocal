@@ -62,6 +62,7 @@ export type MenuItem = {
   price: number
   category: string | null
   emoji: string | null
+  image_url: string | null
   is_available: boolean
   sort_order: number
   created_at: string
@@ -123,9 +124,10 @@ export type ProfileInsert = Omit<Profile, 'created_at'> & {
   created_at?: string
 }
 
-export type MenuItemInsert = Omit<MenuItem, 'id' | 'created_at'> & {
+export type MenuItemInsert = Omit<MenuItem, 'id' | 'created_at' | 'image_url'> & {
   id?: string
   created_at?: string
+  image_url?: string | null
 }
 
 export type OrderInsert = {
