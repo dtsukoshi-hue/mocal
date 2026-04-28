@@ -71,21 +71,29 @@ export default function SalesView({ orders, currentRange }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* 期間切替 */}
-      <div className="flex gap-2">
-        {RANGES.map((r) => (
-          <Link
-            key={r.key}
-            href={`/admin/sales?range=${r.key}`}
-            className={`text-sm font-semibold px-4 py-2 rounded-lg transition-colors ${
-              currentRange === r.key
-                ? 'bg-gray-900 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            {r.label}
-          </Link>
-        ))}
+      {/* 期間切替 + CSV エクスポート */}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex gap-2">
+          {RANGES.map((r) => (
+            <Link
+              key={r.key}
+              href={`/admin/sales?range=${r.key}`}
+              className={`text-sm font-semibold px-4 py-2 rounded-lg transition-colors ${
+                currentRange === r.key
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              {r.label}
+            </Link>
+          ))}
+        </div>
+        <a
+          href={`/api/admin/sales/export?range=${currentRange}`}
+          className="text-sm font-semibold px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors inline-flex items-center gap-1.5"
+        >
+          ⬇ CSV
+        </a>
       </div>
 
       {/* KPI カード */}
