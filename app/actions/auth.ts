@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { timingSafeEqual } from 'crypto'
 import { setSession, clearSession } from '@/lib/session'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkRateLimitAsync } from '@/lib/rate-limit'
 import { logger } from '@/lib/logger'
 
 export type AuthState =
@@ -31,7 +31,7 @@ export async function loginAction(
 ): Promise<AuthState> {
   // ブルートフォース対策: IP 単位で 1 分間に 5 回まで
   const ip = (await headers()).get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
-  if (!checkRateLimit(`login:${ip}`, 5, 60_000)) {
+  if (!(await checkRateLimitAsync('login', ip, 5, 60_000))) {
     logger.warn('login rate limit exceeded', { ip })
     return { error: 'リクエストが多すぎます。しばらくしてから再試行してください。' }
   }

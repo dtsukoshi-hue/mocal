@@ -9,6 +9,7 @@ vi.mock('next/headers', () => ({
 // rate-limit はテスト間で干渉しないように常時許可
 vi.mock('@/lib/rate-limit', () => ({
   checkRateLimit: vi.fn(() => true),
+  checkRateLimitAsync: vi.fn(async () => true),
 }))
 
 import { POST } from '@/app/api/auth/login/route'
@@ -86,7 +87,7 @@ describe('POST /api/auth/login', () => {
 
   it('returns 429 when rate-limited', async () => {
     const rl = await import('@/lib/rate-limit')
-    vi.mocked(rl.checkRateLimit).mockReturnValueOnce(false)
+    vi.mocked(rl.checkRateLimitAsync).mockResolvedValueOnce(false)
     const res = await POST(makeReq({ email: 'admin@test.local', password: 'test-password' }) as never)
     expect(res.status).toBe(429)
   })

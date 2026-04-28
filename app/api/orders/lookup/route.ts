@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { headers } from 'next/headers'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkRateLimitAsync } from '@/lib/rate-limit'
 import { logger } from '@/lib/logger'
 import { normalizeLookupIds } from '@/lib/validation'
 
@@ -21,7 +21,7 @@ const MAX_IDS = 20
 
 export async function POST(request: NextRequest) {
   const ip = (await headers()).get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
-  if (!checkRateLimit(`order-lookup:${ip}`, 30, 60_000)) {
+  if (!(await checkRateLimitAsync('order-lookup', ip, 30, 60_000))) {
     return NextResponse.json(
       { error: 'リクエストが多すぎます。しばらく待ってから再試行してください。' },
       { status: 429 }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import { timingSafeEqual } from 'crypto'
 import { createSessionToken } from '@/lib/session'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkRateLimitAsync } from '@/lib/rate-limit'
 import { logger } from '@/lib/logger'
 
 function safeEqual(a: string, b: string): boolean {
@@ -18,7 +18,7 @@ function safeEqual(a: string, b: string): boolean {
 export async function POST(req: NextRequest) {
   // ブルートフォース対策
   const ip = (await headers()).get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
-  if (!checkRateLimit(`login-api:${ip}`, 5, 60_000)) {
+  if (!(await checkRateLimitAsync('login-api', ip, 5, 60_000))) {
     logger.warn('login API rate limit exceeded', { ip })
     return NextResponse.json(
       { error: 'リクエストが多すぎます。しばらくしてから再試行してください。' },

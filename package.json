@@ -17,6 +17,8 @@
     "@stripe/react-stripe-js": "^6.2.0",
     "@stripe/stripe-js": "^9.3.0",
     "@supabase/ssr": "^0.10.2",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.37.0",
     "next": "16.2.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",

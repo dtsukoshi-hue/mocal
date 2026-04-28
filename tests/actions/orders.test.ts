@@ -22,6 +22,7 @@ vi.mock('@/lib/supabase-server', () => ({
 // rate-limit はモジュールレベルの Map を共有するためテスト間で干渉する → 常に通す
 vi.mock('@/lib/rate-limit', () => ({
   checkRateLimit: vi.fn(() => true),
+  checkRateLimitAsync: vi.fn(async () => true),
 }))
 
 import { createOrderAction } from '@/app/actions/orders'

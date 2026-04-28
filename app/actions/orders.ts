@@ -3,7 +3,7 @@
 import { createServiceClient } from '@/lib/supabase-server'
 import { createPayment } from '@/lib/payment'
 import { headers } from 'next/headers'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkRateLimitAsync } from '@/lib/rate-limit'
 import { logger } from '@/lib/logger'
 
 // ゲスト注文の INSERT は RLS のゲスト用 INSERT ポリシーが無いため service_role 必須。
@@ -26,7 +26,9 @@ export async function createOrderAction(
   formData: FormData
 ): Promise<OrderState> {
   const ip = (await headers()).get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
-  if (!checkRateLimit(`order:${ip}`, 10, 60_000)) return { error: 'リクエストが多すぎます。しばらく待ってから再試行してください。' }
+  if (!(await checkRateLimitAsync('order-create', ip, 10, 60_000))) {
+    return { error: 'リクエストが多すぎます。しばらく待ってから再試行してください。' }
+  }
 
   const storeId = formData.get('storeId')
   const pickupType = formData.get('pickupType')

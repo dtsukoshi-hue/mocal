@@ -54,6 +54,9 @@ export default async function DashboardPage() {
             <Link href="/admin/history" className="text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors">
               履歴
             </Link>
+            <Link href="/admin/sales" className="text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors">
+              売上
+            </Link>
             <Link href="/admin/settings" className="text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors">
               設定
             </Link>

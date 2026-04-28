@@ -18,6 +18,7 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/lib/rate-limit', () => ({
   checkRateLimit: vi.fn(() => true),
+  checkRateLimitAsync: vi.fn(async () => true),
 }))
 
 import { loginAction, logoutAction } from '@/app/actions/auth'
@@ -62,7 +63,7 @@ describe('loginAction', () => {
 
   it('returns rate limit error when rl blocks', async () => {
     const rl = await import('@/lib/rate-limit')
-    vi.mocked(rl.checkRateLimit).mockReturnValueOnce(false)
+    vi.mocked(rl.checkRateLimitAsync).mockResolvedValueOnce(false)
     const r = await loginAction(undefined, fd({ email: 'admin@test.local', password: 'test-password' }))
     expect(r).toMatchObject({ error: expect.stringContaining('リクエストが多すぎます') })
   })
