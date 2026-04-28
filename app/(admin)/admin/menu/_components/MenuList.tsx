@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import ReorderList from './ReorderList'
 
 type MenuItem = {
   id: string
@@ -34,6 +35,7 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
   const [error, setError] = useState<string | null>(null)
   const [renamingCategory, setRenamingCategory] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
+  const [reorderMode, setReorderMode] = useState(false)
 
   // 既存カテゴリ一覧（重複除去・空文字を除外）
   const categories = useMemo(() => {
@@ -196,10 +198,24 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
     setLoading(null)
   }
 
+  if (reorderMode) {
+    return <ReorderList items={items} onDone={() => setReorderMode(false)} />
+  }
+
   return (
     <div className="space-y-4">
       {error && (
         <div className="bg-red-50 text-red-700 text-sm px-4 py-2 rounded-lg">{error}</div>
+      )}
+
+      {/* 並び替えモードボタン */}
+      {items.length > 1 && (
+        <button
+          onClick={() => setReorderMode(true)}
+          className="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold py-2 rounded-xl"
+        >
+          ↕ 並び替えモード
+        </button>
       )}
 
       {/* 追加フォーム */}
