@@ -3,6 +3,10 @@ import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/database.types'
 import MenuView from './_components/MenuView'
 
+// 店舗ページは内容更新の頻度が低い（メニュー・営業時間）ので 60s キャッシュ。
+// 営業中フラグの即時反映が必要な場合はメニュー画面の Realtime チャネルで購読する想定。
+export const revalidate = 60
+
 interface Props {
   params: Promise<{ storeId: string }>
 }

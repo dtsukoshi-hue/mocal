@@ -1,16 +1,23 @@
 'use client'
 
-import { useActionState } from 'react'
-import { loadStripe } from '@stripe/stripe-js'
+import { useActionState, useMemo } from 'react'
+import type { Stripe } from '@stripe/stripe-js'
 import { Elements } from '@stripe/react-stripe-js'
 import { createOrderAction, type OrderState } from '@/app/actions/orders'
 import PaymentForm from './PaymentForm'
 import type { CartItem } from './MenuView'
 import type { Store } from '@/lib/database.types'
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
-)
+// Stripe.js (~100KB) はカート閲覧時には不要なので、決済画面に進んだ時点で
+// dynamic import でロードする。
+let _stripePromise: Promise<Stripe | null> | null = null
+function getStripePromise(): Promise<Stripe | null> {
+  if (_stripePromise) return _stripePromise
+  _stripePromise = import('@stripe/stripe-js').then((m) =>
+    m.loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+  )
+  return _stripePromise
+}
 
 interface Props {
   store: Pick<Store, 'id' | 'name' | 'is_open' | 'wait_minutes'>
@@ -35,7 +42,10 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
     )
   }
 
-  // PaymentIntent 作成完了 → Stripe Elements を表示
+  // PaymentIntent 作成完了 → Stripe Elements を表示（ここで初めて Stripe.js を取得）
+  const isPaying = state && 'clientSecret' in state
+  const stripePromise = useMemo(() => (isPaying ? getStripePromise() : null), [isPaying])
+
   if (state && 'clientSecret' in state) {
     return (
       <div className="min-h-screen bg-gray-50 pb-10">
@@ -46,7 +56,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
         </header>
         <main className="max-w-lg mx-auto px-4 py-4">
           <Elements
-            stripe={stripePromise}
+            stripe={stripePromise!}
             options={{ clientSecret: state.clientSecret, locale: 'ja' }}
           >
             <PaymentForm
