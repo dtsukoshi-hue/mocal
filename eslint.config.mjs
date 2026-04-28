@@ -15,6 +15,9 @@ const eslintConfig = defineConfig([
     "**/.claude/**",        // worktree など内部 artifact を除外
     "next-env.d.ts",
     "public/sw.js",         // SW は別 lint 対象（プレーン JS）
+    "playwright-report/**",
+    "test-results/**",
+    "coverage/**",
   ]),
 ]);
 

@@ -31,6 +31,9 @@ export default function StripeConnectSection() {
   }
 
   useEffect(() => {
+    // load() は async なので setState は await 後（マイクロタスク）に実行される。
+    // 静的解析が同期実行と誤検知するため明示的に許可する。
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load()
   }, [])
 
