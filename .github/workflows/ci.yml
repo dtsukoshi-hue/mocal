@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://ci.example.com
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-anon
+          SUPABASE_SERVICE_ROLE_KEY: ci-service
+          SESSION_SECRET: ci-secret
+          ADMIN_EMAIL: ci@example.com
+          ADMIN_PASSWORD: ci-password
+          ADMIN_STORE_ID: 00000000-0000-0000-0000-000000000000
+          STRIPE_SECRET_KEY: sk_test_ci
+          STRIPE_WEBHOOK_SECRET: whsec_ci
+          NEXT_PUBLIC_VAPID_PUBLIC_KEY: ci-vapid-pub
+          VAPID_PRIVATE_KEY: ci-vapid-priv
+          VAPID_SUBJECT: mailto:ci@example.com
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
