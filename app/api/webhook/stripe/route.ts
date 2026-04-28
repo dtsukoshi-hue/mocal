@@ -114,6 +114,20 @@ export async function POST(request: NextRequest) {
 
       break
     }
+
+    case 'account.updated': {
+      // Stripe Connect オンボーディング完了通知
+      // metadata.store_id があれば store の状態を更新（現状は stripe_account_id 保存のみ）
+      // 将来 charges_enabled / payouts_enabled をミラーする場合はここで更新
+      const account = event.data.object
+      logger.info('stripe account updated', {
+        accountId: account.id,
+        chargesEnabled: account.charges_enabled,
+        payoutsEnabled: account.payouts_enabled,
+        detailsSubmitted: account.details_submitted,
+      })
+      break
+    }
   }
 
   return NextResponse.json({ received: true })

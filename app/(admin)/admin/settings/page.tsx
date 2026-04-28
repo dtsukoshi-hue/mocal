@@ -7,6 +7,7 @@ import { logoutAction } from '@/app/actions/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import StoreSettingsForm from './_components/StoreSettingsForm'
+import StripeConnectSection from './_components/StripeConnectSection'
 
 export default async function StoreSettingsPage() {
   const cookieStore = await cookies()
@@ -48,8 +49,9 @@ export default async function StoreSettingsPage() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6">
+      <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
         <StoreSettingsForm initialName={store.name} initialWaitMinutes={store.wait_minutes} />
+        <StripeConnectSection />
       </main>
     </div>
   )
