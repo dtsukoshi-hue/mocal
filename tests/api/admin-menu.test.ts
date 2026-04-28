@@ -173,6 +173,16 @@ describe('DELETE /api/admin/menu/[id]', () => {
 })
 
 describe('PATCH /api/admin/store', () => {
+  function mockUpdateOk() {
+    const update = vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ error: null }),
+    })
+    vi.mocked(createServiceClient).mockReturnValue({
+      from: vi.fn().mockReturnValue({ update }),
+    } as never)
+    return update
+  }
+
   it('returns 401 without session', async () => {
     sessionMock.getSessionPayload.mockResolvedValue(null)
     const res = await storePatch(req('PATCH', 'http://x', { is_open: true }) as never)
@@ -185,16 +195,61 @@ describe('PATCH /api/admin/store', () => {
     expect(res.status).toBe(400)
   })
 
-  it('updates store on valid request', async () => {
+  it('returns 400 for empty body', async () => {
     sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
-    const update = vi.fn().mockReturnValue({
-      eq: vi.fn().mockResolvedValue({ error: null }),
-    })
-    vi.mocked(createServiceClient).mockReturnValue({
-      from: vi.fn().mockReturnValue({ update }),
-    } as never)
+    const res = await storePatch(req('PATCH', 'http://x', {}) as never)
+    expect(res.status).toBe(400)
+  })
+
+  it('updates is_open', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const update = mockUpdateOk()
     const res = await storePatch(req('PATCH', 'http://x', { is_open: false }) as never)
     expect(res.status).toBe(200)
     expect(update).toHaveBeenCalledWith({ is_open: false })
+  })
+
+  it('rejects empty store name', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const res = await storePatch(req('PATCH', 'http://x', { name: '   ' }) as never)
+    expect(res.status).toBe(400)
+  })
+
+  it('rejects too-long store name', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const res = await storePatch(req('PATCH', 'http://x', { name: 'a'.repeat(61) }) as never)
+    expect(res.status).toBe(400)
+  })
+
+  it('updates store name (trimmed)', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const update = mockUpdateOk()
+    const res = await storePatch(req('PATCH', 'http://x', { name: '  Cafe X  ' }) as never)
+    expect(res.status).toBe(200)
+    expect(update).toHaveBeenCalledWith({ name: 'Cafe X' })
+  })
+
+  it('rejects non-allowed wait_minutes', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const res = await storePatch(req('PATCH', 'http://x', { wait_minutes: 25 }) as never)
+    expect(res.status).toBe(400)
+  })
+
+  it('updates wait_minutes', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const update = mockUpdateOk()
+    const res = await storePatch(req('PATCH', 'http://x', { wait_minutes: 30 }) as never)
+    expect(res.status).toBe(200)
+    expect(update).toHaveBeenCalledWith({ wait_minutes: 30 })
+  })
+
+  it('updates multiple fields at once', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const update = mockUpdateOk()
+    const res = await storePatch(req('PATCH', 'http://x', {
+      name: 'New', wait_minutes: 20, is_open: true,
+    }) as never)
+    expect(res.status).toBe(200)
+    expect(update).toHaveBeenCalledWith({ name: 'New', wait_minutes: 20, is_open: true })
   })
 })
