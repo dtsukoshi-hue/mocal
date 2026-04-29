@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function AdminLoginPage() {
+  const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
-  const [success, setSuccess] = useState(false)
 
   async function handleClick() {
     const email = (document.getElementById('email') as HTMLInputElement).value
@@ -20,33 +20,23 @@ export default function AdminLoginPage() {
         credentials: 'include',
         body: JSON.stringify({ email, password }),
       })
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
       if (!res.ok) {
         setError(data.error ?? 'ログインに失敗しました。')
-      } else {
-        setSuccess(true)
+        setPending(false)
+        return
       }
+      // ログイン成功 → そのままダッシュボードへ（ボタンタップ画面なし）
+      router.push('/admin/dashboard')
+      router.refresh()
     } catch (e) {
       setError('通信エラー: ' + String(e))
-    } finally {
       setPending(false)
     }
   }
 
-  if (success) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center space-y-4">
-          <p className="text-green-600 font-bold text-lg">ログイン成功！</p>
-          <Link
-            href="/admin/dashboard"
-            className="block w-full rounded-lg bg-orange-500 text-white font-semibold py-3 text-sm text-center hover:bg-orange-600"
-          >
-            ダッシュボードへ →
-          </Link>
-        </div>
-      </div>
-    )
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter' && !pending) handleClick()
   }
 
   return (
@@ -67,6 +57,7 @@ export default function AdminLoginPage() {
               name="email"
               type="email"
               autoComplete="email"
+              onKeyDown={handleKeyDown}
               className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
           </div>
@@ -80,6 +71,7 @@ export default function AdminLoginPage() {
               name="password"
               type="password"
               autoComplete="off"
+              onKeyDown={handleKeyDown}
               className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
           </div>
