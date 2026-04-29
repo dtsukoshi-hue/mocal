@@ -6,7 +6,7 @@ import Cart from './Cart'
 
 interface Props {
   store: Pick<Store, 'id' | 'name' | 'is_open' | 'wait_minutes'>
-  menuItems: Pick<MenuItem, 'id' | 'name' | 'price' | 'category' | 'emoji' | 'image_url' | 'is_available' | 'sort_order'>[]
+  menuItems: Pick<MenuItem, 'id' | 'name' | 'price' | 'description' | 'category' | 'emoji' | 'image_url' | 'is_available' | 'sort_order'>[]
 }
 
 export interface CartItem {
@@ -102,23 +102,30 @@ export default function MenuView({ store, menuItems }: Props) {
                     disabled={!store.is_open}
                     className="w-full flex items-center justify-between bg-white rounded-xl px-3 py-3 shadow-sm text-left disabled:opacity-50 hover:bg-amber-50 transition-colors border border-transparent hover:border-amber-200"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
                       {item.image_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={item.image_url}
                           alt={item.name}
-                          className="w-14 h-14 rounded-lg object-cover bg-gray-100 shrink-0"
+                          className="w-16 h-16 rounded-lg object-cover bg-gray-100 shrink-0"
                           loading="lazy"
                         />
                       ) : item.emoji ? (
-                        <span className="text-2xl w-14 h-14 flex items-center justify-center bg-gray-50 rounded-lg shrink-0">
+                        <span className="text-2xl w-16 h-16 flex items-center justify-center bg-gray-50 rounded-lg shrink-0">
                           {item.emoji}
                         </span>
                       ) : null}
-                      <span className="text-sm font-medium text-gray-900 truncate">
-                        {item.name}
-                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {item.name}
+                        </p>
+                        {item.description && (
+                          <p className="text-xs text-gray-500 truncate mt-0.5">
+                            {item.description}
+                          </p>
+                        )}
+                      </div>
                     </div>
                     <span className="text-sm font-semibold text-gray-900 shrink-0 ml-2">
                       ¥{item.price.toLocaleString()}

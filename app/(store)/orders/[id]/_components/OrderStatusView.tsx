@@ -109,16 +109,26 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
 
       <main className="max-w-lg mx-auto px-4 py-6 flex-1 w-full space-y-4">
 
-        {/* ステータスカード */}
+        {/* 受取番号（最重要・大きく表示）*/}
         <div className={`bg-white rounded-2xl shadow-sm p-6 text-center ${
-          order.status === 'ready' ? 'ring-2 ring-emerald-400' : ''
+          order.status === 'ready' ? 'ring-4 ring-emerald-400' : ''
         }`}>
-          <div className="text-5xl mb-3">{config.icon}</div>
-          <h2 className={`text-xl font-bold mb-1 ${config.color}`}>{config.label}</h2>
+          <div className="text-4xl mb-2">{config.icon}</div>
+          <h2 className={`text-lg font-bold mb-3 ${config.color}`}>{config.label}</h2>
+          <p className="text-xs font-bold text-gray-400 tracking-widest uppercase mb-1">受取番号</p>
+          <p className="text-7xl font-black text-gray-900 tabular-nums leading-none mb-2">
+            {String(order.order_number).padStart(3, '0')}
+          </p>
           <p className="text-sm text-gray-500">{config.description}</p>
 
+          {order.status === 'ready' && (
+            <p className="mt-3 text-xs text-emerald-700 font-semibold">
+              番号を呼ばれたらお受け取りください
+            </p>
+          )}
+
           {order.estimated_ready_at && ['accepted', 'preparing', 'ready'].includes(order.status) && (
-            <div className="mt-4 inline-block bg-orange-50 text-orange-700 text-sm font-semibold px-4 py-2 rounded-full">
+            <div className="mt-4 inline-block bg-amber-50 text-amber-700 text-sm font-semibold px-4 py-2 rounded-full border border-amber-200">
               受取予定 {new Date(order.estimated_ready_at).toLocaleTimeString('ja-JP', {
                 hour: '2-digit',
                 minute: '2-digit',
@@ -201,6 +211,16 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
             <span>¥{order.total_amount.toLocaleString()}</span>
           </div>
         </div>
+
+        {/* 領収書リンク（completed のみ）*/}
+        {order.status === 'completed' && (
+          <Link
+            href={`/orders/${order.id}/receipt`}
+            className="block bg-white rounded-2xl shadow-sm p-4 text-center text-sm font-semibold text-amber-700 hover:bg-amber-50 transition-colors"
+          >
+            📄 領収書を表示
+          </Link>
+        )}
 
       </main>
     </div>

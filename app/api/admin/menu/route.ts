@@ -8,20 +8,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '認証が必要です。' }, { status: 401 })
   }
 
-  let body: { name: string; price: number; category?: string; emoji?: string; sort_order?: number }
+  let body: { name: string; price: number; description?: string; category?: string; emoji?: string; sort_order?: number }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'リクエストが不正です。' }, { status: 400 })
   }
 
-  const { name, price, category, emoji, sort_order } = body
+  const { name, price, description, category, emoji, sort_order } = body
 
   if (typeof name !== 'string' || name.trim() === '') {
     return NextResponse.json({ error: 'メニュー名は必須です。' }, { status: 400 })
   }
   if (typeof price !== 'number' || price < 0 || !Number.isInteger(price)) {
     return NextResponse.json({ error: '価格が不正です。' }, { status: 400 })
+  }
+  if (description !== undefined && typeof description === 'string' && description.length > 200) {
+    return NextResponse.json({ error: '説明文は200文字以内にしてください。' }, { status: 400 })
   }
 
   const supabase = createServiceClient()
@@ -32,6 +35,7 @@ export async function POST(request: NextRequest) {
       store_id: session.storeId,
       name: name.trim(),
       price,
+      description: description?.trim() || null,
       category: category?.trim() || null,
       emoji: emoji?.trim() || null,
       sort_order: sort_order ?? 0,

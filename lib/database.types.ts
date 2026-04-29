@@ -60,6 +60,7 @@ export type MenuItem = {
   store_id: string
   name: string
   price: number
+  description: string | null
   category: string | null
   emoji: string | null
   image_url: string | null

@@ -8,6 +8,7 @@ type MenuItem = {
   id: string
   name: string
   price: number
+  description: string | null
   category: string | null
   emoji: string | null
   image_url: string | null
@@ -18,11 +19,12 @@ type MenuItem = {
 type EditingItem = {
   name: string
   price: string
+  description: string
   category: string
   emoji: string
 }
 
-const EMPTY_FORM = { name: '', price: '', category: '', emoji: '' }
+const EMPTY_FORM: EditingItem = { name: '', price: '', description: '', category: '', emoji: '' }
 const UNCATEGORIZED = '__uncategorized__'
 
 export default function MenuList({ items }: { items: MenuItem[] }) {
@@ -115,6 +117,7 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
     setEditForm({
       name: item.name,
       price: String(item.price),
+      description: item.description ?? '',
       category: item.category ?? '',
       emoji: item.emoji ?? '',
     })
@@ -133,6 +136,7 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
       body: JSON.stringify({
         name: editForm.name,
         price,
+        description: editForm.description,
         category: editForm.category,
         emoji: editForm.emoji,
       }),
@@ -154,6 +158,7 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
       body: JSON.stringify({
         name: addForm.name,
         price,
+        description: addForm.description,
         category: addForm.category,
         emoji: addForm.emoji,
       }),
@@ -349,6 +354,9 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
                         {item.emoji && <span className="text-base">{item.emoji}</span>}
                         <p className="font-semibold text-gray-900 truncate">{item.name}</p>
                       </div>
+                      {item.description && (
+                        <p className="text-xs text-gray-500 truncate mt-0.5">{item.description}</p>
+                      )}
                       <p className="text-sm text-gray-600 mt-0.5">¥{item.price.toLocaleString()}</p>
                       {item.image_url && (
                         <div className="flex gap-2 mt-1.5">
@@ -441,7 +449,7 @@ function ItemForm({
       <div className="flex gap-2">
         <input
           type="number"
-          placeholder="価格（円） *"
+          placeholder="価格（税込・円） *"
           value={form.price}
           onChange={(e) => onChange({ ...form, price: e.target.value })}
           className="border rounded-lg px-3 py-2 text-sm flex-1"
@@ -460,6 +468,14 @@ function ItemForm({
           {categories.map((c) => <option key={c} value={c} />)}
         </datalist>
       </div>
+      <textarea
+        placeholder="説明文（任意・200文字以内）"
+        value={form.description}
+        onChange={(e) => onChange({ ...form, description: e.target.value })}
+        maxLength={200}
+        rows={2}
+        className="w-full border rounded-lg px-3 py-2 text-sm resize-none"
+      />
     </div>
   )
 }

@@ -28,7 +28,7 @@ export async function PATCH(
   const auth = await authorize(id)
   if ('error' in auth) return NextResponse.json({ error: auth.error }, { status: auth.status })
 
-  let body: Partial<{ name: string; price: number; category: string; emoji: string; is_available: boolean; sort_order: number }>
+  let body: Partial<{ name: string; price: number; description: string; category: string; emoji: string; is_available: boolean; sort_order: number }>
   try {
     body = await request.json()
   } catch {
@@ -41,10 +41,14 @@ export async function PATCH(
   if (body.price !== undefined && (typeof body.price !== 'number' || body.price < 0 || !Number.isInteger(body.price))) {
     return NextResponse.json({ error: '価格が不正です。' }, { status: 400 })
   }
+  if (body.description !== undefined && typeof body.description === 'string' && body.description.length > 200) {
+    return NextResponse.json({ error: '説明文は200文字以内にしてください。' }, { status: 400 })
+  }
 
   const updateData: Partial<MenuItemInsert> = {}
   if (body.name !== undefined) updateData.name = body.name.trim()
   if (body.price !== undefined) updateData.price = body.price
+  if (body.description !== undefined) updateData.description = body.description.trim() || null
   if (body.category !== undefined) updateData.category = body.category.trim() || null
   if (body.emoji !== undefined) updateData.emoji = body.emoji.trim() || null
   if (body.is_available !== undefined) updateData.is_available = body.is_available
