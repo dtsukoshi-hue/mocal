@@ -68,7 +68,7 @@ export default function PaymentForm({ orderId, orderNumber, totalAmount }: Props
       <button
         type="submit"
         disabled={!stripe || !elements || isLoading}
-        className="w-full rounded-2xl bg-orange-500 text-white font-bold py-4 shadow-lg disabled:opacity-60 hover:bg-orange-600 transition-colors"
+        className="w-full rounded-2xl bg-amber-700 text-white font-bold py-4 shadow-lg disabled:opacity-60 hover:bg-amber-800 transition-colors"
       >
         {isLoading ? '処理中...' : `¥${totalAmount.toLocaleString()} を支払う`}
       </button>

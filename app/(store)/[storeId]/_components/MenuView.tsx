@@ -56,24 +56,25 @@ export default function MenuView({ store, menuItems }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32">
+    <div className="min-h-screen bg-stone-50 pb-32">
       {/* ヘッダー */}
-      <header className="bg-white border-b sticky top-0 z-10">
+      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-4">
           <h1 className="text-lg font-bold text-gray-900">{store.name}</h1>
           <div className="flex items-center gap-2 mt-1">
             <span
-              className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
+              className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-0.5 rounded-full ${
                 store.is_open
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-gray-100 text-gray-500'
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : 'bg-red-50 text-red-700 border border-red-200'
               }`}
             >
+              <span className={`w-1.5 h-1.5 rounded-full ${store.is_open ? 'bg-emerald-500' : 'bg-red-500'}`} />
               {store.is_open ? '受付中' : '受付停止中'}
             </span>
             {store.is_open && (
               <span className="text-xs text-gray-500">
-                約{store.wait_minutes}分
+                約{store.wait_minutes}分で受取
               </span>
             )}
           </div>
@@ -90,7 +91,7 @@ export default function MenuView({ store, menuItems }: Props) {
 
         {categories.map(category => (
           <section key={category}>
-            <h2 className="text-sm font-semibold text-gray-500 mb-3">{category}</h2>
+            <h2 className="text-sm font-bold text-gray-500 mb-3 px-1">{category}</h2>
             <div className="space-y-2">
               {menuItems
                 .filter(item => (item.category ?? 'その他') === category)
@@ -99,7 +100,7 @@ export default function MenuView({ store, menuItems }: Props) {
                     key={item.id}
                     onClick={() => store.is_open && addToCart(item)}
                     disabled={!store.is_open}
-                    className="w-full flex items-center justify-between bg-white rounded-xl px-3 py-3 shadow-sm text-left disabled:opacity-50 hover:bg-orange-50 transition-colors"
+                    className="w-full flex items-center justify-between bg-white rounded-xl px-3 py-3 shadow-sm text-left disabled:opacity-50 hover:bg-amber-50 transition-colors border border-transparent hover:border-amber-200"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       {item.image_url ? (
@@ -135,12 +136,12 @@ export default function MenuView({ store, menuItems }: Props) {
           <div className="max-w-lg mx-auto">
             <button
               onClick={() => setShowCart(true)}
-              className="w-full flex items-center justify-between bg-orange-500 text-white rounded-2xl px-5 py-4 shadow-lg font-semibold"
+              className="w-full flex items-center justify-between bg-amber-700 hover:bg-amber-800 text-white rounded-2xl px-5 py-4 shadow-lg font-semibold transition-colors"
             >
-              <span className="bg-orange-400 rounded-full w-6 h-6 flex items-center justify-center text-sm">
+              <span className="bg-white/20 rounded-full w-6 h-6 flex items-center justify-center text-sm">
                 {totalItems}
               </span>
-              <span>カートを確認する</span>
+              <span>カートを見る</span>
               <span>¥{totalAmount.toLocaleString()}</span>
             </button>
           </div>

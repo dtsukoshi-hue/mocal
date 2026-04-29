@@ -4,34 +4,33 @@ import { cookies } from 'next/headers'
 import { verifySessionToken } from '@/lib/session'
 import { createServiceClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
-import StoreSettingsForm from './_components/StoreSettingsForm'
-import StripeConnectSection from './_components/StripeConnectSection'
 import AdminNav from '../_components/AdminNav'
+import HoursPanel from './_components/HoursPanel'
 
-export default async function StoreSettingsPage() {
+export default async function HoursPage() {
   const cookieStore = await cookies()
   const token = cookieStore.get('admin_session')?.value
   if (!token) redirect('/admin/login')
-  const sessionData = verifySessionToken(token!)
-  if (!sessionData) redirect('/admin/login')
+  const session = verifySessionToken(token!)
+  if (!session) redirect('/admin/login')
 
   const supabase = createServiceClient()
   const { data: store } = await supabase
     .from('stores')
-    .select('name, wait_minutes')
-    .eq('id', sessionData.storeId)
+    .select('is_open, wait_minutes')
+    .eq('id', session.storeId)
     .single()
-
-  if (!store) redirect('/admin/login')
 
   return (
     <div className="min-h-screen bg-stone-50">
-      <AdminNav active="settings" role={sessionData.role as 'owner' | 'staff'} />
+      <AdminNav active="hours" role={session.role as 'owner' | 'staff'} />
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-        <h1 className="text-lg font-bold text-gray-900 mb-2">店舗設定</h1>
-        <StoreSettingsForm initialName={store.name} initialWaitMinutes={store.wait_minutes} />
-        <StripeConnectSection />
+        <h1 className="text-lg font-bold text-gray-900 mb-2">営業時間・受付設定</h1>
+        <HoursPanel
+          isOpen={store?.is_open ?? true}
+          waitMinutes={store?.wait_minutes ?? 15}
+        />
       </main>
     </div>
   )

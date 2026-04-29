@@ -1,10 +1,9 @@
 import { cookies } from 'next/headers'
 import { verifySessionToken } from '@/lib/session'
 import { createServiceClient } from '@/lib/supabase-server'
-import { logoutAction } from '@/app/actions/auth'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import MenuList from './_components/MenuList'
+import AdminNav from '../_components/AdminNav'
 
 export default async function MenuPage() {
   const cookieStore = await cookies()
@@ -23,24 +22,11 @@ export default async function MenuPage() {
     .order('created_at', { ascending: true })
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/admin/dashboard" className="text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors">
-              ← 注文管理
-            </Link>
-            <h1 className="text-lg font-bold text-gray-900">メニュー管理</h1>
-          </div>
-          <form action={logoutAction}>
-            <button type="submit" className="text-sm text-gray-400 hover:text-gray-600 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors">
-              ログアウト
-            </button>
-          </form>
-        </div>
-      </header>
+    <div className="min-h-screen bg-stone-50">
+      <AdminNav active="menu" role={sessionData.role as 'owner' | 'staff'} />
 
       <main className="max-w-4xl mx-auto px-4 py-6">
+        <h1 className="text-lg font-bold text-gray-900 mb-4">メニュー管理</h1>
         <MenuList items={items ?? []} />
       </main>
     </div>

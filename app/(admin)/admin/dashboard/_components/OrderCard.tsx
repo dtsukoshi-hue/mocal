@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
 type OrderItem = { name: string; qty: number; price: number }
@@ -18,25 +18,41 @@ type Order = {
 }
 
 const statusLabel: Record<string, string> = {
-  paid:      '新規注文',
+  paid:      '新規',
   accepted:  '受付済',
   preparing: '調理中',
   ready:     '受取可能',
 }
 
-const statusColor: Record<string, string> = {
-  paid:      'bg-amber-100 text-amber-800',
-  accepted:  'bg-blue-100 text-blue-800',
-  preparing: 'bg-purple-100 text-purple-800',
-  ready:     'bg-emerald-100 text-emerald-800',
+// プロトタイプの border-left カラーリング
+const borderColor: Record<string, string> = {
+  paid:      'border-l-4 border-l-orange-500',
+  accepted:  'border-l-4 border-l-blue-500',
+  preparing: 'border-l-4 border-l-amber-500',
+  ready:     'border-l-4 border-l-emerald-600',
+}
+
+// プロトタイプ準拠のステータスアイコン
+const statusIcon: Record<string, string> = {
+  paid:      '🔴',
+  accepted:  '🔵',
+  preparing: '🟡',
+  ready:     '✅',
+}
+
+const statusBadgeBg: Record<string, string> = {
+  paid:      'bg-orange-50 text-orange-700 border border-orange-200',
+  accepted:  'bg-blue-50 text-blue-700 border border-blue-200',
+  preparing: 'bg-amber-50 text-amber-700 border border-amber-200',
+  ready:     'bg-emerald-50 text-emerald-700 border border-emerald-200',
 }
 
 const nextActions: Record<string, { label: string; status: string; color: string }[]> = {
-  paid:      [{ label: '受付', status: 'accepted', color: 'bg-blue-500 hover:bg-blue-600' }],
-  accepted:  [{ label: '調理開始', status: 'preparing', color: 'bg-purple-500 hover:bg-purple-600' }],
-  preparing: [{ label: '準備完了', status: 'ready', color: 'bg-emerald-500 hover:bg-emerald-600' }],
+  paid:      [{ label: '受付', status: 'accepted', color: 'bg-blue-600 hover:bg-blue-700' }],
+  accepted:  [{ label: '調理開始', status: 'preparing', color: 'bg-amber-600 hover:bg-amber-700' }],
+  preparing: [{ label: '準備完了', status: 'ready', color: 'bg-emerald-600 hover:bg-emerald-700' }],
   ready:     [
-    { label: '受取完了', status: 'completed', color: 'bg-gray-500 hover:bg-gray-600' },
+    { label: '受取確認', status: 'completed', color: 'bg-gray-700 hover:bg-gray-800' },
     { label: '未受取', status: 'no_show', color: 'bg-red-400 hover:bg-red-500' },
   ],
 }
@@ -45,6 +61,14 @@ const cancelableStatuses = ['paid', 'accepted', 'preparing']
 
 const WAIT_OPTIONS = [10, 15, 20, 30, 40, 60]
 
+function formatTime(d: string): string {
+  return new Date(d).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+}
+
+function elapsedMinutes(fromIso: string, nowMs: number): number {
+  return Math.floor((nowMs - new Date(fromIso).getTime()) / 60_000)
+}
+
 export default function OrderCard({ order }: { order: Order }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -52,6 +76,12 @@ export default function OrderCard({ order }: { order: Order }) {
   const [error, setError] = useState<string | null>(null)
   const [waitMinutes, setWaitMinutes] = useState(15)
   const [confirmCancel, setConfirmCancel] = useState(false)
+  // 経過分数を 30 秒ごとに更新
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30_000)
+    return () => clearInterval(id)
+  }, [])
 
   const isDisabled = loading || isPending
 
@@ -79,29 +109,40 @@ export default function OrderCard({ order }: { order: Order }) {
 
   const actions = nextActions[order.status] ?? []
   const canCancel = cancelableStatuses.includes(order.status)
+  const elapsedFromCreated = elapsedMinutes(order.created_at, now)
+  const elapsedFromAccepted = order.accepted_at ? elapsedMinutes(order.accepted_at, now) : null
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      {/* ヘッダー */}
-      <div className={`px-5 py-3 flex items-center justify-between ${
-        order.status === 'paid' ? 'bg-amber-50' :
-        order.status === 'ready' ? 'bg-emerald-50' : 'bg-gray-50'
-      }`}>
-        <div className="flex items-center gap-3">
-          <span className="text-base font-bold text-gray-900">
+    <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden ${borderColor[order.status] ?? ''}`}>
+      {/* ヘッダー: 大きい注文番号 + ステータスバッジ + 金額 */}
+      <div className="px-5 pt-4 pb-3 flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="font-bold text-gray-900 text-3xl leading-none tabular-nums">
             #{order.order_number}
           </span>
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusColor[order.status]}`}>
-            {statusLabel[order.status]}
-          </span>
+          <div className="flex flex-col gap-1 min-w-0">
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1 self-start ${statusBadgeBg[order.status] ?? ''}`}>
+              <span aria-hidden>{statusIcon[order.status] ?? ''}</span>
+              {statusLabel[order.status] ?? order.status}
+            </span>
+            <span className="text-xs text-gray-400">
+              {formatTime(order.created_at)} 受付
+              {order.status !== 'paid' && elapsedFromAccepted !== null && (
+                <> ・ 受付から {elapsedFromAccepted}分経過</>
+              )}
+              {order.status === 'paid' && (
+                <> ・ {elapsedFromCreated}分前</>
+              )}
+            </span>
+          </div>
         </div>
-        <span className="text-base font-bold text-gray-900">
+        <span className="text-base font-bold text-gray-900 shrink-0">
           ¥{order.total_amount.toLocaleString()}
         </span>
       </div>
 
       {/* 本文 */}
-      <div className="px-5 py-4 space-y-3">
+      <div className="px-5 pb-4 space-y-3">
         <ul className="text-sm text-gray-700 space-y-1">
           {order.order_items?.map((item, i) => (
             <li key={i} className="flex justify-between">
@@ -112,8 +153,8 @@ export default function OrderCard({ order }: { order: Order }) {
         </ul>
 
         {order.estimated_ready_at && (
-          <p className="text-xs text-gray-400">
-            受取予定：{new Date(order.estimated_ready_at).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
+          <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-1.5">
+            受取予定 {formatTime(order.estimated_ready_at)}
           </p>
         )}
 
@@ -148,8 +189,12 @@ export default function OrderCard({ order }: { order: Order }) {
         {/* キャンセル確認 */}
         {confirmCancel && (
           <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 space-y-2">
-            <p className="text-sm font-medium text-red-800">この注文をキャンセルしますか？</p>
-            <p className="text-xs text-red-600">決済済みの場合は自動で返金されます。</p>
+            <p className="text-sm font-medium text-red-800">
+              #{order.order_number} の注文をキャンセルしますか？
+            </p>
+            <p className="text-xs text-red-600">
+              お客様へキャンセル通知が自動で送られます。決済済みの場合は自動で返金されます。
+            </p>
             <div className="flex gap-2 pt-1">
               <button
                 onClick={() => setConfirmCancel(false)}
@@ -163,7 +208,7 @@ export default function OrderCard({ order }: { order: Order }) {
                 disabled={isDisabled}
                 className="flex-1 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-semibold py-1.5 disabled:opacity-50"
               >
-                {isDisabled ? '処理中...' : 'キャンセル確定'}
+                {isDisabled ? '処理中...' : 'キャンセルする'}
               </button>
             </div>
           </div>
