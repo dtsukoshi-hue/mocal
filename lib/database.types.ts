@@ -112,6 +112,15 @@ export type PushSubscription = {
   created_at: string
 }
 
+export type StaffAccount = {
+  id: string
+  store_id: string
+  email: string
+  password_hash: string
+  role: 'owner' | 'staff'
+  created_at: string
+}
+
 // ------------------------------------------------------------
 // INSERT 用型（id / created_at を省略可能）
 // ------------------------------------------------------------
@@ -226,6 +235,12 @@ export type Database = {
         Row: PushSubscription
         Insert: Omit<PushSubscription, 'id' | 'created_at'> & { id?: string; created_at?: string }
         Update: Partial<Omit<PushSubscription, 'id'>>
+        Relationships: []
+      }
+      staff_accounts: {
+        Row: StaffAccount
+        Insert: Omit<StaffAccount, 'id' | 'created_at'> & { id?: string; created_at?: string }
+        Update: Partial<Omit<StaffAccount, 'id'>>
         Relationships: []
       }
     }

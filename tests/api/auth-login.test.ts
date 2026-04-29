@@ -12,6 +12,10 @@ vi.mock('@/lib/rate-limit', () => ({
   checkRateLimitAsync: vi.fn(async () => true),
 }))
 
+vi.mock('@/lib/staff-auth', () => ({
+  authenticateStaff: vi.fn(async () => null),
+}))
+
 import { POST } from '@/app/api/auth/login/route'
 
 function makeReq(body: unknown): Request {

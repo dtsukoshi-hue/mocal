@@ -3,6 +3,7 @@ import { headers } from 'next/headers'
 import { timingSafeEqual } from 'crypto'
 import { createSessionToken } from '@/lib/session'
 import { checkRateLimitAsync } from '@/lib/rate-limit'
+import { authenticateStaff } from '@/lib/staff-auth'
 import { logger } from '@/lib/logger'
 
 function safeEqual(a: string, b: string): boolean {
@@ -53,11 +54,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '認証に失敗しました。' }, { status: 500 })
   }
 
-  // 定数時間比較
+  // 1. env ベースの owner と一致するか定数時間比較
   const emailOk = safeEqual(email, validEmail)
   const passOk = safeEqual(password, validPassword)
 
-  if (!emailOk || !passOk) {
+  let session: { email: string; storeId: string; role: 'owner' | 'staff' } | null = null
+
+  if (emailOk && passOk) {
+    session = { email, storeId, role: 'owner' }
+  } else {
+    // 2. staff_accounts でフォールバック認証
+    try {
+      const staff = await authenticateStaff(email, password)
+      if (staff) {
+        session = { email: staff.email, storeId: staff.storeId, role: staff.role }
+      }
+    } catch (e) {
+      logger.error('staff auth error', { ip, error: String(e) })
+    }
+  }
+
+  if (!session) {
     logger.warn('login API failed', { ip })
     return NextResponse.json(
       { error: 'メールアドレスまたはパスワードが正しくありません。' },
@@ -66,9 +83,9 @@ export async function POST(req: NextRequest) {
   }
 
   const token = createSessionToken({
-    email,
-    storeId,
-    role: 'owner',
+    email: session.email,
+    storeId: session.storeId,
+    role: session.role,
     exp: Date.now() + 7 * 24 * 60 * 60 * 1000,
   })
 
@@ -80,6 +97,6 @@ export async function POST(req: NextRequest) {
     maxAge: 7 * 24 * 60 * 60,
     path: '/',
   })
-  logger.info('login API success', { ip })
+  logger.info('login API success', { ip, role: session.role })
   return res
 }

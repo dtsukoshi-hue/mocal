@@ -21,6 +21,10 @@ vi.mock('@/lib/rate-limit', () => ({
   checkRateLimitAsync: vi.fn(async () => true),
 }))
 
+vi.mock('@/lib/staff-auth', () => ({
+  authenticateStaff: vi.fn(async () => null),
+}))
+
 import { loginAction, logoutAction } from '@/app/actions/auth'
 
 function fd(fields: Record<string, string>): FormData {

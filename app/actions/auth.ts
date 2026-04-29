@@ -5,6 +5,7 @@ import { headers } from 'next/headers'
 import { timingSafeEqual } from 'crypto'
 import { setSession, clearSession } from '@/lib/session'
 import { checkRateLimitAsync } from '@/lib/rate-limit'
+import { authenticateStaff } from '@/lib/staff-auth'
 import { logger } from '@/lib/logger'
 
 export type AuthState =
@@ -58,24 +59,37 @@ export async function loginAction(
     return { error: '認証に失敗しました。' }
   }
 
-  // 定数時間比較（タイミング攻撃対策）。両方を必ず計算する。
+  // 1. env ベースの owner（既定の店舗オーナー）と一致するか定数時間比較
   const emailOk = safeEqual(email, validEmail)
   const passOk = safeEqual(password, validPassword)
 
-  if (!emailOk || !passOk) {
-    logger.warn('login failed', { ip })
-    return { error: 'メールアドレスまたはパスワードが正しくありません。' }
+  if (emailOk && passOk) {
+    try {
+      await setSession({ email, storeId, role: 'owner' })
+    } catch (e) {
+      logger.error('session creation failed', { ip, error: String(e) })
+      return { error: '認証に失敗しました。' }
+    }
+    logger.info('login success (env owner)', { ip })
+    redirect('/admin/dashboard')
   }
 
+  // 2. staff_accounts テーブルでフォールバック認証
   try {
-    await setSession({ email, storeId, role: 'owner' })
+    const staff = await authenticateStaff(email, password)
+    if (staff) {
+      await setSession({ email: staff.email, storeId: staff.storeId, role: staff.role })
+      logger.info('login success (staff)', { ip, role: staff.role })
+      redirect('/admin/dashboard')
+    }
   } catch (e) {
-    logger.error('session creation failed', { ip, error: String(e) })
-    return { error: '認証に失敗しました。' }
+    // redirect() は throw する仕様なので再 throw が必要
+    if (e instanceof Error && e.message.startsWith('NEXT_REDIRECT')) throw e
+    logger.error('staff auth failed', { ip, error: String(e) })
   }
 
-  logger.info('login success', { ip })
-  redirect('/admin/dashboard')
+  logger.warn('login failed', { ip })
+  return { error: 'メールアドレスまたはパスワードが正しくありません。' }
 }
 
 export async function logoutAction(): Promise<void> {
