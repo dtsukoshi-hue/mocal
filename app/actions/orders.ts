@@ -33,6 +33,7 @@ export async function createOrderAction(
   const storeId = formData.get('storeId')
   const pickupType = formData.get('pickupType')
   const itemsRaw = formData.get('items')
+  const customerNoteRaw = formData.get('customerNote')
 
   if (
     typeof storeId !== 'string' ||
@@ -40,6 +41,16 @@ export async function createOrderAction(
     typeof itemsRaw !== 'string'
   ) {
     return { error: '注文データが不正です。' }
+  }
+
+  // 備考は任意。文字列型でない場合は無視
+  let customerNote: string | null = null
+  if (typeof customerNoteRaw === 'string') {
+    const trimmed = customerNoteRaw.trim()
+    if (trimmed.length > 200) {
+      return { error: '備考は 200 文字以内にしてください。' }
+    }
+    customerNote = trimmed === '' ? null : trimmed
   }
 
   // storeId UUID 形式チェック
@@ -128,6 +139,7 @@ export async function createOrderAction(
       status: 'pending',
       pickup_type: pickupType as 'standard' | 'scheduled',
       total_amount: totalAmount,
+      customer_note: customerNote,
     })
     .select('id, order_number')
     .single()

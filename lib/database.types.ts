@@ -85,6 +85,7 @@ export type Order = {
   cancelled_reason_detail: string | null
   stripe_payment_intent_id: string | null
   stripe_charge_id: string | null
+  customer_note: string | null
   created_at: string
 }
 
@@ -147,6 +148,7 @@ export type OrderInsert = {
   cancelled_reason_detail?: string | null
   stripe_payment_intent_id?: string | null
   stripe_charge_id?: string | null
+  customer_note?: string | null
   created_at?: string
 }
 

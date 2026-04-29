@@ -13,6 +13,7 @@ type Order = {
   total_amount: number
   estimated_ready_at: string | null
   store_id: string
+  customer_note: string | null
   stores: { name: string } | null
   order_items: { name: string; qty: number; price: number }[]
 }
@@ -160,6 +161,15 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
                 )
               })}
             </div>
+          </div>
+        )}
+
+        {order.customer_note && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
+            <p className="text-xs font-semibold text-amber-700 mb-0.5">📝 ご要望</p>
+            <p className="text-sm text-amber-900 whitespace-pre-wrap break-words">
+              {order.customer_note}
+            </p>
           </div>
         )}
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useMemo } from 'react'
+import { useActionState, useMemo, useState } from 'react'
 import type { Stripe } from '@stripe/stripe-js'
 import { Elements } from '@stripe/react-stripe-js'
 import { createOrderAction, type OrderState } from '@/app/actions/orders'
@@ -31,6 +31,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
     createOrderAction,
     undefined
   )
+  const [customerNote, setCustomerNote] = useState('')
 
   const totalAmount = cart.reduce((sum, c) => sum + c.price * c.qty, 0)
 
@@ -111,6 +112,25 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
           ))}
         </div>
 
+        {/* 備考欄（アレルギー・辛さ・その他要望） */}
+        <div className="bg-white rounded-xl shadow-sm px-4 py-3 space-y-2">
+          <label htmlFor="customer-note" className="block text-sm font-medium text-gray-700">
+            ご要望（任意）
+          </label>
+          <textarea
+            id="customer-note"
+            value={customerNote}
+            onChange={(e) => setCustomerNote(e.target.value)}
+            maxLength={200}
+            rows={2}
+            placeholder="アレルギーや辛さなどあればご記入ください"
+            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none"
+          />
+          <p className="text-xs text-gray-400 text-right">
+            {customerNote.length} / 200
+          </p>
+        </div>
+
         <div className="bg-white rounded-xl shadow-sm px-4 py-3 flex justify-between">
           <span className="text-sm font-medium text-gray-700">合計</span>
           <span className="text-base font-bold text-gray-900">
@@ -130,6 +150,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
           <form action={action}>
             <input type="hidden" name="storeId" value={store.id} />
             <input type="hidden" name="pickupType" value="standard" />
+            <input type="hidden" name="customerNote" value={customerNote} />
             <input
               type="hidden"
               name="items"
