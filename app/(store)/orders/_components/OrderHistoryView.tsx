@@ -19,7 +19,7 @@ interface FetchedOrder {
 const STATUS_LABEL: Record<string, string> = {
   pending:   '決済処理中',
   paid:      '注文受付済',
-  accepted:  '受理済',
+  accepted:  '受付済',
   preparing: '調理中',
   ready:     '受取可能',
   completed: '受取完了',

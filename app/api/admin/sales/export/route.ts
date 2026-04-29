@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
   }
 
   // CSV 構築（UTF-8 BOM 付き → Excel の文字化け対策）
-  const header = ['注文番号', 'ステータス', '注文日時', '受理日時', '完成日時', '合計金額', '注文内容']
+  const header = ['注文番号', 'ステータス', '注文日時', '受付日時', '準備完了日時', '合計金額', '注文内容']
   const rows = (orders ?? []).map((o) => {
     const items = (o.order_items ?? [])
       .map((i) => `${i.name} x${i.qty} (${i.price}円)`)

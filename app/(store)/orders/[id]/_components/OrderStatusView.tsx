@@ -25,9 +25,9 @@ interface Props {
 // Progress steps for normal flow
 const STEPS: { key: OrderStatus; label: string }[] = [
   { key: 'paid',      label: '注文受付' },
-  { key: 'accepted',  label: '受理' },
+  { key: 'accepted',  label: '受付' },
   { key: 'preparing', label: '調理中' },
-  { key: 'ready',     label: 'できあがり' },
+  { key: 'ready',     label: '準備完了' },
   { key: 'completed', label: '受取完了' },
 ]
 
@@ -35,10 +35,10 @@ const NORMAL_STATUSES = new Set<string>(['paid', 'accepted', 'preparing', 'ready
 
 const STATUS_CONFIG: Record<string, { label: string; icon: string; description: string; color: string }> = {
   pending:   { label: '決済処理中',   icon: '⏳', description: '決済を確認しています...',                     color: 'text-gray-500' },
-  paid:      { label: '注文受付済',   icon: '✅', description: '店舗の受理をお待ちください',                  color: 'text-blue-600' },
-  accepted:  { label: '受理済',       icon: '👨‍🍳', description: '調理を開始します',                          color: 'text-purple-600' },
+  paid:      { label: '注文受付済',   icon: '✅', description: '店舗の受付をお待ちください',                  color: 'text-blue-600' },
+  accepted:  { label: '受付済',       icon: '👨‍🍳', description: '調理を開始します',                          color: 'text-purple-600' },
   preparing: { label: '調理中',       icon: '🍳', description: '準備中です。もうしばらくお待ちください',     color: 'text-orange-600' },
-  ready:     { label: 'できあがり！', icon: '🎉', description: 'カウンターへお越しください',                  color: 'text-emerald-600' },
+  ready:     { label: '準備完了！',   icon: '🎉', description: 'カウンターへお越しください',                  color: 'text-emerald-600' },
   completed: { label: '受取完了',     icon: '😊', description: 'ご利用ありがとうございました',                color: 'text-gray-600' },
   cancelled: { label: 'キャンセル',   icon: '❌', description: '注文はキャンセルされました',                  color: 'text-red-500' },
   refunded:  { label: '返金済',       icon: '💴', description: '返金処理が完了しました',                      color: 'text-purple-500' },

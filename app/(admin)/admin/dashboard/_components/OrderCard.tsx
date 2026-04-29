@@ -19,7 +19,7 @@ type Order = {
 
 const statusLabel: Record<string, string> = {
   paid:      '新規注文',
-  accepted:  '受理済',
+  accepted:  '受付済',
   preparing: '調理中',
   ready:     '受取可能',
 }
@@ -32,9 +32,9 @@ const statusColor: Record<string, string> = {
 }
 
 const nextActions: Record<string, { label: string; status: string; color: string }[]> = {
-  paid:      [{ label: '受理する', status: 'accepted', color: 'bg-blue-500 hover:bg-blue-600' }],
+  paid:      [{ label: '受付', status: 'accepted', color: 'bg-blue-500 hover:bg-blue-600' }],
   accepted:  [{ label: '調理開始', status: 'preparing', color: 'bg-purple-500 hover:bg-purple-600' }],
-  preparing: [{ label: 'できあがり', status: 'ready', color: 'bg-emerald-500 hover:bg-emerald-600' }],
+  preparing: [{ label: '準備完了', status: 'ready', color: 'bg-emerald-500 hover:bg-emerald-600' }],
   ready:     [
     { label: '受取完了', status: 'completed', color: 'bg-gray-500 hover:bg-gray-600' },
     { label: '未受取', status: 'no_show', color: 'bg-red-400 hover:bg-red-500' },

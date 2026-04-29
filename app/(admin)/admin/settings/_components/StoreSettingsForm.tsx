@@ -73,7 +73,7 @@ export default function StoreSettingsForm({ initialName, initialWaitMinutes }: P
             <option key={m} value={m}>{m} 分</option>
           ))}
         </select>
-        <p className="text-xs text-gray-400 mt-1">注文受理時のデフォルト待ち時間。注文ごとに個別変更も可能です。</p>
+        <p className="text-xs text-gray-400 mt-1">注文受付時のデフォルト待ち時間。注文ごとに個別変更も可能です。</p>
       </div>
 
       {error && (
