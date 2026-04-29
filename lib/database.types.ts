@@ -121,6 +121,15 @@ export type StaffAccount = {
   created_at: string
 }
 
+export type OrderPushSubscription = {
+  id: string
+  order_id: string
+  endpoint: string
+  p256dh: string
+  auth: string
+  created_at: string
+}
+
 // ------------------------------------------------------------
 // INSERT 用型（id / created_at を省略可能）
 // ------------------------------------------------------------
@@ -241,6 +250,12 @@ export type Database = {
         Row: StaffAccount
         Insert: Omit<StaffAccount, 'id' | 'created_at'> & { id?: string; created_at?: string }
         Update: Partial<Omit<StaffAccount, 'id'>>
+        Relationships: []
+      }
+      order_push_subscriptions: {
+        Row: OrderPushSubscription
+        Insert: Omit<OrderPushSubscription, 'id' | 'created_at'> & { id?: string; created_at?: string }
+        Update: Partial<Omit<OrderPushSubscription, 'id'>>
         Relationships: []
       }
     }

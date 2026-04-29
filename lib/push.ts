@@ -3,32 +3,31 @@ import webpush from 'web-push'
 import { createServiceClient } from '@/lib/supabase-server'
 import { getEnv } from './env'
 
-export async function sendPushToStore(
-  storeId: string,
-  payload: { title: string; body: string; url?: string }
-) {
-  // ビルド時ではなくランタイムで VAPID を初期化
+function initVapid() {
   webpush.setVapidDetails(
     getEnv('VAPID_SUBJECT'),
     getEnv('NEXT_PUBLIC_VAPID_PUBLIC_KEY'),
     getEnv('VAPID_PRIVATE_KEY')
   )
+}
 
-  const supabase = createServiceClient()
-  const { data: subscriptions } = await supabase
-    .from('push_subscriptions')
-    .select('endpoint, p256dh, auth')
-    .eq('store_id', storeId)
+interface PushPayload {
+  title: string
+  body: string
+  url?: string
+}
 
-  if (!subscriptions || subscriptions.length === 0) return
+async function sendBatch(
+  table: 'push_subscriptions' | 'order_push_subscriptions',
+  subs: { endpoint: string; p256dh: string; auth: string }[],
+  payload: PushPayload
+) {
+  if (subs.length === 0) return
 
   const results = await Promise.allSettled(
-    subscriptions.map(sub =>
+    subs.map((sub) =>
       webpush.sendNotification(
-        {
-          endpoint: sub.endpoint,
-          keys: { p256dh: sub.p256dh, auth: sub.auth },
-        },
+        { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
         JSON.stringify(payload)
       )
     )
@@ -39,16 +38,33 @@ export async function sendPushToStore(
   results.forEach((result, i) => {
     if (result.status === 'rejected') {
       const err = result.reason as { statusCode?: number }
-      if (err?.statusCode === 410) {
-        expiredEndpoints.push(subscriptions[i].endpoint)
-      }
+      if (err?.statusCode === 410) expiredEndpoints.push(subs[i].endpoint)
     }
   })
 
   if (expiredEndpoints.length > 0) {
-    await supabase
-      .from('push_subscriptions')
-      .delete()
-      .in('endpoint', expiredEndpoints)
+    const supabase = createServiceClient()
+    await supabase.from(table).delete().in('endpoint', expiredEndpoints)
   }
+}
+
+export async function sendPushToStore(storeId: string, payload: PushPayload) {
+  initVapid()
+  const supabase = createServiceClient()
+  const { data: subscriptions } = await supabase
+    .from('push_subscriptions')
+    .select('endpoint, p256dh, auth')
+    .eq('store_id', storeId)
+  await sendBatch('push_subscriptions', subscriptions ?? [], payload)
+}
+
+/** 注文 ID に紐づく顧客サブスクリプションへ通知 */
+export async function sendPushToOrder(orderId: string, payload: PushPayload) {
+  initVapid()
+  const supabase = createServiceClient()
+  const { data: subscriptions } = await supabase
+    .from('order_push_subscriptions')
+    .select('endpoint, p256dh, auth')
+    .eq('order_id', orderId)
+  await sendBatch('order_push_subscriptions', subscriptions ?? [], payload)
 }

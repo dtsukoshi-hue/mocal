@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createBrowserClient } from '@supabase/ssr'
 import type { Database, OrderStatus } from '@/lib/database.types'
 import { saveOrderToHistory } from '@/lib/order-history'
+import CustomerPushSubscriber from './CustomerPushSubscriber'
 
 type Order = {
   id: string
@@ -86,8 +87,11 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
   const isNormalFlow = NORMAL_STATUSES.has(order.status)
   const currentStepIndex = getStepIndex(order.status)
 
+  // ready / completed / cancelled / refunded / no_show 等の終了状態では通知不要
+  const showPushOptIn = ['paid', 'accepted', 'preparing'].includes(order.status)
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-stone-50 flex flex-col">
       <header className="bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between gap-4">
           <div className="min-w-0">
@@ -162,6 +166,11 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
               })}
             </div>
           </div>
+        )}
+
+        {/* 準備完了通知のオプトイン */}
+        {showPushOptIn && (
+          <CustomerPushSubscriber orderId={order.id} />
         )}
 
         {order.customer_note && (

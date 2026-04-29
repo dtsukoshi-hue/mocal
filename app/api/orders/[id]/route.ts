@@ -3,12 +3,22 @@ import { createServiceClient } from '@/lib/supabase-server'
 import { getSessionPayload } from '@/lib/session'
 import { stripe } from '@/lib/stripe'
 import { logger } from '@/lib/logger'
+import { sendPushToOrder } from '@/lib/push'
 import {
   ALL_ORDER_STATUSES,
   isValidOrderStatusTransition,
   isUuid,
 } from '@/lib/validation'
 import type { OrderStatus } from '@/lib/database.types'
+
+// 仕様書 11. 通知トリガー
+const PUSH_PAYLOADS: Record<string, { title: string; body: string }> = {
+  accepted:  { title: '注文を受け付けました', body: '調理を開始しました。' },
+  ready:     { title: '🎉 ご注文の準備ができました', body: 'カウンターまでお越しください。' },
+  no_show:   { title: 'お受け取りお時間が経過しました', body: '店舗にご相談ください。' },
+  refunded:  { title: '返金処理が完了しました', body: 'ご利用ありがとうございました。' },
+  cancelled: { title: '注文がキャンセルされました', body: '詳しくは店舗にお問い合わせください。' },
+}
 
 // 店舗が注文ステータスを更新するエンドポイント
 // PATCH /api/orders/:id  { status: OrderStatus }
@@ -109,6 +119,20 @@ export async function PATCH(
 
   if (error) {
     return NextResponse.json({ error: '更新に失敗しました。' }, { status: 500 })
+  }
+
+  // 顧客へプッシュ通知（仕様書 11.1）
+  // 失敗してもステータス更新の応答は返す（ベストエフォート）
+  const payload = PUSH_PAYLOADS[updateData.status]
+  if (payload) {
+    try {
+      await sendPushToOrder(id, {
+        ...payload,
+        url: `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/orders/${id}`,
+      })
+    } catch (e) {
+      logger.error('order push send error', { orderId: id, status: updateData.status, error: String(e) })
+    }
   }
 
   return NextResponse.json({ order: updated })
