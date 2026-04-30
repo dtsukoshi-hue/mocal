@@ -3,6 +3,7 @@ import { verifySessionToken } from '@/lib/session'
 import { createServiceClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import MenuList from './_components/MenuList'
+import CombosManager from './_components/CombosManager'
 import AdminNav from '../_components/AdminNav'
 
 export default async function MenuPage() {
@@ -25,9 +26,26 @@ export default async function MenuPage() {
     <div className="min-h-screen bg-stone-50">
       <AdminNav active="menu" role={sessionData.role as 'owner' | 'staff'} />
 
-      <main className="max-w-4xl mx-auto px-4 py-6">
-        <h1 className="text-lg font-bold text-gray-900 mb-4">メニュー管理</h1>
-        <MenuList items={items ?? []} />
+      <main className="max-w-4xl mx-auto px-4 py-6 space-y-8">
+        <section>
+          <h1 className="text-lg font-bold text-gray-900 mb-4">メニュー管理</h1>
+          <MenuList items={items ?? []} />
+        </section>
+
+        <section>
+          <h2 className="text-base font-bold text-gray-900 mb-3">🎁 お得なセット（コンボ商品）</h2>
+          <p className="text-xs text-gray-500 mb-3">
+            既存メニューの組み合わせを「セット」として提示できます。注文時には個別の商品として展開されます。
+          </p>
+          <CombosManager
+            menuItems={(items ?? []).map((i) => ({
+              id: i.id,
+              name: i.name,
+              price: i.price,
+              emoji: i.emoji,
+            }))}
+          />
+        </section>
       </main>
     </div>
   )
