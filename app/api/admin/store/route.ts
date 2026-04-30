@@ -8,17 +8,30 @@ const VALID_WAIT_MINUTES = [10, 15, 20, 30, 40, 60] as const
 type WaitMinutes = typeof VALID_WAIT_MINUTES[number]
 const MAX_NAME_LENGTH = 60
 
-type StoreUpdate = Partial<Pick<StoreInsert, 'is_open' | 'name' | 'wait_minutes'>>
+type StoreUpdate = Partial<
+  Pick<StoreInsert, 'is_open' | 'name' | 'wait_minutes' | 'manual_override_until'>
+>
 
-function validateUpdate(body: unknown): { ok: true; data: StoreUpdate } | { ok: false; error: string } {
+interface ValidatedUpdate {
+  data: StoreUpdate
+  /** is_open を更新するときに自動オーバーライドを掛けるか */
+  setAutoOverride: boolean
+  /** 明示的にオーバーライド解除リクエストか */
+  clearOverride: boolean
+}
+
+function validateUpdate(body: unknown): { ok: true; result: ValidatedUpdate } | { ok: false; error: string } {
   if (!body || typeof body !== 'object') return { ok: false, error: 'リクエストが不正です。' }
   const b = body as Record<string, unknown>
 
   const out: StoreUpdate = {}
+  let setAutoOverride = false
+  let clearOverride = false
 
   if ('is_open' in b) {
     if (typeof b.is_open !== 'boolean') return { ok: false, error: 'is_open が不正です。' }
     out.is_open = b.is_open
+    setAutoOverride = true
   }
 
   if ('name' in b) {
@@ -39,11 +52,37 @@ function validateUpdate(body: unknown): { ok: true; data: StoreUpdate } | { ok: 
     out.wait_minutes = b.wait_minutes as WaitMinutes
   }
 
-  if (Object.keys(out).length === 0) {
+  if ('clear_override' in b) {
+    if (typeof b.clear_override !== 'boolean') {
+      return { ok: false, error: 'clear_override が不正です。' }
+    }
+    if (b.clear_override) {
+      clearOverride = true
+    }
+  }
+
+  if (Object.keys(out).length === 0 && !clearOverride) {
     return { ok: false, error: '更新内容が指定されていません。' }
   }
 
-  return { ok: true, data: out }
+  return { ok: true, result: { data: out, setAutoOverride, clearOverride } }
+}
+
+/**
+ * JST 当日の終わり（翌日 00:00:00 JST = 当日 23:59:59 + 1秒）を ISO 文字列で返す。
+ * 手動オーバーライドが切れる時刻として使用する。
+ */
+function endOfTodayJstIso(): string {
+  // JST 表示の現在時刻を作る
+  const now = new Date()
+  const jstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000)
+  // JST の年月日を取り出して翌日 00:00 を作る
+  const jstYear  = jstNow.getUTCFullYear()
+  const jstMonth = jstNow.getUTCMonth()
+  const jstDate  = jstNow.getUTCDate()
+  // 翌日 00:00 JST = 翌日 -9h UTC = 当日 15:00 UTC
+  const nextJstMidnightUtc = Date.UTC(jstYear, jstMonth, jstDate + 1, -9, 0, 0)
+  return new Date(nextJstMidnightUtc).toISOString()
 }
 
 export async function PATCH(request: NextRequest) {
@@ -64,10 +103,20 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: validation.error }, { status: 400 })
   }
 
+  const { data, setAutoOverride, clearOverride } = validation.result
+
+  // is_open を変更する場合 → 手動オーバーライドを当日終了まで設定
+  // clear_override が指定された場合 → null にして自動制御に戻す
+  if (clearOverride) {
+    data.manual_override_until = null
+  } else if (setAutoOverride) {
+    data.manual_override_until = endOfTodayJstIso()
+  }
+
   const supabase = createServiceClient()
   const { error } = await supabase
     .from('stores')
-    .update(validation.data)
+    .update(data)
     .eq('id', session.storeId)
 
   if (error) {
@@ -75,5 +124,5 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: '更新に失敗しました。' }, { status: 500 })
   }
 
-  return NextResponse.json({ ok: true, ...validation.data })
+  return NextResponse.json({ ok: true, ...data })
 }

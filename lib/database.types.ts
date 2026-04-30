@@ -38,6 +38,8 @@ export type Store = {
   stripe_account_id: string | null
   is_open: boolean
   wait_minutes: WaitMinutes
+  /** 手動オーバーライド期限。!= null かつ now() より未来の間は cron が is_open を上書きしない */
+  manual_override_until: string | null
   created_at: string
 }
 

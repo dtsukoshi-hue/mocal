@@ -17,7 +17,7 @@ export default async function HoursPage() {
   const supabase = createServiceClient()
   const { data: store } = await supabase
     .from('stores')
-    .select('is_open, wait_minutes')
+    .select('is_open, wait_minutes, manual_override_until')
     .eq('id', session.storeId)
     .single()
 
@@ -30,6 +30,7 @@ export default async function HoursPage() {
         <HoursPanel
           isOpen={store?.is_open ?? true}
           waitMinutes={store?.wait_minutes ?? 15}
+          overrideUntil={store?.manual_override_until ?? null}
         />
       </main>
     </div>

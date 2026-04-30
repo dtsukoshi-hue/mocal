@@ -12,6 +12,7 @@ const DEFAULT_CLOSE = '22:00'
 interface Props {
   isOpen: boolean
   waitMinutes: number
+  overrideUntil: string | null
 }
 
 interface HoursRow {
@@ -32,16 +33,17 @@ function normalizeTime(t: string | null | undefined): string {
   return t.length >= 5 ? t.slice(0, 5) : t
 }
 
-export default function HoursPanel({ isOpen: initialIsOpen, waitMinutes: initialWait }: Props) {
+export default function HoursPanel({ isOpen: initialIsOpen, waitMinutes: initialWait, overrideUntil: initialOverride }: Props) {
   const router = useRouter()
   const [, startTransition] = useTransition()
   const [isOpen, setIsOpen] = useState(initialIsOpen)
   const [waitMinutes, setWaitMinutes] = useState(initialWait)
+  const [overrideUntil, setOverrideUntil] = useState<string | null>(initialOverride)
   const [hours, setHours] = useState<HoursRow[]>(() => Array.from({ length: 7 }, (_, i) => blankRow(i)))
   const [hoursLoaded, setHoursLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-  const [loading, setLoading] = useState<'toggle' | 'wait' | 'hours' | null>(null)
+  const [loading, setLoading] = useState<'toggle' | 'wait' | 'hours' | 'clear' | null>(null)
 
   // 既存の営業時間をフェッチ
   useEffect(() => {
@@ -69,7 +71,7 @@ export default function HoursPanel({ isOpen: initialIsOpen, waitMinutes: initial
     return () => { cancelled = true }
   }, [])
 
-  async function patchStore(body: Record<string, unknown>, key: 'toggle' | 'wait') {
+  async function patchStore(body: Record<string, unknown>, key: 'toggle' | 'wait' | 'clear') {
     setLoading(key)
     setError(null)
     setSuccess(false)
@@ -82,24 +84,46 @@ export default function HoursPanel({ isOpen: initialIsOpen, waitMinutes: initial
       const data = await res.json().catch(() => ({}))
       setError(data.error ?? '更新に失敗しました')
       setLoading(null)
-      return false
+      return null
     }
+    const json = await res.json().catch(() => ({}))
     setSuccess(true)
     setLoading(null)
     startTransition(() => router.refresh())
-    return true
+    return json
   }
 
   async function toggleOpen() {
     const next = !isOpen
     setIsOpen(next)
-    const ok = await patchStore({ is_open: next }, 'toggle')
-    if (!ok) setIsOpen(!next)
+    const json = await patchStore({ is_open: next }, 'toggle')
+    if (!json) {
+      setIsOpen(!next)
+    } else if (json.manual_override_until) {
+      setOverrideUntil(json.manual_override_until)
+    }
+  }
+
+  async function clearOverride() {
+    const json = await patchStore({ clear_override: true }, 'clear')
+    if (json) {
+      setOverrideUntil(null)
+    }
   }
 
   async function saveWait() {
     await patchStore({ wait_minutes: waitMinutes }, 'wait')
   }
+
+  // マウント時点の現在時刻で判定（Date.now を render で呼ばない）
+  const [mountedAt] = useState(() => Date.now())
+  const overrideActive =
+    overrideUntil !== null && new Date(overrideUntil).getTime() > mountedAt
+  const overrideUntilLabel = overrideActive
+    ? new Date(overrideUntil!).toLocaleString('ja-JP', {
+        month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
+      })
+    : ''
 
   function updateRow(weekday: number, patch: Partial<HoursRow>) {
     setHours((prev) => prev.map((r) => (r.weekday === weekday ? { ...r, ...patch } : r)))
@@ -171,6 +195,28 @@ export default function HoursPanel({ isOpen: initialIsOpen, waitMinutes: initial
             {isOpen ? '受付中' : '受付停止中'}
           </button>
         </div>
+        {overrideActive ? (
+          <div className="flex items-center justify-between gap-3 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+            <div className="text-xs text-amber-800 leading-tight">
+              <p className="font-bold">🔒 手動上書き中</p>
+              <p className="text-[11px] text-amber-700">
+                {overrideUntilLabel} まで自動制御を停止しています
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={clearOverride}
+              disabled={loading === 'clear'}
+              className="text-xs font-semibold bg-white border border-amber-300 text-amber-700 hover:bg-amber-100 px-3 py-1.5 rounded-lg disabled:opacity-50 whitespace-nowrap"
+            >
+              {loading === 'clear' ? '解除中...' : '自動制御に戻す'}
+            </button>
+          </div>
+        ) : (
+          <p className="text-[11px] text-gray-400">
+            ※ 営業時間に基づき自動で切り替わります
+          </p>
+        )}
       </section>
 
       {/* 予定受取時間 */}

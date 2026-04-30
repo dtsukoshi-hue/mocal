@@ -201,12 +201,26 @@ describe('PATCH /api/admin/store', () => {
     expect(res.status).toBe(400)
   })
 
-  it('updates is_open', async () => {
+  it('updates is_open and sets manual override until', async () => {
     sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
     const update = mockUpdateOk()
     const res = await storePatch(req('PATCH', 'http://x', { is_open: false }) as never)
     expect(res.status).toBe(200)
-    expect(update).toHaveBeenCalledWith({ is_open: false })
+    // is_open 変更時は manual_override_until が同時に設定される
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        is_open: false,
+        manual_override_until: expect.stringMatching(/T/),
+      })
+    )
+  })
+
+  it('clears override when clear_override is true', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const update = mockUpdateOk()
+    const res = await storePatch(req('PATCH', 'http://x', { clear_override: true }) as never)
+    expect(res.status).toBe(200)
+    expect(update).toHaveBeenCalledWith({ manual_override_until: null })
   })
 
   it('rejects empty store name', async () => {
@@ -250,6 +264,13 @@ describe('PATCH /api/admin/store', () => {
       name: 'New', wait_minutes: 20, is_open: true,
     }) as never)
     expect(res.status).toBe(200)
-    expect(update).toHaveBeenCalledWith({ name: 'New', wait_minutes: 20, is_open: true })
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'New',
+        wait_minutes: 20,
+        is_open: true,
+        manual_override_until: expect.stringMatching(/T/),
+      })
+    )
   })
 })

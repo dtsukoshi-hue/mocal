@@ -28,7 +28,7 @@ export default async function DashboardPage() {
     { data: activeOrders },
     { data: todayCompleted },
   ] = await Promise.all([
-    supabase.from('stores').select('is_open, name').eq('id', sessionData.storeId).single(),
+    supabase.from('stores').select('is_open, name, manual_override_until').eq('id', sessionData.storeId).single(),
     supabase
       .from('orders')
       .select(`
@@ -61,7 +61,7 @@ export default async function DashboardPage() {
       <AdminNav
         active="orders"
         role={sessionData.role as 'owner' | 'staff'}
-        rightSlot={<StoreToggle isOpen={store?.is_open ?? true} />}
+        rightSlot={<StoreToggle isOpen={store?.is_open ?? true} overrideUntil={store?.manual_override_until ?? null} />}
       />
 
       <PushSubscriber />
