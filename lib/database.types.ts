@@ -119,6 +119,47 @@ export type PushSubscription = {
   created_at: string
 }
 
+export type ComboOffer = {
+  id: string
+  store_id: string
+  name: string
+  description: string | null
+  /** セット価格 = 含まれるアイテムの合計 + price_delta */
+  price_delta: number
+  emoji: string | null
+  is_available: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export type ComboOfferItem = {
+  id: string
+  combo_id: string
+  menu_item_id: string
+  qty: number
+}
+
+export type ComboOfferInsert = {
+  id?: string
+  store_id: string
+  name: string
+  description?: string | null
+  price_delta?: number
+  emoji?: string | null
+  is_available?: boolean
+  sort_order?: number
+  created_at?: string
+  updated_at?: string
+}
+
+export type ComboOfferItemInsert = {
+  id?: string
+  combo_id: string
+  menu_item_id: string
+  qty?: number
+}
+
 export type StoreHours = {
   id: string
   store_id: string
@@ -293,6 +334,18 @@ export type Database = {
         Row: StoreHours
         Insert: StoreHoursInsert
         Update: Partial<StoreHoursInsert>
+        Relationships: []
+      }
+      combo_offers: {
+        Row: ComboOffer
+        Insert: ComboOfferInsert
+        Update: Partial<ComboOfferInsert>
+        Relationships: []
+      }
+      combo_offer_items: {
+        Row: ComboOfferItem
+        Insert: ComboOfferItemInsert
+        Update: Partial<ComboOfferItemInsert>
         Relationships: []
       }
     }

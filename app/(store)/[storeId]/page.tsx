@@ -41,7 +41,35 @@ export default async function StorePage({ params }: Props) {
     .eq('is_available', true)
     .order('sort_order')
 
+  // コンボ商品（お得なセット）取得
+  const [{ data: combos }, { data: comboItems }] = await Promise.all([
+    supabase
+      .from('combo_offers')
+      .select('id, name, description, price_delta, emoji, is_available, sort_order')
+      .eq('store_id', storeId)
+      .eq('is_available', true)
+      .order('sort_order'),
+    supabase
+      .from('combo_offer_items')
+      .select('combo_id, menu_item_id, qty'),
+  ])
+
+  // コンボ ID ごとに含まれるアイテムをまとめる
+  type ComboWithItems = NonNullable<typeof combos>[number] & {
+    items: { menu_item_id: string; qty: number }[]
+  }
+  const comboItemsByCombo = new Map<string, { menu_item_id: string; qty: number }[]>()
+  for (const ci of comboItems ?? []) {
+    const arr = comboItemsByCombo.get(ci.combo_id) ?? []
+    arr.push({ menu_item_id: ci.menu_item_id, qty: ci.qty })
+    comboItemsByCombo.set(ci.combo_id, arr)
+  }
+  const combosWithItems: ComboWithItems[] = (combos ?? []).map((c) => ({
+    ...c,
+    items: comboItemsByCombo.get(c.id) ?? [],
+  }))
+
   return (
-    <MenuView store={store} menuItems={menuItems ?? []} />
+    <MenuView store={store} menuItems={menuItems ?? []} combos={combosWithItems} />
   )
 }
