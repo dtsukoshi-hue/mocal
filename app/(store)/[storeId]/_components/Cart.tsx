@@ -6,7 +6,9 @@ import { Elements } from '@stripe/react-stripe-js'
 import { createOrderAction, type OrderState } from '@/app/actions/orders'
 import PaymentForm from './PaymentForm'
 import type { CartItem } from './MenuView'
-import type { Store } from '@/lib/database.types'
+import type { MenuItem, Store } from '@/lib/database.types'
+
+type MenuItemForCart = Pick<MenuItem, 'id' | 'name' | 'price' | 'description' | 'category' | 'emoji' | 'image_url' | 'is_available' | 'sort_order'>
 
 // Stripe.js (~100KB) はカート閲覧時には不要なので、決済画面に進んだ時点で
 // dynamic import でロードする。
@@ -23,10 +25,61 @@ interface Props {
   store: Pick<Store, 'id' | 'name' | 'is_open' | 'wait_minutes'>
   cart: CartItem[]
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>
+  menuItems: MenuItemForCart[]
   onBack: () => void
 }
 
-export default function Cart({ store, cart, setCart, onBack }: Props) {
+// 「サイド」「ドリンク」カテゴリの判定。プロトタイプの命名に合わせる。
+const SIDE_KEYWORDS = ['サイド', 'side']
+const DRINK_KEYWORDS = ['ドリンク', '飲み物', 'drink']
+
+function matchesAny(category: string | null | undefined, keywords: string[]): boolean {
+  if (!category) return false
+  const c = category.toLowerCase()
+  return keywords.some((k) => c.includes(k.toLowerCase()))
+}
+
+function UpsellGroup({
+  title,
+  items,
+  onAdd,
+}: {
+  title: string
+  items: MenuItemForCart[]
+  onAdd: (item: MenuItemForCart) => void
+}) {
+  return (
+    <div>
+      <p className="text-xs font-semibold text-amber-700 mb-1.5">{title}</p>
+      <div className="space-y-1.5">
+        {items.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => onAdd(item)}
+            className="w-full flex items-center justify-between bg-white rounded-lg px-3 py-2 hover:bg-amber-100 transition-colors text-left border border-transparent hover:border-amber-300"
+          >
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              {item.emoji && <span>{item.emoji}</span>}
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
+                {item.description && (
+                  <p className="text-[10px] text-gray-400 truncate">{item.description}</p>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 ml-2">
+              <span className="text-xs text-gray-700">¥{item.price.toLocaleString()}</span>
+              <span className="w-6 h-6 rounded-full bg-amber-700 text-white flex items-center justify-center text-sm font-bold">＋</span>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default function Cart({ store, cart, setCart, menuItems, onBack }: Props) {
   const [state, action, pending] = useActionState<OrderState, FormData>(
     createOrderAction,
     undefined
@@ -38,6 +91,50 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
   const [minPickupAt] = useState(
     () => new Date(Date.now() + 30 * 60 * 1000).toISOString().slice(0, 16)
   )
+
+  // アップセル候補（ご一緒にいかがですか）
+  // カート内に含まれていない「サイド」「ドリンク」を上位 sort_order から提案
+  const upsellSuggestions = useMemo(() => {
+    const cartIds = new Set(cart.map((c) => c.menuItemId))
+    const hasSide = cart.some((c) => {
+      const m = menuItems.find((x) => x.id === c.menuItemId)
+      return m && matchesAny(m.category, SIDE_KEYWORDS)
+    })
+    const hasDrink = cart.some((c) => {
+      const m = menuItems.find((x) => x.id === c.menuItemId)
+      return m && matchesAny(m.category, DRINK_KEYWORDS)
+    })
+
+    const sides: MenuItemForCart[] = []
+    const drinks: MenuItemForCart[] = []
+    for (const m of menuItems) {
+      if (!m.is_available || cartIds.has(m.id)) continue
+      if (!hasSide && matchesAny(m.category, SIDE_KEYWORDS)) sides.push(m)
+      else if (!hasDrink && matchesAny(m.category, DRINK_KEYWORDS)) drinks.push(m)
+    }
+    return {
+      sides:  sides.slice(0, 3),
+      drinks: drinks.slice(0, 3),
+    }
+  }, [cart, menuItems])
+
+  function addToCartFromUpsell(item: MenuItemForCart) {
+    setCart((prev) => {
+      const existing = prev.find((c) => c.menuItemId === item.id)
+      if (existing) {
+        return prev.map((c) =>
+          c.menuItemId === item.id ? { ...c, qty: c.qty + 1 } : c
+        )
+      }
+      return [...prev, {
+        menuItemId: item.id,
+        name: item.name,
+        price: item.price,
+        qty: 1,
+        emoji: item.emoji,
+      }]
+    })
+  }
 
   const totalAmount = cart.reduce((sum, c) => sum + c.price * c.qty, 0)
   // 商品価格は税込前提（飲食店標準）。消費税 10% を内税で表示。
@@ -175,6 +272,27 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
             ))}
           </div>
         </div>
+
+        {/* ご一緒にいかがですか（アップセル）*/}
+        {(upsellSuggestions.sides.length > 0 || upsellSuggestions.drinks.length > 0) && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 space-y-3">
+            <p className="text-sm font-bold text-amber-800">🎁 ご一緒にいかがですか？</p>
+            {upsellSuggestions.sides.length > 0 && (
+              <UpsellGroup
+                title="🍟 サイドメニュー"
+                items={upsellSuggestions.sides}
+                onAdd={addToCartFromUpsell}
+              />
+            )}
+            {upsellSuggestions.drinks.length > 0 && (
+              <UpsellGroup
+                title="🥤 ドリンク"
+                items={upsellSuggestions.drinks}
+                onAdd={addToCartFromUpsell}
+              />
+            )}
+          </div>
+        )}
 
         {/* 備考欄（アレルギー・辛さ・その他要望） */}
         <div className="bg-white rounded-xl shadow-sm px-4 py-3 space-y-2">

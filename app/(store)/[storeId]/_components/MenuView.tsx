@@ -50,6 +50,7 @@ export default function MenuView({ store, menuItems }: Props) {
         store={store}
         cart={cart}
         setCart={setCart}
+        menuItems={menuItems}
         onBack={() => setShowCart(false)}
       />
     )

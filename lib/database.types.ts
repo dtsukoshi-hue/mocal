@@ -113,6 +113,30 @@ export type PushSubscription = {
   created_at: string
 }
 
+export type StoreHours = {
+  id: string
+  store_id: string
+  weekday: number   // 0=日, 1=月, ..., 6=土
+  is_open: boolean
+  open_time: string | null   // 'HH:MM:SS'
+  close_time: string | null
+  last_order: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type StoreHoursInsert = {
+  id?: string
+  store_id: string
+  weekday: number
+  is_open?: boolean
+  open_time?: string | null
+  close_time?: string | null
+  last_order?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
 export type StaffAccount = {
   id: string
   store_id: string
@@ -257,6 +281,12 @@ export type Database = {
         Row: OrderPushSubscription
         Insert: Omit<OrderPushSubscription, 'id' | 'created_at'> & { id?: string; created_at?: string }
         Update: Partial<Omit<OrderPushSubscription, 'id'>>
+        Relationships: []
+      }
+      store_hours: {
+        Row: StoreHours
+        Insert: StoreHoursInsert
+        Update: Partial<StoreHoursInsert>
         Relationships: []
       }
     }
