@@ -87,6 +87,8 @@ export default function Cart({ store, cart, setCart, menuItems, onBack }: Props)
   const [customerNote, setCustomerNote] = useState('')
   const [pickupType, setPickupType] = useState<'standard' | 'scheduled'>('standard')
   const [scheduledAt, setScheduledAt] = useState('')
+  // ステップ: 'cart' = カート閲覧（数量編集・アップセル）、'confirm' = 注文確認
+  const [step, setStep] = useState<'cart' | 'confirm'>('cart')
   // datetime-local input の min（30 分先以降）— マウント時に固定して Cannot call impure function during render を回避
   const [minPickupAt] = useState(
     () => new Date(Date.now() + 30 * 60 * 1000).toISOString().slice(0, 16)
@@ -177,12 +179,108 @@ export default function Cart({ store, cart, setCart, menuItems, onBack }: Props)
     )
   }
 
+  // ===== Step 1: カート（数量編集・アップセル） =====
+  if (step === 'cart') {
+    return (
+      <div className="min-h-screen bg-stone-50 pb-32">
+        <header className="bg-white border-b sticky top-0 z-10">
+          <div className="max-w-lg mx-auto px-4 py-4 flex items-center gap-3">
+            <button onClick={onBack} className="text-amber-700 text-sm font-medium">
+              ← メニューに戻る
+            </button>
+            <h1 className="text-lg font-bold text-gray-900">カート</h1>
+          </div>
+        </header>
+
+        <main className="max-w-lg mx-auto px-4 py-4 space-y-4">
+          {/* カート内容 */}
+          <div className="bg-white rounded-xl shadow-sm">
+            <p className="text-xs font-semibold text-gray-500 px-4 pt-3 pb-2">カートの中身</p>
+            {cart.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-8">カートは空です</p>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {cart.map(item => (
+                  <div key={item.menuItemId} className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {item.emoji && <span>{item.emoji}</span>}
+                      <span className="text-sm text-gray-900 truncate">{item.name}</span>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <button
+                        onClick={() => updateQty(item.menuItemId, -1)}
+                        aria-label="減らす"
+                        className="w-7 h-7 rounded-full border text-gray-600 flex items-center justify-center"
+                      >−</button>
+                      <span className="text-sm font-semibold w-4 text-center">{item.qty}</span>
+                      <button
+                        onClick={() => updateQty(item.menuItemId, +1)}
+                        aria-label="増やす"
+                        className="w-7 h-7 rounded-full border text-gray-600 flex items-center justify-center"
+                      >＋</button>
+                      <span className="text-sm text-gray-600 w-20 text-right">
+                        ¥{(item.price * item.qty).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ご一緒にいかがですか（アップセル） */}
+          {(upsellSuggestions.sides.length > 0 || upsellSuggestions.drinks.length > 0) && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 space-y-3">
+              <p className="text-sm font-bold text-amber-800">🎁 ご一緒にいかがですか？</p>
+              {upsellSuggestions.sides.length > 0 && (
+                <UpsellGroup
+                  title="🍟 サイドメニュー"
+                  items={upsellSuggestions.sides}
+                  onAdd={addToCartFromUpsell}
+                />
+              )}
+              {upsellSuggestions.drinks.length > 0 && (
+                <UpsellGroup
+                  title="🥤 ドリンク"
+                  items={upsellSuggestions.drinks}
+                  onAdd={addToCartFromUpsell}
+                />
+              )}
+            </div>
+          )}
+
+          {/* 簡易合計 */}
+          <div className="bg-white rounded-xl shadow-sm px-4 py-3 flex justify-between">
+            <span className="text-sm font-medium text-gray-700">合計</span>
+            <span className="text-base font-bold text-gray-900">
+              ¥{totalAmount.toLocaleString()}
+            </span>
+          </div>
+        </main>
+
+        <div className="fixed bottom-6 left-0 right-0 px-4">
+          <div className="max-w-lg mx-auto">
+            <button
+              type="button"
+              onClick={() => setStep('confirm')}
+              disabled={cart.length === 0}
+              className="w-full rounded-2xl bg-amber-700 text-white font-bold py-4 shadow-lg disabled:opacity-60 hover:bg-amber-800 transition-colors"
+            >
+              会計へ進む（¥{totalAmount.toLocaleString()}）
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ===== Step 2: 注文確認（受取方法・支払い）=====
   return (
     <div className="min-h-screen bg-stone-50 pb-32">
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center gap-3">
-          <button onClick={onBack} className="text-amber-700 text-sm font-medium">
-            ← メニューに戻る
+          <button onClick={() => setStep('cart')} className="text-amber-700 text-sm font-medium">
+            ← カートに戻る
           </button>
           <h1 className="text-lg font-bold text-gray-900">注文を確認</h1>
         </div>
@@ -238,61 +336,35 @@ export default function Cart({ store, cart, setCart, menuItems, onBack }: Props)
           )}
         </div>
 
-        {/* 注文内容 */}
+        {/* 注文内容（確認・読み取り専用） */}
         <div className="bg-white rounded-xl shadow-sm">
-          <p className="text-xs font-semibold text-gray-500 px-4 pt-3 pb-2">注文内容</p>
+          <div className="flex items-center justify-between px-4 pt-3 pb-2">
+            <p className="text-xs font-semibold text-gray-500">注文内容</p>
+            <button
+              type="button"
+              onClick={() => setStep('cart')}
+              className="text-xs text-amber-700 hover:underline"
+            >
+              編集
+            </button>
+          </div>
           <div className="divide-y divide-gray-100">
             {cart.map(item => (
               <div key={item.menuItemId} className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-2 min-w-0">
                   {item.emoji && <span>{item.emoji}</span>}
-                  <span className="text-sm text-gray-900 truncate">{item.name}</span>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <button
-                    onClick={() => updateQty(item.menuItemId, -1)}
-                    aria-label="減らす"
-                    className="w-7 h-7 rounded-full border text-gray-600 flex items-center justify-center"
-                  >
-                    −
-                  </button>
-                  <span className="text-sm font-semibold w-4 text-center">{item.qty}</span>
-                  <button
-                    onClick={() => updateQty(item.menuItemId, +1)}
-                    aria-label="増やす"
-                    className="w-7 h-7 rounded-full border text-gray-600 flex items-center justify-center"
-                  >
-                    ＋
-                  </button>
-                  <span className="text-sm text-gray-600 w-20 text-right">
-                    ¥{(item.price * item.qty).toLocaleString()}
+                  <span className="text-sm text-gray-900 truncate">
+                    {item.name}
+                    <span className="text-gray-400 ml-1">× {item.qty}</span>
                   </span>
                 </div>
+                <span className="text-sm text-gray-600 shrink-0">
+                  ¥{(item.price * item.qty).toLocaleString()}
+                </span>
               </div>
             ))}
           </div>
         </div>
-
-        {/* ご一緒にいかがですか（アップセル）*/}
-        {(upsellSuggestions.sides.length > 0 || upsellSuggestions.drinks.length > 0) && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 space-y-3">
-            <p className="text-sm font-bold text-amber-800">🎁 ご一緒にいかがですか？</p>
-            {upsellSuggestions.sides.length > 0 && (
-              <UpsellGroup
-                title="🍟 サイドメニュー"
-                items={upsellSuggestions.sides}
-                onAdd={addToCartFromUpsell}
-              />
-            )}
-            {upsellSuggestions.drinks.length > 0 && (
-              <UpsellGroup
-                title="🥤 ドリンク"
-                items={upsellSuggestions.drinks}
-                onAdd={addToCartFromUpsell}
-              />
-            )}
-          </div>
-        )}
 
         {/* 備考欄（アレルギー・辛さ・その他要望） */}
         <div className="bg-white rounded-xl shadow-sm px-4 py-3 space-y-2">
@@ -371,7 +443,7 @@ export default function Cart({ store, cart, setCart, menuItems, onBack }: Props)
                 ? '準備中...'
                 : pickupType === 'scheduled' && !scheduledAt
                   ? '受取日時を選択してください'
-                  : `¥${totalAmount.toLocaleString()} を支払う`}
+                  : `注文を確定する（¥${totalAmount.toLocaleString()}）`}
             </button>
           </form>
         </div>

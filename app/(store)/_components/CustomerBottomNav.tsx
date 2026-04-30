@@ -18,7 +18,9 @@ export default function CustomerBottomNav({ homeHref }: Props) {
   const pathname = usePathname()
 
   const tabs: Tab[] = []
-  if (homeHref) tabs.push({ href: homeHref, label: 'ホーム', icon: '🏠' })
+  // 個別店舗ページ（QR から入った場合）はその店舗を「ホーム」に。
+  // 未指定時はディスカバリー（多店舗一覧）をホームとする。
+  tabs.push({ href: homeHref ?? '/', label: 'ホーム', icon: '🏠' })
   tabs.push({ href: '/orders', label: '注文履歴', icon: '📋' })
   tabs.push({ href: '/mypage', label: 'マイページ', icon: '👤' })
 
