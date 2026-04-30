@@ -8,22 +8,56 @@ interface StoreEntry {
   name: string
   is_open: boolean | null
   wait_minutes: number | null
+  area: string | null
+  cuisine_type: string | null
 }
 
 interface Props {
   stores: StoreEntry[]
 }
 
-// プロトタイプではエリアやジャンルでフィルタしているが、現状の DB には
-// エリア・ジャンル・距離が無いため検索のみ提供（拡張時にカテゴリ追加予定）
+const ALL = '__all__'
+
 export default function StoreDiscoveryView({ stores }: Props) {
   const [query, setQuery] = useState('')
+  const [activeArea, setActiveArea] = useState<string>(ALL)
+  const [activeCuisine, setActiveCuisine] = useState<string>(ALL)
+
+  // 重複除去したエリア・ジャンル一覧
+  const areas = useMemo(() => {
+    const set = new Set<string>()
+    for (const s of stores) {
+      if (s.area && s.area.trim() !== '') set.add(s.area.trim())
+    }
+    return Array.from(set).sort()
+  }, [stores])
+
+  const cuisines = useMemo(() => {
+    const set = new Set<string>()
+    for (const s of stores) {
+      if (s.cuisine_type && s.cuisine_type.trim() !== '') set.add(s.cuisine_type.trim())
+    }
+    return Array.from(set).sort()
+  }, [stores])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return stores
-    return stores.filter((s) => s.name.toLowerCase().includes(q))
-  }, [stores, query])
+    return stores.filter((s) => {
+      if (activeArea !== ALL && s.area !== activeArea) return false
+      if (activeCuisine !== ALL && s.cuisine_type !== activeCuisine) return false
+      if (q) {
+        const name = s.name.toLowerCase()
+        const cuisine = (s.cuisine_type ?? '').toLowerCase()
+        if (!name.includes(q) && !cuisine.includes(q)) return false
+      }
+      return true
+    })
+  }, [stores, query, activeArea, activeCuisine])
+
+  const heading = useMemo(() => {
+    if (activeArea !== ALL) return `${activeArea}エリア`
+    return '店舗一覧'
+  }, [activeArea])
 
   return (
     <>
@@ -39,20 +73,54 @@ export default function StoreDiscoveryView({ stores }: Props) {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="店舗名で探す"
+            placeholder="店舗名・ジャンルで探す"
             className="w-full text-sm bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-400"
           />
         </div>
+
+        {/* エリア絞り込み */}
+        {areas.length > 0 && (
+          <div className="border-t border-gray-100 px-4 py-2 overflow-x-auto">
+            <div className="flex gap-1.5 max-w-lg mx-auto">
+              <Chip active={activeArea === ALL} onClick={() => setActiveArea(ALL)}>
+                すべてのエリア
+              </Chip>
+              {areas.map((a) => (
+                <Chip key={a} active={activeArea === a} onClick={() => setActiveArea(a)}>
+                  {a}
+                </Chip>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ジャンル絞り込み */}
+        {cuisines.length > 0 && (
+          <div className="border-t border-gray-100 px-4 py-2 overflow-x-auto">
+            <div className="flex gap-1.5 max-w-lg mx-auto">
+              <Chip active={activeCuisine === ALL} onClick={() => setActiveCuisine(ALL)}>
+                すべて
+              </Chip>
+              {cuisines.map((c) => (
+                <Chip key={c} active={activeCuisine === c} onClick={() => setActiveCuisine(c)}>
+                  {c}
+                </Chip>
+              ))}
+            </div>
+          </div>
+        )}
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-4 space-y-2">
         <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider px-1 pt-2">
-          {query ? '検索結果' : '店舗一覧'}
+          {query ? '検索結果' : heading}
         </h2>
 
         {filtered.length === 0 ? (
           <div className="bg-white rounded-2xl p-8 text-center text-sm text-gray-400 shadow-sm">
-            {query ? '該当する店舗がありません' : '現在表示できる店舗がありません'}
+            {query || activeArea !== ALL || activeCuisine !== ALL
+              ? '該当する店舗がありません'
+              : '現在表示できる店舗がありません'}
           </div>
         ) : (
           filtered.map((store) => (
@@ -64,6 +132,10 @@ export default function StoreDiscoveryView({ stores }: Props) {
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <h3 className="text-sm font-bold text-gray-900 truncate">{store.name}</h3>
+                  <p className="text-xs text-gray-500 mt-0.5 truncate">
+                    {store.cuisine_type ?? 'お店'}
+                    {store.area && <> · {store.area}</>}
+                  </p>
                   <div className="flex items-center gap-2 mt-1.5">
                     <span
                       className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
@@ -98,5 +170,29 @@ export default function StoreDiscoveryView({ stores }: Props) {
         </div>
       </main>
     </>
+  )
+}
+
+function Chip({
+  children,
+  active,
+  onClick,
+}: {
+  children: React.ReactNode
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors whitespace-nowrap ${
+        active
+          ? 'bg-gray-900 text-white'
+          : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'
+      }`}
+    >
+      {children}
+    </button>
   )
 }

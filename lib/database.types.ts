@@ -40,6 +40,10 @@ export type Store = {
   wait_minutes: WaitMinutes
   /** 手動オーバーライド期限。!= null かつ now() より未来の間は cron が is_open を上書きしない */
   manual_override_until: string | null
+  /** エリア（例: 「清澄白河」）。ディスカバリーページの絞り込みに使用 */
+  area: string | null
+  /** 料理ジャンル（例: 「バーガー」「カフェ」「居酒屋」）*/
+  cuisine_type: string | null
   created_at: string
 }
 

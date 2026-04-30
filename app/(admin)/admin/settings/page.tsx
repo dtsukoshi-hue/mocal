@@ -18,7 +18,7 @@ export default async function StoreSettingsPage() {
   const supabase = createServiceClient()
   const { data: store } = await supabase
     .from('stores')
-    .select('name, wait_minutes')
+    .select('name, wait_minutes, area, cuisine_type')
     .eq('id', sessionData.storeId)
     .single()
 
@@ -30,7 +30,12 @@ export default async function StoreSettingsPage() {
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
         <h1 className="text-lg font-bold text-gray-900 mb-2">店舗設定</h1>
-        <StoreSettingsForm initialName={store.name} initialWaitMinutes={store.wait_minutes} />
+        <StoreSettingsForm
+          initialName={store.name}
+          initialWaitMinutes={store.wait_minutes}
+          initialArea={store.area ?? ''}
+          initialCuisineType={store.cuisine_type ?? ''}
+        />
         <StripeConnectSection />
       </main>
     </div>

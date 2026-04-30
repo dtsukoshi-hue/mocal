@@ -9,7 +9,7 @@ type WaitMinutes = typeof VALID_WAIT_MINUTES[number]
 const MAX_NAME_LENGTH = 60
 
 type StoreUpdate = Partial<
-  Pick<StoreInsert, 'is_open' | 'name' | 'wait_minutes' | 'manual_override_until'>
+  Pick<StoreInsert, 'is_open' | 'name' | 'wait_minutes' | 'manual_override_until' | 'area' | 'cuisine_type'>
 >
 
 interface ValidatedUpdate {
@@ -50,6 +50,32 @@ function validateUpdate(body: unknown): { ok: true; result: ValidatedUpdate } | 
       return { ok: false, error: `待ち時間は ${VALID_WAIT_MINUTES.join(', ')} 分のいずれかを指定してください。` }
     }
     out.wait_minutes = b.wait_minutes as WaitMinutes
+  }
+
+  if ('area' in b) {
+    if (b.area !== null && typeof b.area !== 'string') {
+      return { ok: false, error: 'エリアが不正です。' }
+    }
+    if (typeof b.area === 'string') {
+      const trimmed = b.area.trim()
+      if (trimmed.length > 30) return { ok: false, error: 'エリアは 30 文字以内にしてください。' }
+      out.area = trimmed === '' ? null : trimmed
+    } else {
+      out.area = null
+    }
+  }
+
+  if ('cuisine_type' in b) {
+    if (b.cuisine_type !== null && typeof b.cuisine_type !== 'string') {
+      return { ok: false, error: 'ジャンルが不正です。' }
+    }
+    if (typeof b.cuisine_type === 'string') {
+      const trimmed = b.cuisine_type.trim()
+      if (trimmed.length > 30) return { ok: false, error: 'ジャンルは 30 文字以内にしてください。' }
+      out.cuisine_type = trimmed === '' ? null : trimmed
+    } else {
+      out.cuisine_type = null
+    }
   }
 
   if ('clear_override' in b) {

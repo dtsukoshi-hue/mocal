@@ -15,7 +15,7 @@ export default async function Home() {
   // 公開ポリシー stores_public_read で anon でも一覧取得可能
   const { data: stores } = await supabase
     .from('stores')
-    .select('id, name, is_open, wait_minutes')
+    .select('id, name, is_open, wait_minutes, area, cuisine_type')
     .order('name', { ascending: true })
 
   return (
