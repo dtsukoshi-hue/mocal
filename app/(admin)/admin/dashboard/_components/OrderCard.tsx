@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
-type OrderItem = { name: string; qty: number; price: number }
+type OrderItem = { name: string; qty: number; price: number; combo_id?: string | null; combo_label?: string | null }
 
 type Order = {
   id: string
@@ -164,13 +164,57 @@ export default function OrderCard({ order }: { order: Order }) {
 
       {/* 本文 */}
       <div className="px-5 pb-4 space-y-3">
-        <ul className="text-sm text-gray-700 space-y-1">
-          {order.order_items?.map((item, i) => (
-            <li key={i} className="flex justify-between">
-              <span>{item.name} <span className="text-gray-400">× {item.qty}</span></span>
-              <span className="text-gray-500">¥{(item.price * item.qty).toLocaleString()}</span>
-            </li>
-          ))}
+        <ul className="text-sm text-gray-700 space-y-1.5">
+          {(() => {
+            // combo_id ごとにグループ化（null は個別行）
+            const groups: Array<
+              | { type: 'item'; item: OrderItem; key: string }
+              | { type: 'combo'; comboId: string; label: string; items: OrderItem[]; key: string }
+            > = []
+            const comboMap = new Map<string, OrderItem[]>()
+            for (const it of order.order_items ?? []) {
+              if (it.combo_id) {
+                const arr = comboMap.get(it.combo_id) ?? []
+                arr.push(it)
+                comboMap.set(it.combo_id, arr)
+              } else {
+                groups.push({ type: 'item', item: it, key: `i-${groups.length}` })
+              }
+            }
+            for (const [cid, items] of comboMap.entries()) {
+              groups.push({
+                type: 'combo',
+                comboId: cid,
+                label: items[0]?.combo_label ?? 'セット',
+                items,
+                key: `c-${cid}`,
+              })
+            }
+            return groups.map((g) => {
+              if (g.type === 'item') {
+                return (
+                  <li key={g.key} className="flex justify-between">
+                    <span>{g.item.name} <span className="text-gray-400">× {g.item.qty}</span></span>
+                    <span className="text-gray-500">¥{(g.item.price * g.item.qty).toLocaleString()}</span>
+                  </li>
+                )
+              }
+              const comboTotal = g.items.reduce((s, it) => s + it.price * it.qty, 0)
+              return (
+                <li key={g.key} className="bg-amber-50/60 rounded-lg px-2 py-1.5">
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-amber-900">🎁 {g.label}</span>
+                    <span className="text-amber-900">¥{comboTotal.toLocaleString()}</span>
+                  </div>
+                  <ul className="ml-3 mt-0.5 text-xs text-amber-700/80 space-y-0.5">
+                    {g.items.map((it, i) => (
+                      <li key={i}>・{it.name} × {it.qty}</li>
+                    ))}
+                  </ul>
+                </li>
+              )
+            })
+          })()}
         </ul>
 
         {order.estimated_ready_at && (

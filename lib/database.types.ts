@@ -103,6 +103,10 @@ export type OrderItem = {
   name: string                  // スナップショット
   price: number                 // スナップショット
   qty: number
+  /** コンボ商品の一部として追加された行は同じ combo_id を共有する */
+  combo_id: string | null
+  /** コンボ名のスナップショット（リネームや削除に耐える）*/
+  combo_label: string | null
 }
 
 export type ProcessedWebhookEvent = {

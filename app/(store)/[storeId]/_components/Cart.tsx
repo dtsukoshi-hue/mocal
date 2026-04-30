@@ -5,7 +5,7 @@ import type { Stripe } from '@stripe/stripe-js'
 import { Elements } from '@stripe/react-stripe-js'
 import { createOrderAction, type OrderState } from '@/app/actions/orders'
 import PaymentForm from './PaymentForm'
-import type { CartItem } from './MenuView'
+import type { CartItem, CartCombo } from './MenuView'
 import type { MenuItem, Store } from '@/lib/database.types'
 
 type MenuItemForCart = Pick<MenuItem, 'id' | 'name' | 'price' | 'description' | 'category' | 'emoji' | 'image_url' | 'is_available' | 'sort_order'>
@@ -25,6 +25,8 @@ interface Props {
   store: Pick<Store, 'id' | 'name' | 'is_open' | 'wait_minutes'>
   cart: CartItem[]
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>
+  cartCombos: CartCombo[]
+  setCartCombos: React.Dispatch<React.SetStateAction<CartCombo[]>>
   menuItems: MenuItemForCart[]
   onBack: () => void
 }
@@ -79,7 +81,7 @@ function UpsellGroup({
   )
 }
 
-export default function Cart({ store, cart, setCart, menuItems, onBack }: Props) {
+export default function Cart({ store, cart, setCart, cartCombos, setCartCombos, menuItems, onBack }: Props) {
   const [state, action, pending] = useActionState<OrderState, FormData>(
     createOrderAction,
     undefined
@@ -138,15 +140,30 @@ export default function Cart({ store, cart, setCart, menuItems, onBack }: Props)
     })
   }
 
-  const totalAmount = cart.reduce((sum, c) => sum + c.price * c.qty, 0)
+  // 個別アイテムの合計
+  const itemsTotal = cart.reduce((sum, c) => sum + c.price * c.qty, 0)
+  // コンボの合計
+  const combosTotal = cartCombos.reduce((sum, cc) => {
+    const baseSum = cc.items.reduce((s, ci) => s + ci.price * ci.qty, 0)
+    return sum + (baseSum + cc.priceDelta) * cc.qty
+  }, 0)
+  const totalAmount = itemsTotal + combosTotal
+  const isCartEmpty = cart.length === 0 && cartCombos.length === 0
   // 商品価格は税込前提（飲食店標準）。消費税 10% を内税で表示。
-  // 軽減税率 8% を採用する場合はここを変更。
   const taxIncluded = Math.round(totalAmount - totalAmount / 1.1)
 
   const updateQty = (menuItemId: string, delta: number) => {
     setCart(prev =>
       prev
         .map(c => c.menuItemId === menuItemId ? { ...c, qty: c.qty + delta } : c)
+        .filter(c => c.qty > 0)
+    )
+  }
+
+  const updateComboQty = (comboId: string, delta: number) => {
+    setCartCombos(prev =>
+      prev
+        .map(c => c.comboId === comboId ? { ...c, qty: c.qty + delta } : c)
         .filter(c => c.qty > 0)
     )
   }
@@ -196,10 +213,49 @@ export default function Cart({ store, cart, setCart, menuItems, onBack }: Props)
           {/* カート内容 */}
           <div className="bg-white rounded-xl shadow-sm">
             <p className="text-xs font-semibold text-gray-500 px-4 pt-3 pb-2">カートの中身</p>
-            {cart.length === 0 ? (
+            {isCartEmpty ? (
               <p className="text-sm text-gray-400 text-center py-8">カートは空です</p>
             ) : (
               <div className="divide-y divide-gray-100">
+                {/* コンボ */}
+                {cartCombos.map(cc => {
+                  const baseSum = cc.items.reduce((s, ci) => s + ci.price * ci.qty, 0)
+                  const setPrice = baseSum + cc.priceDelta
+                  return (
+                    <div key={cc.comboId} className="px-4 py-3 bg-amber-50/50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 min-w-0">
+                          {cc.emoji && <span>{cc.emoji}</span>}
+                          <div className="min-w-0">
+                            <span className="text-sm font-semibold text-amber-900 truncate">
+                              🎁 {cc.name}
+                            </span>
+                            <p className="text-[10px] text-amber-700">
+                              {cc.items.map((i) => `${i.name}×${i.qty}`).join(' / ')}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <button
+                            onClick={() => updateComboQty(cc.comboId, -1)}
+                            aria-label="減らす"
+                            className="w-7 h-7 rounded-full border text-gray-600 flex items-center justify-center"
+                          >−</button>
+                          <span className="text-sm font-semibold w-4 text-center">{cc.qty}</span>
+                          <button
+                            onClick={() => updateComboQty(cc.comboId, +1)}
+                            aria-label="増やす"
+                            className="w-7 h-7 rounded-full border text-gray-600 flex items-center justify-center"
+                          >＋</button>
+                          <span className="text-sm text-amber-900 font-semibold w-20 text-right">
+                            ¥{(setPrice * cc.qty).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+                {/* 個別アイテム */}
                 {cart.map(item => (
                   <div key={item.menuItemId} className="flex items-center justify-between px-4 py-3">
                     <div className="flex items-center gap-2 min-w-0">
@@ -263,7 +319,7 @@ export default function Cart({ store, cart, setCart, menuItems, onBack }: Props)
             <button
               type="button"
               onClick={() => setStep('confirm')}
-              disabled={cart.length === 0}
+              disabled={isCartEmpty}
               className="w-full rounded-2xl bg-amber-700 text-white font-bold py-4 shadow-lg disabled:opacity-60 hover:bg-amber-800 transition-colors"
             >
               会計へ進む（¥{totalAmount.toLocaleString()}）
@@ -349,6 +405,26 @@ export default function Cart({ store, cart, setCart, menuItems, onBack }: Props)
             </button>
           </div>
           <div className="divide-y divide-gray-100">
+            {cartCombos.map(cc => {
+              const baseSum = cc.items.reduce((s, ci) => s + ci.price * ci.qty, 0)
+              const setPrice = baseSum + cc.priceDelta
+              return (
+                <div key={cc.comboId} className="px-4 py-3 bg-amber-50/50">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-amber-900">
+                      🎁 {cc.name}
+                      <span className="text-amber-700 ml-1">× {cc.qty}</span>
+                    </span>
+                    <span className="text-sm text-amber-900 shrink-0">
+                      ¥{(setPrice * cc.qty).toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-amber-700 mt-0.5">
+                    {cc.items.map((i) => `${i.name}×${i.qty}`).join(' / ')}
+                  </p>
+                </div>
+              )
+            })}
             {cart.map(item => (
               <div key={item.menuItemId} className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-2 min-w-0">
@@ -434,9 +510,17 @@ export default function Cart({ store, cart, setCart, menuItems, onBack }: Props)
                 qty: c.qty,
               })))}
             />
+            <input
+              type="hidden"
+              name="combos"
+              value={JSON.stringify(cartCombos.map(cc => ({
+                comboId: cc.comboId,
+                qty: cc.qty,
+              })))}
+            />
             <button
               type="submit"
-              disabled={pending || cart.length === 0 || (pickupType === 'scheduled' && !scheduledAt)}
+              disabled={pending || isCartEmpty || (pickupType === 'scheduled' && !scheduledAt)}
               className="w-full rounded-2xl bg-amber-700 text-white font-bold py-4 shadow-lg disabled:opacity-60 hover:bg-amber-800 transition-colors"
             >
               {pending

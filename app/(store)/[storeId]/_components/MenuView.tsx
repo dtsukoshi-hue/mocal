@@ -29,8 +29,20 @@ export interface CartItem {
   emoji: string | null
 }
 
+export interface CartCombo {
+  comboId: string
+  name: string
+  emoji: string | null
+  /** 含まれるメニュー（数量込み・スナップショット）*/
+  items: { menuItemId: string; name: string; price: number; qty: number; emoji: string | null }[]
+  /** コンボ価格差分（負で割引・正で追加料金）*/
+  priceDelta: number
+  qty: number
+}
+
 export default function MenuView({ store, menuItems, combos = [] }: Props) {
   const [cart, setCart] = useState<CartItem[]>([])
+  const [cartCombos, setCartCombos] = useState<CartCombo[]>([])
   const [showCart, setShowCart] = useState(false)
 
   const categories = [...new Set(menuItems.map(item => item.category ?? 'その他'))]
@@ -53,32 +65,43 @@ export default function MenuView({ store, menuItems, combos = [] }: Props) {
     })
   }
 
-  const totalItems = cart.reduce((sum, c) => sum + c.qty, 0)
-  const totalAmount = cart.reduce((sum, c) => sum + c.price * c.qty, 0)
+  // 個別アイテムの合計
+  const itemsTotal = cart.reduce((sum, c) => sum + c.price * c.qty, 0)
+  // コンボの合計（各コンボ qty 分・基本価格 + price_delta）
+  const combosTotal = cartCombos.reduce((sum, cc) => {
+    const baseSum = cc.items.reduce((s, ci) => s + ci.price * ci.qty, 0)
+    return sum + (baseSum + cc.priceDelta) * cc.qty
+  }, 0)
+  const totalAmount = itemsTotal + combosTotal
+  const totalItems =
+    cart.reduce((sum, c) => sum + c.qty, 0) +
+    cartCombos.reduce((sum, cc) => sum + cc.qty, 0)
 
-  // コンボを 1 件カートに追加（含まれるメニューを個別に展開）
+  // コンボを追加（個別アイテムには展開せず、コンボのまま保持）
   const addCombo = (combo: ComboInfo) => {
-    setCart((prev) => {
-      let next = [...prev]
-      for (const ci of combo.items) {
-        const item = menuItems.find((m) => m.id === ci.menu_item_id)
-        if (!item || !item.is_available) continue
-        const existing = next.find((c) => c.menuItemId === ci.menu_item_id)
-        if (existing) {
-          next = next.map((c) =>
-            c.menuItemId === ci.menu_item_id ? { ...c, qty: c.qty + ci.qty } : c
-          )
-        } else {
-          next.push({
-            menuItemId: item.id,
-            name: item.name,
-            price: item.price,
-            qty: ci.qty,
-            emoji: item.emoji,
-          })
-        }
+    setCartCombos((prev) => {
+      const existing = prev.find((c) => c.comboId === combo.id)
+      if (existing) {
+        return prev.map((c) =>
+          c.comboId === combo.id ? { ...c, qty: c.qty + 1 } : c
+        )
       }
-      return next
+      const items = combo.items
+        .map((ci) => {
+          const m = menuItems.find((x) => x.id === ci.menu_item_id)
+          return m
+            ? { menuItemId: m.id, name: m.name, price: m.price, qty: ci.qty, emoji: m.emoji }
+            : null
+        })
+        .filter((x): x is NonNullable<typeof x> => x !== null)
+      return [...prev, {
+        comboId: combo.id,
+        name: combo.name,
+        emoji: combo.emoji,
+        items,
+        priceDelta: combo.price_delta,
+        qty: 1,
+      }]
     })
   }
 
@@ -88,6 +111,8 @@ export default function MenuView({ store, menuItems, combos = [] }: Props) {
         store={store}
         cart={cart}
         setCart={setCart}
+        cartCombos={cartCombos}
+        setCartCombos={setCartCombos}
         menuItems={menuItems}
         onBack={() => setShowCart(false)}
       />
