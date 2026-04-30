@@ -34,6 +34,7 @@ export async function createOrderAction(
   const pickupType = formData.get('pickupType')
   const itemsRaw = formData.get('items')
   const customerNoteRaw = formData.get('customerNote')
+  const scheduledAtRaw = formData.get('scheduledAt')
 
   if (
     typeof storeId !== 'string' ||
@@ -62,6 +63,27 @@ export async function createOrderAction(
   // pickupType バリデーション
   if (pickupType !== 'standard' && pickupType !== 'scheduled') {
     return { error: '注文データが不正です。' }
+  }
+
+  // scheduled の場合は scheduledAt 必須・未来の時刻のみ
+  let scheduledAt: string | null = null
+  if (pickupType === 'scheduled') {
+    if (typeof scheduledAtRaw !== 'string') {
+      return { error: '受取日時を指定してください。' }
+    }
+    const t = new Date(scheduledAtRaw)
+    if (isNaN(t.getTime())) {
+      return { error: '受取日時の形式が不正です。' }
+    }
+    // 30 日後より遠い予約は拒否（運用ガード）
+    const max = Date.now() + 30 * 24 * 60 * 60 * 1000
+    if (t.getTime() < Date.now() + 15 * 60 * 1000) {
+      return { error: '受取日時は15分以上先を指定してください。' }
+    }
+    if (t.getTime() > max) {
+      return { error: '受取日時は30日以内で指定してください。' }
+    }
+    scheduledAt = t.toISOString()
   }
 
   let items: OrderItemInput[]
@@ -140,6 +162,7 @@ export async function createOrderAction(
       pickup_type: pickupType as 'standard' | 'scheduled',
       total_amount: totalAmount,
       customer_note: customerNote,
+      scheduled_at: scheduledAt,
     })
     .select('id, order_number')
     .single()

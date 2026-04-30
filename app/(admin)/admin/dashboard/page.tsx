@@ -34,6 +34,7 @@ export default async function DashboardPage() {
       .select(`
         id, order_number, status, total_amount, estimated_ready_at,
         accepted_at, created_at, customer_note,
+        pickup_type, scheduled_at,
         order_items(name, qty, price)
       `)
       .eq('store_id', sessionData.storeId)

@@ -14,6 +14,8 @@ type Order = {
   accepted_at: string | null
   created_at: string
   customer_note: string | null
+  pickup_type?: string | null
+  scheduled_at?: string | null
   order_items: OrderItem[]
 }
 
@@ -85,6 +87,15 @@ export default function OrderCard({ order }: { order: Order }) {
 
   const isDisabled = loading || isPending
 
+  function handlePrint() {
+    if (typeof window === 'undefined') return
+    // 別ウィンドウで領収書を開いて印刷ダイアログを起動
+    const url = `/orders/${order.id}/receipt`
+    const w = window.open(url, '_blank', 'noopener,noreferrer,width=420,height=720')
+    // window.open が popup 制限で null を返した場合は同タブで開く
+    if (!w) window.location.href = url
+  }
+
   async function handleAction(status: string) {
     setLoading(true)
     setError(null)
@@ -134,6 +145,16 @@ export default function OrderCard({ order }: { order: Order }) {
                 <> ・ {elapsedFromCreated}分前</>
               )}
             </span>
+            {order.pickup_type === 'scheduled' && order.scheduled_at && (
+              <span className="text-[10px] font-bold inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 self-start mt-0.5">
+                📅 {new Date(order.scheduled_at).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 指定
+              </span>
+            )}
+            {order.pickup_type === 'standard' && (
+              <span className="text-[10px] font-bold inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-50 text-gray-600 border border-gray-200 self-start mt-0.5">
+                スタンダード
+              </span>
+            )}
           </div>
         </div>
         <span className="text-base font-bold text-gray-900 shrink-0">
@@ -237,6 +258,17 @@ export default function OrderCard({ order }: { order: Order }) {
               </button>
             )}
           </div>
+        )}
+
+        {/* 印刷ボタン（accepted 以降の状態で利用可）*/}
+        {['accepted', 'preparing', 'ready'].includes(order.status) && !confirmCancel && (
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="w-full text-xs font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-50 py-2 rounded-lg transition-colors"
+          >
+            🖨 レシート印刷
+          </button>
         )}
       </div>
     </div>
