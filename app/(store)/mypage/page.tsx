@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import CustomerBottomNav from '../_components/CustomerBottomNav'
+import NotificationPanel from './_components/NotificationPanel'
 
 export const metadata = {
   title: 'マイページ',
@@ -33,8 +34,10 @@ export default function MyPage() {
           <RowLink href="/orders" label="注文履歴" icon="📋" />
           <RowDisabled label="プロフィール編集" icon="✏️" hint="準備中" />
           <RowDisabled label="支払い方法" icon="💳" hint="準備中" />
-          <RowDisabled label="通知設定" icon="🔔" hint="注文画面から設定可能" />
         </section>
+
+        {/* 通知設定 */}
+        <NotificationPanel />
 
         {/* サポート */}
         <section className="bg-white rounded-2xl shadow-sm border border-gray-100 divide-y divide-gray-100 overflow-hidden">
