@@ -6,6 +6,7 @@ import { createServiceClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import StoreSettingsForm from './_components/StoreSettingsForm'
 import StripeConnectSection from './_components/StripeConnectSection'
+import StoreImagesSection from './_components/StoreImagesSection'
 import AdminNav from '../_components/AdminNav'
 
 export default async function StoreSettingsPage() {
@@ -18,7 +19,7 @@ export default async function StoreSettingsPage() {
   const supabase = createServiceClient()
   const { data: store } = await supabase
     .from('stores')
-    .select('name, wait_minutes, area, cuisine_type')
+    .select('name, wait_minutes, area, cuisine_type, logo_url, cover_url')
     .eq('id', sessionData.storeId)
     .single()
 
@@ -35,6 +36,10 @@ export default async function StoreSettingsPage() {
           initialWaitMinutes={store.wait_minutes}
           initialArea={store.area ?? ''}
           initialCuisineType={store.cuisine_type ?? ''}
+        />
+        <StoreImagesSection
+          initialLogoUrl={store.logo_url ?? null}
+          initialCoverUrl={store.cover_url ?? null}
         />
         <StripeConnectSection />
       </main>

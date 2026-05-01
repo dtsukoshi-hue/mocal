@@ -10,6 +10,7 @@ interface StoreEntry {
   wait_minutes: number | null
   area: string | null
   cuisine_type: string | null
+  logo_url: string | null
 }
 
 interface Props {
@@ -130,6 +131,14 @@ export default function StoreDiscoveryView({ stores }: Props) {
               className="block bg-white rounded-2xl shadow-sm border border-gray-100 px-4 py-3 hover:bg-amber-50 transition-colors"
             >
               <div className="flex items-center justify-between gap-3">
+                {store.logo_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={store.logo_url}
+                    alt=""
+                    className="w-12 h-12 rounded-lg object-cover bg-gray-100 shrink-0"
+                  />
+                )}
                 <div className="min-w-0 flex-1">
                   <h3 className="text-sm font-bold text-gray-900 truncate">{store.name}</h3>
                   <p className="text-xs text-gray-500 mt-0.5 truncate">

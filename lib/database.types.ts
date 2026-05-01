@@ -44,6 +44,10 @@ export type Store = {
   area: string | null
   /** 料理ジャンル（例: 「バーガー」「カフェ」「居酒屋」）*/
   cuisine_type: string | null
+  /** 店舗ロゴ画像 URL（一覧・ヘッダー用の小さなアイコン）*/
+  logo_url: string | null
+  /** 店舗カバー画像 URL（店舗ページ上部のヒーロー画像）*/
+  cover_url: string | null
   created_at: string
 }
 

@@ -16,7 +16,7 @@ export interface ComboInfo {
 }
 
 interface Props {
-  store: Pick<Store, 'id' | 'name' | 'is_open' | 'wait_minutes'>
+  store: Pick<Store, 'id' | 'name' | 'is_open' | 'wait_minutes' | 'logo_url' | 'cover_url'>
   menuItems: Pick<MenuItem, 'id' | 'name' | 'price' | 'description' | 'category' | 'emoji' | 'image_url' | 'is_available' | 'sort_order'>[]
   combos?: ComboInfo[]
 }
@@ -121,26 +121,45 @@ export default function MenuView({ store, menuItems, combos = [] }: Props) {
 
   return (
     <div className="min-h-screen bg-stone-50 pb-32">
+      {/* カバー画像（あれば）*/}
+      {store.cover_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={store.cover_url}
+          alt={`${store.name} のカバー画像`}
+          className="w-full h-44 object-cover bg-gray-100"
+        />
+      )}
       {/* ヘッダー */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
-        <div className="max-w-lg mx-auto px-4 py-4">
-          <h1 className="text-lg font-bold text-gray-900">{store.name}</h1>
-          <div className="flex items-center gap-2 mt-1">
-            <span
-              className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                store.is_open
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  : 'bg-red-50 text-red-700 border border-red-200'
-              }`}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${store.is_open ? 'bg-emerald-500' : 'bg-red-500'}`} />
-              {store.is_open ? '受付中' : '受付停止中'}
-            </span>
-            {store.is_open && (
-              <span className="text-xs text-gray-500">
-                約{store.wait_minutes}分で受取
+        <div className="max-w-lg mx-auto px-4 py-4 flex items-center gap-3">
+          {store.logo_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={store.logo_url}
+              alt=""
+              className="w-10 h-10 rounded-lg object-cover bg-gray-100 shrink-0"
+            />
+          )}
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg font-bold text-gray-900 truncate">{store.name}</h1>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span
+                className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                  store.is_open
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-red-50 text-red-700 border border-red-200'
+                }`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${store.is_open ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                {store.is_open ? '受付中' : '受付停止中'}
               </span>
-            )}
+              {store.is_open && (
+                <span className="text-xs text-gray-500">
+                  約{store.wait_minutes}分で受取
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </header>
