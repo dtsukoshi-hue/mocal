@@ -45,8 +45,9 @@ export default function MyPage() {
             サポート
           </p>
           <RowDisabled label="よくある質問" icon="❓" hint="準備中" />
-          <RowDisabled label="プライバシーポリシー" icon="🔒" hint="準備中" />
-          <RowDisabled label="特定商取引法" icon="📜" hint="準備中" />
+          <RowLink href="/privacy"   label="プライバシーポリシー"     icon="🔒" />
+          <RowLink href="/terms"     label="利用規約"                 icon="📋" />
+          <RowLink href="/tokushoho" label="特定商取引法に基づく表記" icon="📜" />
         </section>
 
         <p className="text-xs text-gray-400 text-center pt-2">
