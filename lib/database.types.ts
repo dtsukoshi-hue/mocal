@@ -92,6 +92,8 @@ export type Order = {
   cancelled_reason_detail: string | null
   stripe_payment_intent_id: string | null
   stripe_charge_id: string | null
+  /** Stripe が決済完了時に発行する公式レシート URL */
+  stripe_receipt_url: string | null
   customer_note: string | null
   created_at: string
 }
@@ -242,6 +244,7 @@ export type OrderInsert = {
   cancelled_reason_detail?: string | null
   stripe_payment_intent_id?: string | null
   stripe_charge_id?: string | null
+  stripe_receipt_url?: string | null
   customer_note?: string | null
   created_at?: string
 }

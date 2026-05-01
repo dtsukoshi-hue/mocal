@@ -9,8 +9,9 @@ interface ReceiptOrder {
   total_amount: number
   created_at: string
   ready_at: string | null
+  stripe_receipt_url: string | null
   stores: { name: string } | null
-  order_items: { name: string; qty: number; price: number }[]
+  order_items: { name: string; qty: number; price: number; combo_id: string | null; combo_label: string | null }[]
 }
 
 export default function ReceiptView({ order }: { order: ReceiptOrder }) {
@@ -107,6 +108,22 @@ export default function ReceiptView({ order }: { order: ReceiptOrder }) {
               </span>
             </div>
           </section>
+
+          {order.stripe_receipt_url && (
+            <section className="border-t border-gray-200 pt-3 print:hidden">
+              <a
+                href={order.stripe_receipt_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-center text-sm font-semibold text-amber-700 hover:underline"
+              >
+                Stripe 公式レシートを開く →
+              </a>
+              <p className="text-[10px] text-gray-400 text-center mt-1">
+                銀行明細との突合や経費精算にご利用いただけます
+              </p>
+            </section>
+          )}
 
           <footer className="text-xs text-gray-400 text-center pt-4 border-t border-gray-200">
             <p>この領収書は mocal が発行するお支払い証明です。</p>

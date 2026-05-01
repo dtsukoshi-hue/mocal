@@ -22,8 +22,9 @@ export default async function ReceiptPage({ params }: Props) {
       total_amount,
       created_at,
       ready_at,
+      stripe_receipt_url,
       stores(name),
-      order_items(name, qty, price)
+      order_items(name, qty, price, combo_id, combo_label)
     `)
     .eq('id', id)
     .single()

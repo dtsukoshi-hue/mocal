@@ -76,11 +76,25 @@ export async function POST(request: NextRequest) {
         ? intent.latest_charge
         : intent.latest_charge?.id
 
+      // 公式レシート URL を取得（Stripe が決済完了時に自動生成）
+      // Direct Charges でも latest_charge は platform に紐づくため
+      // 追加ヘッダ不要で retrieve できる。失敗時はスキップ。
+      let receiptUrl: string | null = null
+      if (chargeId) {
+        try {
+          const charge = await stripe.charges.retrieve(chargeId)
+          receiptUrl = charge.receipt_url ?? null
+        } catch (e) {
+          logger.warn('charge retrieve failed', { chargeId, error: String(e) })
+        }
+      }
+
       await supabase
         .from('orders')
         .update({
           status: 'paid',
           stripe_charge_id: chargeId ?? null,
+          stripe_receipt_url: receiptUrl,
         })
         .eq('id', orderId)
 
