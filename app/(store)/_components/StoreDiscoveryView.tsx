@@ -112,7 +112,7 @@ export default function StoreDiscoveryView({ stores }: Props) {
         )}
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-4 space-y-2">
+      <main id="main-content" className="max-w-lg mx-auto px-4 py-4 space-y-2">
         <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider px-1 pt-2">
           {query ? '検索結果' : heading}
         </h2>

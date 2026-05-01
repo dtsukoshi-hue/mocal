@@ -48,7 +48,7 @@ export default async function HistoryPage() {
     <div className="min-h-screen bg-stone-50">
       <AdminNav active="history" role={sessionData.role as 'owner' | 'staff'} />
 
-      <main className="max-w-4xl mx-auto px-4 py-6 space-y-2">
+      <main id="main-content" className="max-w-4xl mx-auto px-4 py-6 space-y-2">
         <h1 className="text-lg font-bold text-gray-900 mb-2">注文履歴</h1>
         {(!orders || orders.length === 0) && (
           <div className="text-center text-gray-400 py-24 text-sm">履歴がありません</div>

@@ -15,7 +15,7 @@ export default function MyPage() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-6 space-y-4">
+      <main id="main-content" className="max-w-lg mx-auto px-4 py-6 space-y-4">
         {/* ゲストユーザー案内 */}
         <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center space-y-3">
           <div className="w-16 h-16 bg-gray-100 rounded-full mx-auto flex items-center justify-center text-2xl">

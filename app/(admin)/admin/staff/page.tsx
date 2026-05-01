@@ -20,7 +20,7 @@ export default async function StaffPage() {
     <div className="min-h-screen bg-stone-50">
       <AdminNav active="staff" role="owner" />
 
-      <main className="max-w-2xl mx-auto px-4 py-6">
+      <main id="main-content" className="max-w-2xl mx-auto px-4 py-6">
         <h1 className="text-lg font-bold text-gray-900 mb-4">スタッフ管理</h1>
         <StaffManager />
       </main>

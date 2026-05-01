@@ -29,7 +29,7 @@ export default async function StoreSettingsPage() {
     <div className="min-h-screen bg-stone-50">
       <AdminNav active="settings" role={sessionData.role as 'owner' | 'staff'} />
 
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+      <main id="main-content" className="max-w-2xl mx-auto px-4 py-6 space-y-4">
         <h1 className="text-lg font-bold text-gray-900 mb-2">店舗設定</h1>
         <StoreSettingsForm
           initialName={store.name}

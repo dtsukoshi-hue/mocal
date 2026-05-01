@@ -41,7 +41,7 @@ export default function ReceiptView({ order }: { order: ReceiptOrder }) {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-6">
+      <main id="main-content" className="max-w-lg mx-auto px-4 py-6">
         <article className="bg-white rounded-2xl shadow-sm p-8 print:shadow-none print:rounded-none print:p-4 space-y-6">
           <header className="text-center border-b border-gray-200 pb-4">
             <h1 className="text-2xl font-bold text-gray-900 tracking-wide">領収書</h1>

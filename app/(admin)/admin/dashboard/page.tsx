@@ -67,7 +67,7 @@ export default async function DashboardPage() {
       <PushSubscriber />
       <RealtimeRefresher storeId={sessionData.storeId} />
 
-      <main className="max-w-4xl mx-auto px-4 py-6 space-y-5">
+      <main id="main-content" className="max-w-4xl mx-auto px-4 py-6 space-y-5">
         {store?.name && (
           <p className="text-xs text-gray-500 px-1">{store.name}</p>
         )}

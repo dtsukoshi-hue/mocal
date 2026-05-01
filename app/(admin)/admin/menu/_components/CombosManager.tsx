@@ -418,6 +418,7 @@ function ComboForm({
                       type="button"
                       onClick={() => setItemQty(m.id, qty - 1)}
                       disabled={qty === 0}
+                      aria-label={`${m.name} を 1 つ減らす`}
                       className="w-6 h-6 rounded-full border text-gray-600 flex items-center justify-center disabled:opacity-30"
                     >−</button>
                     <span className={`text-sm font-semibold w-4 text-center ${qty > 0 ? 'text-gray-900' : 'text-gray-300'}`}>
@@ -426,6 +427,7 @@ function ComboForm({
                     <button
                       type="button"
                       onClick={() => setItemQty(m.id, qty + 1)}
+                      aria-label={`${m.name} を 1 つ追加`}
                       className="w-6 h-6 rounded-full border text-gray-600 flex items-center justify-center"
                     >＋</button>
                   </div>

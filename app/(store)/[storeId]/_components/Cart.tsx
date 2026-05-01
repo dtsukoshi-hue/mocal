@@ -180,7 +180,7 @@ export default function Cart({ store, cart, setCart, cartCombos, setCartCombos, 
             <h1 className="text-lg font-bold text-gray-900">お支払い</h1>
           </div>
         </header>
-        <main className="max-w-lg mx-auto px-4 py-4">
+        <main id="main-content" className="max-w-lg mx-auto px-4 py-4">
           <Elements
             stripe={stripePromise!}
             options={{ clientSecret: state.clientSecret, locale: 'ja' }}
@@ -238,13 +238,13 @@ export default function Cart({ store, cart, setCart, cartCombos, setCartCombos, 
                         <div className="flex items-center gap-3 shrink-0">
                           <button
                             onClick={() => updateComboQty(cc.comboId, -1)}
-                            aria-label="減らす"
+                            aria-label={`${cc.name} を 1 セット減らす`}
                             className="w-7 h-7 rounded-full border text-gray-600 flex items-center justify-center"
                           >−</button>
-                          <span className="text-sm font-semibold w-4 text-center">{cc.qty}</span>
+                          <span className="text-sm font-semibold w-4 text-center" aria-live="polite">{cc.qty}</span>
                           <button
                             onClick={() => updateComboQty(cc.comboId, +1)}
-                            aria-label="増やす"
+                            aria-label={`${cc.name} を 1 セット追加`}
                             className="w-7 h-7 rounded-full border text-gray-600 flex items-center justify-center"
                           >＋</button>
                           <span className="text-sm text-amber-900 font-semibold w-20 text-right">
@@ -265,13 +265,13 @@ export default function Cart({ store, cart, setCart, cartCombos, setCartCombos, 
                     <div className="flex items-center gap-3 shrink-0">
                       <button
                         onClick={() => updateQty(item.menuItemId, -1)}
-                        aria-label="減らす"
+                        aria-label={`${item.name} を 1 つ減らす`}
                         className="w-7 h-7 rounded-full border text-gray-600 flex items-center justify-center"
                       >−</button>
-                      <span className="text-sm font-semibold w-4 text-center">{item.qty}</span>
+                      <span className="text-sm font-semibold w-4 text-center" aria-live="polite">{item.qty}</span>
                       <button
                         onClick={() => updateQty(item.menuItemId, +1)}
-                        aria-label="増やす"
+                        aria-label={`${item.name} を 1 つ追加`}
                         className="w-7 h-7 rounded-full border text-gray-600 flex items-center justify-center"
                       >＋</button>
                       <span className="text-sm text-gray-600 w-20 text-right">

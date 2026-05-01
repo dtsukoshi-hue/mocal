@@ -45,7 +45,7 @@ export default async function SalesPage({ searchParams }: Props) {
     <div className="min-h-screen bg-stone-50">
       <AdminNav active="reports" role={sessionData.role as 'owner' | 'staff'} />
 
-      <main className="max-w-4xl mx-auto px-4 py-6">
+      <main id="main-content" className="max-w-4xl mx-auto px-4 py-6">
         <h1 className="text-lg font-bold text-gray-900 mb-4">レポート</h1>
         <SalesView orders={orders ?? []} currentRange={range ?? '30d'} />
       </main>
