@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /orders/
+Disallow: /api/
+
+Sitemap: https://mocal.jp/sitemap.xml
