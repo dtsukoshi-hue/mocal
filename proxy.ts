@@ -138,7 +138,14 @@ export async function proxy(request: NextRequest) {
             cookiesToSet.forEach(({ name, value }) =>
               request.cookies.set(name, value)
             )
-            response = NextResponse.next({ request: { headers: requestHeaders } })
+            // request.cookies.set が request.headers の Cookie も更新するため、
+            // 最新の request.headers から再取得して nonce を付与し直す
+            const updatedHeaders = new Headers(request.headers)
+            if (nonce && csp) {
+              updatedHeaders.set('x-nonce', nonce)
+              updatedHeaders.set('Content-Security-Policy', csp)
+            }
+            response = NextResponse.next({ request: { headers: updatedHeaders } })
             cookiesToSet.forEach(({ name, value, options }) =>
               response.cookies.set(name, value, options)
             )
