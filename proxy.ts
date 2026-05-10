@@ -106,21 +106,25 @@ export async function proxy(request: NextRequest) {
   const nonce = isPageRequest
     ? Buffer.from(crypto.randomUUID()).toString('base64')
     : null
+  const csp = nonce ? buildCsp(nonce) : null
+
+  // nonce を request headers にも付与（Server Components が headers() で読めるようにする）
+  const requestHeaders = new Headers(request.headers)
+  if (nonce && csp) {
+    requestHeaders.set('x-nonce', nonce)
+    requestHeaders.set('Content-Security-Policy', csp)
+  }
 
   // 認証不要の管理画面ページはスキップ
   if (pathname === '/admin/login' || pathname === '/admin/reset-password') {
-    const response = NextResponse.next()
-    if (nonce) {
-      const csp = buildCsp(nonce)
-      response.headers.set('Content-Security-Policy', csp)
-      response.headers.set('x-nonce', nonce)
-    }
+    const response = NextResponse.next({ request: { headers: requestHeaders } })
+    if (csp) response.headers.set('Content-Security-Policy', csp)
     return response
   }
 
   // /admin/* へのアクセスはセッション確認
   if (pathname.startsWith('/admin')) {
-    let response = NextResponse.next({ request })
+    let response = NextResponse.next({ request: { headers: requestHeaders } })
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -134,7 +138,7 @@ export async function proxy(request: NextRequest) {
             cookiesToSet.forEach(({ name, value }) =>
               request.cookies.set(name, value)
             )
-            response = NextResponse.next({ request })
+            response = NextResponse.next({ request: { headers: requestHeaders } })
             cookiesToSet.forEach(({ name, value, options }) =>
               response.cookies.set(name, value, options)
             )
@@ -149,21 +153,13 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL('/admin/login', request.url))
     }
 
-    if (nonce) {
-      const csp = buildCsp(nonce)
-      response.headers.set('Content-Security-Policy', csp)
-      response.headers.set('x-nonce', nonce)
-    }
+    if (csp) response.headers.set('Content-Security-Policy', csp)
     return response
   }
 
   // その他のページ（店舗ページ等）
-  const response = NextResponse.next()
-  if (nonce) {
-    const csp = buildCsp(nonce)
-    response.headers.set('Content-Security-Policy', csp)
-    response.headers.set('x-nonce', nonce)
-  }
+  const response = NextResponse.next({ request: { headers: requestHeaders } })
+  if (csp) response.headers.set('Content-Security-Policy', csp)
   return response
 }
 
