@@ -81,6 +81,34 @@ describe('proxy', () => {
     })
   })
 
+  describe('Content Security Policy', () => {
+    it('sets CSP header on page requests', async () => {
+      const res = await proxy(makeRequest({ pathname: '/' }))
+      const csp = res.headers.get('content-security-policy')
+      expect(csp).not.toBeNull()
+      expect(csp).toContain("default-src 'self'")
+      expect(csp).toContain("nonce-")
+      expect(csp).toContain("'strict-dynamic'")
+      expect(csp).toContain("frame-ancestors 'none'")
+    })
+
+    it('does not set CSP header on API requests', async () => {
+      const res = await proxy(makeRequest({ pathname: '/api/health' }))
+      expect(res.headers.get('content-security-policy')).toBeNull()
+    })
+
+    it('does not set CSP header on _next/static requests', async () => {
+      const res = await proxy(makeRequest({ pathname: '/_next/static/chunks/main.js' }))
+      expect(res.headers.get('content-security-policy')).toBeNull()
+    })
+
+    it('sets CSP on /admin/login (no auth required)', async () => {
+      const res = await proxy(makeRequest({ pathname: '/admin/login' }))
+      const csp = res.headers.get('content-security-policy')
+      expect(csp).not.toBeNull()
+    })
+  })
+
   describe('rate limiting', () => {
     it('returns 429 after 5 login POSTs from same IP', async () => {
       const ip = uniqueIp()

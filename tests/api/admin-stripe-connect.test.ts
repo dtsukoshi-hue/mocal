@@ -106,6 +106,30 @@ describe('POST /api/admin/stripe/connect', () => {
     )
   })
 
+  it('sends account_update when type is update', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    mockStore({ stripe_account_id: 'acct_existing' })
+    stripeMock.accountLinksCreate.mockResolvedValue({ url: 'https://stripe.com/update' })
+
+    const res = await POST(req('POST', { type: 'update' }) as never)
+    expect(res.status).toBe(200)
+    expect(stripeMock.accountLinksCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'account_update' })
+    )
+  })
+
+  it('sends account_onboarding when type is not update', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    mockStore({ stripe_account_id: 'acct_existing' })
+    stripeMock.accountLinksCreate.mockResolvedValue({ url: 'https://stripe.com/onboard' })
+
+    const res = await POST(req('POST', { type: 'onboarding' }) as never)
+    expect(res.status).toBe(200)
+    expect(stripeMock.accountLinksCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'account_onboarding' })
+    )
+  })
+
   it('returns the onboarding URL', async () => {
     sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
     mockStore({ stripe_account_id: 'acct_x' })

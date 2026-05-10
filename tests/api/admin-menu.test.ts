@@ -61,6 +61,18 @@ describe('POST /api/admin/menu', () => {
     expect(res.status).toBe(400)
   })
 
+  it('returns 400 for name exceeding 60 chars', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const res = await menuPost(req('POST', 'http://x', { name: 'A'.repeat(61), price: 100 }) as never)
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 for price exceeding 999999', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const res = await menuPost(req('POST', 'http://x', { name: 'A', price: 1_000_000 }) as never)
+    expect(res.status).toBe(400)
+  })
+
   it('inserts item when valid', async () => {
     sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
     const insert = vi.fn().mockReturnValue({
