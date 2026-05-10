@@ -1,12 +1,13 @@
 'use client'
 
-import { useActionState, useMemo, useState } from 'react'
+import { useActionState, useEffect, useMemo, useState } from 'react'
 import type { Stripe } from '@stripe/stripe-js'
 import { Elements } from '@stripe/react-stripe-js'
+import { createBrowserClient } from '@supabase/ssr'
 import { createOrderAction, type OrderState } from '@/app/actions/orders'
 import PaymentForm from './PaymentForm'
 import type { CartItem, CartCombo } from './MenuView'
-import type { MenuItem, Store } from '@/lib/database.types'
+import type { Database, MenuItem, Store } from '@/lib/database.types'
 
 type MenuItemForCart = Pick<MenuItem, 'id' | 'name' | 'price' | 'description' | 'category' | 'emoji' | 'image_url' | 'is_available' | 'sort_order'>
 
@@ -87,6 +88,21 @@ export default function Cart({ store, cart, setCart, cartCombos, setCartCombos, 
     undefined
   )
   const [customerNote, setCustomerNote] = useState('')
+
+  // ゲストユーザーを匿名認証でサインインさせる。
+  // Cookie に Supabase セッションが保存されるため、Server Action 実行時に
+  // createCookieClient().auth.getUser() で user.id を取得できる。
+  useEffect(() => {
+    const supabase = createBrowserClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        supabase.auth.signInAnonymously()
+      }
+    })
+  }, [])
   const [pickupType, setPickupType] = useState<'standard' | 'scheduled'>('standard')
   const [scheduledAt, setScheduledAt] = useState('')
   // ステップ: 'cart' = カート閲覧（数量編集・アップセル）、'confirm' = 注文確認

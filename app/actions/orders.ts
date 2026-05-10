@@ -1,13 +1,11 @@
 'use server'
 
-import { createServiceClient } from '@/lib/supabase-server'
+import { createServiceClient, createCookieClient } from '@/lib/supabase-server'
 import { createPayment } from '@/lib/payment'
 import { headers } from 'next/headers'
 import { checkRateLimitAsync } from '@/lib/rate-limit'
 import { logger } from '@/lib/logger'
 
-// ゲスト注文の INSERT は RLS のゲスト用 INSERT ポリシーが無いため service_role 必須。
-// ゲスト読み取りも同様に service_role を使い、UUID を access token として扱う。
 
 export type OrderState =
   | { error: string }
@@ -142,8 +140,11 @@ export async function createOrderAction(
     return { error: 'カートが空です。' }
   }
 
-  // ゲスト注文のため user_id は常に null（Supabase Auth は使用しない）
-  const userId = null
+  // Cookie に保存された Supabase セッションから匿名ユーザー ID を取得
+  // 匿名ログイン済みの場合は user.id、未ログインの場合は null（後方互換）
+  const cookieClient = await createCookieClient()
+  const { data: { user } } = await cookieClient.auth.getUser()
+  const userId = user?.id ?? null
 
   // RLS のゲスト用 INSERT ポリシーが無い & UUID/価格はサーバ側で再検証するため service_role を使用
   const supabase = createServiceClient()
