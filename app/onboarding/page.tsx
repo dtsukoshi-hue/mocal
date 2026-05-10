@@ -66,6 +66,7 @@ export default function OnboardingPage() {
               name="email"
               type="email"
               required
+              autoComplete="email"
               placeholder="admin@example.com"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
@@ -80,6 +81,7 @@ export default function OnboardingPage() {
               type="password"
               required
               minLength={8}
+              autoComplete="new-password"
               placeholder="••••••••"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
