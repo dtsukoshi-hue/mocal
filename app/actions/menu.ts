@@ -98,15 +98,20 @@ export async function updateMenuItemAction(
   return { success: true }
 }
 
-export async function toggleMenuItemAction(id: string, isAvailable: boolean): Promise<void> {
+export async function toggleMenuItemAction(id: string, isAvailable: boolean): Promise<{ error: string } | undefined> {
   const session = await verifyStoreSession()
   const supabase = createServiceClient()
 
-  await supabase
+  const { error } = await supabase
     .from('menu_items')
     .update({ is_available: isAvailable })
     .eq('id', id)
     .eq('store_id', session.storeId)
+
+  if (error) {
+    console.error('[menu/toggle]', error)
+    return { error: '販売状態の更新に失敗しました。' }
+  }
 
   revalidatePath('/admin/menu')
 }
@@ -165,15 +170,20 @@ export async function moveMenuItemAction(id: string, direction: 'up' | 'down'): 
   revalidatePath('/admin/menu')
 }
 
-export async function deleteMenuItemAction(id: string): Promise<void> {
+export async function deleteMenuItemAction(id: string): Promise<{ error: string } | undefined> {
   const session = await verifyStoreSession()
   const supabase = createServiceClient()
 
-  await supabase
+  const { error } = await supabase
     .from('menu_items')
     .delete()
     .eq('id', id)
     .eq('store_id', session.storeId)
+
+  if (error) {
+    console.error('[menu/delete]', error)
+    return { error: '商品の削除に失敗しました。' }
+  }
 
   revalidatePath('/admin/menu')
 }

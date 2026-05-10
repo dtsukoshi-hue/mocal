@@ -14,6 +14,7 @@ interface Props {
 export default function MenuItemCard({ item, isFirst, isLast }: Props) {
   const [editing, setEditing] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
 
   if (editing) {
     return (
@@ -24,7 +25,11 @@ export default function MenuItemCard({ item, isFirst, isLast }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3">
+    <div className="bg-white rounded-xl shadow-sm p-4">
+      {error && (
+        <p className="text-xs text-red-600 mb-2">{error}</p>
+      )}
+      <div className="flex items-center gap-3">
       {/* 並び替えボタン */}
       <div className="flex flex-col gap-0.5 shrink-0">
         <form action={moveMenuItemAction.bind(null, item.id, 'up')}>
@@ -64,7 +69,13 @@ export default function MenuItemCard({ item, isFirst, isLast }: Props) {
 
       <div className="flex items-center gap-2 shrink-0">
         <button
-          onClick={() => startTransition(() => toggleMenuItemAction(item.id, !item.is_available))}
+          onClick={() => {
+            setError(null)
+            startTransition(async () => {
+              const result = await toggleMenuItemAction(item.id, !item.is_available)
+              if (result?.error) setError(result.error)
+            })
+          }}
           disabled={isPending}
           role="switch"
           aria-checked={item.is_available}
@@ -85,17 +96,21 @@ export default function MenuItemCard({ item, isFirst, isLast }: Props) {
           編集
         </button>
 
-        <form action={deleteMenuItemAction.bind(null, item.id)}>
-          <button
-            type="submit"
-            className="text-sm text-red-500 hover:text-red-600 px-2"
-            onClick={e => {
-              if (!confirm(`「${item.name}」を削除しますか？`)) e.preventDefault()
-            }}
-          >
-            削除
-          </button>
-        </form>
+        <button
+          disabled={isPending}
+          onClick={() => {
+            if (!confirm(`「${item.name}」を削除しますか？`)) return
+            setError(null)
+            startTransition(async () => {
+              const result = await deleteMenuItemAction(item.id)
+              if (result?.error) setError(result.error)
+            })
+          }}
+          className="text-sm text-red-500 hover:text-red-600 px-2 disabled:opacity-50"
+        >
+          削除
+        </button>
+      </div>
       </div>
     </div>
   )
