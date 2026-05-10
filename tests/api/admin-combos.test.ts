@@ -192,13 +192,15 @@ describe('GET /api/admin/combos', () => {
       }
       if (table === 'combo_offer_items') {
         return {
-          select: vi.fn().mockResolvedValue({
-            data: [
-              { combo_id: 'c1', menu_item_id: ITEM_A, qty: 1 },
-              { combo_id: 'c2', menu_item_id: ITEM_B, qty: 2 },
-              { combo_id: 'c-foreign', menu_item_id: ITEM_A, qty: 1 },
-            ],
-            error: null,
+          select: vi.fn().mockReturnValue({
+            in: vi.fn().mockResolvedValue({
+              data: [
+                { combo_id: 'c1', menu_item_id: ITEM_A, qty: 1 },
+                { combo_id: 'c2', menu_item_id: ITEM_B, qty: 2 },
+                // c-foreign は .in() で除外されているので返さない
+              ],
+              error: null,
+            }),
           }),
         }
       }
