@@ -116,30 +116,36 @@ export async function GET() {
 
   const supabase = createServiceClient()
 
-  const [{ data: combos, error: c1 }, { data: items, error: c2 }] = await Promise.all([
-    supabase
-      .from('combo_offers')
-      .select('id, name, description, price_delta, emoji, is_available, sort_order')
-      .eq('store_id', session.storeId)
-      .order('sort_order', { ascending: true }),
-    supabase
-      .from('combo_offer_items')
-      .select('combo_id, menu_item_id, qty'),
-  ])
+  const { data: combos, error: c1 } = await supabase
+    .from('combo_offers')
+    .select('id, name, description, price_delta, emoji, is_available, sort_order')
+    .eq('store_id', session.storeId)
+    .order('sort_order', { ascending: true })
 
-  if (c1 || c2) {
-    logger.error('combos fetch error', { storeId: session.storeId, c1: c1?.code, c2: c2?.code })
+  if (c1) {
+    logger.error('combos fetch error', { storeId: session.storeId, code: c1.code })
     return NextResponse.json({ error: '取得に失敗しました。' }, { status: 500 })
   }
 
-  // combo_offer_items は全行を返してしまうので、取得した combos の id でフィルタ
-  const validIds = new Set((combos ?? []).map((c) => c.id))
+  const comboIds = (combos ?? []).map((c) => c.id)
   const itemsByCombo = new Map<string, { menu_item_id: string; qty: number }[]>()
-  for (const it of items ?? []) {
-    if (!validIds.has(it.combo_id)) continue
-    const arr = itemsByCombo.get(it.combo_id) ?? []
-    arr.push({ menu_item_id: it.menu_item_id, qty: it.qty })
-    itemsByCombo.set(it.combo_id, arr)
+
+  if (comboIds.length > 0) {
+    const { data: items, error: c2 } = await supabase
+      .from('combo_offer_items')
+      .select('combo_id, menu_item_id, qty')
+      .in('combo_id', comboIds)
+
+    if (c2) {
+      logger.error('combo_offer_items fetch error', { storeId: session.storeId, code: c2.code })
+      return NextResponse.json({ error: '取得に失敗しました。' }, { status: 500 })
+    }
+
+    for (const it of items ?? []) {
+      const arr = itemsByCombo.get(it.combo_id) ?? []
+      arr.push({ menu_item_id: it.menu_item_id, qty: it.qty })
+      itemsByCombo.set(it.combo_id, arr)
+    }
   }
 
   const result = (combos ?? []).map((c) => ({

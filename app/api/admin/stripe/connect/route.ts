@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   }
 
   // type: 'onboarding' = 新規登録 / 'update' = 既存アカウントの編集再送
-  const linkType = body.type === 'update' ? 'account_onboarding' : 'account_onboarding'
+  const linkType = body.type === 'update' ? 'account_update' : 'account_onboarding'
 
   const supabase = createServiceClient()
   const { data: store, error: storeError } = await supabase

@@ -2,6 +2,51 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifySessionToken } from '@/lib/session'
 
+// ---------------------------------------------------------------------------
+// Content Security Policy (CSP) — nonce ベースで XSS を防御
+// Next.js App Router は hydration 用インラインスクリプトを注入するため、
+// nonce を使って特定スクリプトだけを許可する。
+// ---------------------------------------------------------------------------
+function buildCsp(nonce: string): string {
+  const isDev = process.env.NODE_ENV === 'development'
+
+  // Supabase WebSocket URL（env から動的に取得）
+  let supabaseHost = ''
+  let supabaseWss = ''
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+    if (supabaseUrl) {
+      supabaseHost = new URL(supabaseUrl).host
+      supabaseWss  = `wss://${supabaseHost}`
+    }
+  } catch { /* invalid URL → fallback to empty */ }
+
+  const directives = [
+    `default-src 'self'`,
+    // 'strict-dynamic': nonce 付きスクリプトが動的に読み込むスクリプトも許可
+    // js.stripe.com: Stripe.js（支払いフォーム）
+    // 'unsafe-eval': 開発環境のみ（React DevTools が使用）
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://js.stripe.com${isDev ? " 'unsafe-eval'" : ''}`,
+    // Stripe の Payment Element はインラインスタイルを注入するため unsafe-inline が必要
+    `style-src 'self' 'unsafe-inline'`,
+    // Stripe のカードロゴ等の画像
+    `img-src 'self' blob: data: https://*.stripe.com`,
+    `font-src 'self'`,
+    `object-src 'none'`,
+    `base-uri 'self'`,
+    `form-action 'self'`,
+    // Stripe Payment Element は iframe で描画される
+    `frame-src https://js.stripe.com`,
+    // Supabase REST/Realtime（HTTP + WebSocket）+ Stripe API
+    `connect-src 'self'${supabaseHost ? ` https://${supabaseHost} ${supabaseWss}` : ''} https://api.stripe.com`,
+    // Service Worker（WebPush 通知）
+    `worker-src 'self'`,
+    `frame-ancestors 'none'`,
+  ]
+
+  return directives.join('; ')
+}
+
 // Edge Runtime rate limiter (in-memory, per-instance)
 const edgeRateLimitStore = new Map<string, { count: number; resetAt: number }>()
 
@@ -42,9 +87,26 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  // CSP 用 nonce を生成（ページリクエストのみ）
+  // _next/static・API・favicon など静的リソースは除外
+  const isPageRequest = !pathname.startsWith('/_next/') && !pathname.startsWith('/api/')
+  const nonce = isPageRequest
+    ? Buffer.from(crypto.randomUUID()).toString('base64')
+    : null
+  const csp = nonce ? buildCsp(nonce) : null
+
+  // nonce を request headers にも付与（Server Components が headers() で読めるようにする）
+  const requestHeaders = new Headers(request.headers)
+  if (nonce && csp) {
+    requestHeaders.set('x-nonce', nonce)
+    requestHeaders.set('Content-Security-Policy', csp)
+  }
+
   // ログインページはスキップ
   if (pathname === '/admin/login') {
-    return NextResponse.next()
+    const response = NextResponse.next({ request: { headers: requestHeaders } })
+    if (csp) response.headers.set('Content-Security-Policy', csp)
+    return response
   }
 
   // /admin/* へのアクセスはセッション確認
@@ -55,7 +117,9 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  return NextResponse.next()
+  const response = NextResponse.next({ request: { headers: requestHeaders } })
+  if (csp) response.headers.set('Content-Security-Policy', csp)
+  return response
 }
 
 export const config = {

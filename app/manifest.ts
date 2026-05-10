@@ -1,23 +1,26 @@
 import type { MetadataRoute } from 'next'
 
 // PWA マニフェスト
-// 顧客が注文ステータス画面をホーム画面に追加して再訪しやすくする。
+// 顧客が店舗ページをホーム画面に追加して再訪しやすくする。
 // アイコンは将来差し替え（現状は favicon を流用）。
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'mocal',
+    name: 'mocal — テイクアウト事前注文',
     short_name: 'mocal',
-    description: 'テイクアウト事前注文プラットフォーム',
-    start_url: '/orders',
+    description: '近くのお店に並ばず・待たず・スマホで事前注文。受取番号で受け取るだけ。',
+    start_url: '/',
     display: 'standalone',
-    background_color: '#f9fafb',
-    theme_color: '#f97316',
+    orientation: 'portrait',
+    background_color: '#f5f5f4',
+    theme_color: '#b45309',
     lang: 'ja',
+    categories: ['food', 'shopping'],
     icons: [
       {
         src: '/favicon.ico',
         sizes: 'any',
         type: 'image/x-icon',
+        purpose: 'any',
       },
     ],
   }
