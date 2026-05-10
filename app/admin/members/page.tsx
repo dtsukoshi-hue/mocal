@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { verifyStoreSession } from '@/lib/dal'
-import { createSupabaseServerClient } from '@/lib/supabase-ssr'
 import { createServiceClient } from '@/lib/supabase-server'
 import Link from 'next/link'
 import InviteStaffForm from './_components/InviteStaffForm'
@@ -10,16 +9,15 @@ export const metadata: Metadata = { title: 'スタッフ管理 | mocal' }
 
 export default async function MembersPage() {
   const session = await verifyStoreSession()
-  const supabase = await createSupabaseServerClient()
+
+  // service_role で全メンバーを取得（anon key の RLS は user_id = auth.uid() のみ許可するため）
+  const serviceClient = createServiceClient()
 
   // メンバー一覧（auth.users と JOIN はできないので user_id だけ取得し別途解決）
-  const { data: members } = await supabase
+  const { data: members } = await serviceClient
     .from('store_members')
     .select('id, user_id, role')
     .eq('store_id', session.storeId)
-
-  // Auth admin API でこの店舗のメンバーのみのメールアドレスを取得
-  const serviceClient = createServiceClient()
   const memberIds = (members ?? []).map(m => m.user_id)
   const userEntries = await Promise.all(
     memberIds.map(async (uid) => {
