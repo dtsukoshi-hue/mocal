@@ -38,11 +38,23 @@ export async function PATCH(
   if (body.name !== undefined && (typeof body.name !== 'string' || body.name.trim() === '')) {
     return NextResponse.json({ error: 'メニュー名は必須です。' }, { status: 400 })
   }
+  if (body.name !== undefined && typeof body.name === 'string' && body.name.trim().length > 60) {
+    return NextResponse.json({ error: 'メニュー名は60文字以内にしてください。' }, { status: 400 })
+  }
   if (body.price !== undefined && (typeof body.price !== 'number' || body.price < 0 || !Number.isInteger(body.price))) {
     return NextResponse.json({ error: '価格が不正です。' }, { status: 400 })
   }
+  if (body.price !== undefined && typeof body.price === 'number' && body.price > 999_999) {
+    return NextResponse.json({ error: '価格は999,999円以下にしてください。' }, { status: 400 })
+  }
   if (body.description !== undefined && typeof body.description === 'string' && body.description.length > 200) {
     return NextResponse.json({ error: '説明文は200文字以内にしてください。' }, { status: 400 })
+  }
+  if (body.category !== undefined && typeof body.category === 'string' && body.category.trim().length > 30) {
+    return NextResponse.json({ error: 'カテゴリは30文字以内にしてください。' }, { status: 400 })
+  }
+  if (body.emoji !== undefined && typeof body.emoji === 'string' && body.emoji.trim().length > 4) {
+    return NextResponse.json({ error: '絵文字が長すぎます。' }, { status: 400 })
   }
 
   const updateData: Partial<MenuItemInsert> = {}
