@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { removeMemberAction } from '@/app/actions/members'
 
 interface Props {
@@ -9,19 +9,27 @@ interface Props {
 
 export default function RemoveMemberButton({ memberId }: Props) {
   const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
 
   const handleRemove = () => {
     if (!confirm('このスタッフを削除しますか？')) return
-    startTransition(() => removeMemberAction(memberId))
+    setError(null)
+    startTransition(async () => {
+      const result = await removeMemberAction(memberId)
+      if (result?.error) setError(result.error)
+    })
   }
 
   return (
-    <button
-      onClick={handleRemove}
-      disabled={isPending}
-      className="text-sm text-red-500 hover:text-red-600 disabled:opacity-50"
-    >
-      {isPending ? '削除中…' : '削除'}
-    </button>
+    <div className="text-right">
+      {error && <p className="text-xs text-red-600 mb-1">{error}</p>}
+      <button
+        onClick={handleRemove}
+        disabled={isPending}
+        className="text-sm text-red-500 hover:text-red-600 disabled:opacity-50"
+      >
+        {isPending ? '削除中…' : '削除'}
+      </button>
+    </div>
   )
 }

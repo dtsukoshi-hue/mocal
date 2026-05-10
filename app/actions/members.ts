@@ -61,9 +61,9 @@ export async function inviteStaffAction(
   return { success: `${email} をスタッフとして追加しました。` }
 }
 
-export async function removeMemberAction(memberId: string): Promise<void> {
+export async function removeMemberAction(memberId: string): Promise<{ error: string } | undefined> {
   const session = await verifyStoreSession()
-  if (session.role !== 'owner') return
+  if (session.role !== 'owner') return { error: 'オーナーのみスタッフを削除できます。' }
 
   const supabase = createServiceClient()
 
@@ -74,13 +74,18 @@ export async function removeMemberAction(memberId: string): Promise<void> {
     .eq('id', memberId)
     .single()
 
-  if (member?.user_id === session.userId) return
+  if (member?.user_id === session.userId) return { error: 'オーナー自身は削除できません。' }
 
-  await supabase
+  const { error } = await supabase
     .from('store_members')
     .delete()
     .eq('id', memberId)
     .eq('store_id', session.storeId)
+
+  if (error) {
+    console.error('[members/remove]', error)
+    return { error: 'スタッフの削除に失敗しました。' }
+  }
 
   revalidatePath('/admin/members')
 }
