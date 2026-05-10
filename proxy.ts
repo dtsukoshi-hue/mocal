@@ -14,6 +14,8 @@ const RATE_LIMITS: { path: string; max: number; windowMs: number }[] = [
   { path: '/api/orders/', max: 60, windowMs: 60_000 },
   // 注文作成は Server Action 経由のため /api/orders への直接 POST は存在しない
   { path: '/api/push/subscribe', max: 20, windowMs: 60_000 },
+  // テスト通知: 5回/分/IP（スパム防止）
+  { path: '/api/push/test', max: 5, windowMs: 60_000 },
 ]
 
 function checkRateLimit(ip: string, pathname: string): boolean {
