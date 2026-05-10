@@ -29,8 +29,8 @@ function buildCsp(nonce: string): string {
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://js.stripe.com${isDev ? " 'unsafe-eval'" : ''}`,
     // Stripe の Payment Element はインラインスタイルを注入するため unsafe-inline が必要
     `style-src 'self' 'unsafe-inline'`,
-    // Stripe のカードロゴ等の画像
-    `img-src 'self' blob: data: https://*.stripe.com`,
+    // Stripe のカードロゴ等の画像 + Supabase Storage（店舗ロゴ・メニュー画像）
+    `img-src 'self' blob: data: https://*.stripe.com${supabaseHost ? ` https://${supabaseHost}` : ''}`,
     `font-src 'self'`,
     `object-src 'none'`,
     `base-uri 'self'`,
