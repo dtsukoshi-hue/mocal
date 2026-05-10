@@ -15,6 +15,7 @@ interface Props {
 export default function OrderActions({ orderId, status, defaultWaitMinutes = 20 }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [isFetching, setIsFetching] = useState(false)
   const [waitMinutes, setWaitMinutes] = useState<number>(defaultWaitMinutes)
   const [error, setError] = useState<string | null>(null)
 
@@ -24,20 +25,26 @@ export default function OrderActions({ orderId, status, defaultWaitMinutes = 20 
 
   async function patch(body: { status: string; waitMinutes?: number }) {
     setError(null)
-    const res = await fetch(`/api/orders/${orderId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({}))
-      setError(json.error ?? '更新に失敗しました。')
-      return
+    setIsFetching(true)
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        setError(json.error ?? '更新に失敗しました。')
+        return
+      }
+      startTransition(() => router.refresh())
+    } finally {
+      setIsFetching(false)
     }
-    startTransition(() => router.refresh())
   }
 
-  const disabled = isPending
+  // fetch 中も router.refresh() 中もボタンを無効化
+  const disabled = isFetching || isPending
 
   return (
     <div className="space-y-2 pt-1">
@@ -60,7 +67,7 @@ export default function OrderActions({ orderId, status, defaultWaitMinutes = 20 
             onClick={() => patch({ status: 'accepted', waitMinutes })}
             className="flex-1 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-1.5 disabled:opacity-50"
           >
-            {isPending ? '処理中…' : '受理する'}
+            {disabled ? '処理中…' : '受理する'}
           </button>
           <button
             disabled={disabled}
@@ -79,7 +86,7 @@ export default function OrderActions({ orderId, status, defaultWaitMinutes = 20 
             onClick={() => patch({ status: 'preparing' })}
             className="text-sm font-medium bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-4 py-1.5 disabled:opacity-50"
           >
-            {isPending ? '処理中…' : '調理開始'}
+            {disabled ? '処理中…' : '調理開始'}
           </button>
           <button
             disabled={disabled}
@@ -105,7 +112,7 @@ export default function OrderActions({ orderId, status, defaultWaitMinutes = 20 
             onClick={() => patch({ status: 'ready' })}
             className="flex-1 text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg px-4 py-1.5 disabled:opacity-50"
           >
-            {isPending ? '処理中…' : '準備完了'}
+            {disabled ? '処理中…' : '準備完了'}
           </button>
           <button
             disabled={disabled}
@@ -124,7 +131,7 @@ export default function OrderActions({ orderId, status, defaultWaitMinutes = 20 
             onClick={() => patch({ status: 'completed' })}
             className="flex-1 text-sm font-medium bg-gray-800 hover:bg-gray-900 text-white rounded-lg px-4 py-1.5 disabled:opacity-50"
           >
-            {isPending ? '処理中…' : '受取確認'}
+            {disabled ? '処理中…' : '受取確認'}
           </button>
           <button
             disabled={disabled}
