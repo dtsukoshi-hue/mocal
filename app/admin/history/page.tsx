@@ -27,6 +27,7 @@ const statusColor: Record<HistoryStatus, string> = {
 const cancelledReasonLabel: Record<string, string> = {
   store_closed:     '営業時間外',
   out_of_stock:     '在庫切れ',
+  store_cancel:     '店舗キャンセル',
   user_cancel:      'ユーザーキャンセル',
   timeout:          'タイムアウト',
   payment_failed:   '決済失敗',

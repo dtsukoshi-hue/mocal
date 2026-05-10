@@ -17,6 +17,7 @@ export type PickupType = 'standard' | 'scheduled'
 export type CancelledReasonType =
   | 'store_closed'
   | 'out_of_stock'
+  | 'store_cancel'    // 店舗スタッフによる手動キャンセル
   | 'user_cancel'
   | 'timeout'
   | 'payment_failed'

@@ -92,6 +92,11 @@ export async function PATCH(
   const now = new Date().toISOString()
   const updateData: Partial<Order> = { status }
 
+  // 店舗スタッフによる手動キャンセルは cancelled_reason_type を明示
+  if (status === 'cancelled') {
+    updateData.cancelled_reason_type = 'store_cancel'
+  }
+
   if (status === 'accepted') {
     updateData.accepted_at = now
     // waitMinutes は許可値のみ（上で検証済み）、未指定時はデフォルト 20 分

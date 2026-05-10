@@ -1,6 +1,6 @@
 'use client'
 
-import { useOptimistic, useTransition } from 'react'
+import { useOptimistic, useTransition, useState } from 'react'
 import { toggleStoreOpenAction } from '@/app/actions/store'
 
 interface Props {
@@ -10,16 +10,20 @@ interface Props {
 export default function StoreOpenToggle({ isOpen }: Props) {
   const [optimisticOpen, setOptimisticOpen] = useOptimistic(isOpen)
   const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
 
   function toggle() {
+    setError(null)
     startTransition(async () => {
       setOptimisticOpen(!optimisticOpen)
-      await toggleStoreOpenAction(!optimisticOpen)
+      const result = await toggleStoreOpenAction(!optimisticOpen)
+      if (result?.error) setError(result.error)
     })
   }
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-5">
+      {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
       <div className="flex items-center justify-between">
         <div>
           <p className="font-semibold text-gray-900">受付状態</p>

@@ -42,14 +42,19 @@ export async function updateStoreProfileAction(
   return { success: true }
 }
 
-export async function toggleStoreOpenAction(isOpen: boolean): Promise<void> {
+export async function toggleStoreOpenAction(isOpen: boolean): Promise<{ error: string } | undefined> {
   const session = await verifyStoreSession()
   const supabase = createServiceClient()
 
-  await supabase
+  const { error } = await supabase
     .from('stores')
     .update({ is_open: isOpen })
     .eq('id', session.storeId)
+
+  if (error) {
+    console.error('[store/toggle]', error)
+    return { error: '受付状態の更新に失敗しました。' }
+  }
 
   revalidatePath('/admin/settings')
   revalidatePath('/admin/dashboard')

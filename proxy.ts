@@ -10,11 +10,9 @@ import { createServerClient } from '@supabase/ssr'
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
 
 const RATE_LIMITS: { path: string; max: number; windowMs: number }[] = [
-  // PATCH /api/orders/[id] — 店舗スタッフの注文状態更新: 60回/分/IP（より寛大に）
-  // ※ /api/orders/ (スラッシュあり) を先に置いて find の優先度を利用する
+  // PATCH /api/orders/[id] — 店舗スタッフの注文状態更新: 60回/分/IP
   { path: '/api/orders/', max: 60, windowMs: 60_000 },
-  // POST /api/orders — 顧客の注文作成: 10回/分/IP（厳しめ）
-  { path: '/api/orders',  max: 10, windowMs: 60_000 },
+  // 注文作成は Server Action 経由のため /api/orders への直接 POST は存在しない
   { path: '/api/push/subscribe', max: 20, windowMs: 60_000 },
 ]
 
