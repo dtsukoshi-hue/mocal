@@ -59,7 +59,10 @@ async function sendWithRetry(
       }
       if (isLast) {
         console.error('[webpush] 送信失敗（最大リトライ到達）:', err)
+        break
       }
+      // 指数バックオフ: 500ms → 1000ms（最大2回リトライ）
+      await new Promise(resolve => setTimeout(resolve, 500 * attempt))
     }
   }
 }

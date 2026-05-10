@@ -59,7 +59,36 @@ export async function POST(request: NextRequest) {
         console.error('[webhook] 注文取得失敗:', orderErr)
         break
       }
-      if (!order || order.status !== 'pending') break
+      if (!order) break
+
+      // cron タイムアウト等で既にキャンセル済みの場合 → 自動返金して終了
+      // （顧客は決済されたのに注文が存在しない状態を防ぐ）
+      if (order.status === 'cancelled') {
+        const chargeId = typeof intent.latest_charge === 'string'
+          ? intent.latest_charge
+          : intent.latest_charge?.id ?? null
+        if (chargeId) {
+          const { data: storeForRefund } = await supabase
+            .from('stores')
+            .select('stripe_account_id')
+            .eq('id', order.store_id)
+            .single()
+          try {
+            await refundPayment(chargeId, storeForRefund?.stripe_account_id)
+            await supabase.from('orders').update({ status: 'refunded', stripe_charge_id: chargeId }).eq('id', orderId)
+            notifyOrder(orderId, {
+              title: 'キャンセル・返金のお知らせ',
+              body: '注文がキャンセルされていたため、返金処理を行いました',
+              url: `/orders/${orderId}`,
+            }).catch((e) => console.error('[webhook] タイムアウト返金通知失敗:', e))
+          } catch (err) {
+            console.error('[webhook] タイムアウトキャンセル後の返金失敗（手動対応必要）charge:', chargeId, err)
+          }
+        }
+        break
+      }
+
+      if (order.status !== 'pending') break
 
       const { data: store, error: storeErr } = await supabase
         .from('stores')

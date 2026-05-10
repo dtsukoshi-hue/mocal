@@ -1,7 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createHmac } from 'crypto'
 import { getStripe } from '@/lib/stripe'
 import { createServiceClient } from '@/lib/supabase-server'
 import { createSupabaseServerClient } from '@/lib/supabase-ssr'
+
+// state の HMAC 署名を検証（connect/route.ts の signState と対称）
+function verifyState(stateParam: string): { storeId: string } | null {
+  try {
+    const secret = process.env.STRIPE_WEBHOOK_SECRET ?? process.env.NEXTAUTH_SECRET ?? 'dev-secret'
+    const decoded = JSON.parse(Buffer.from(stateParam, 'base64url').toString('utf-8'))
+    const { sig, ...payload } = decoded
+    if (!sig || !payload.storeId) return null
+    const expected = createHmac('sha256', secret).update(JSON.stringify(payload)).digest('hex')
+    // タイミング攻撃耐性のある比較
+    if (sig.length !== expected.length) return null
+    let diff = 0
+    for (let i = 0; i < sig.length; i++) diff |= sig.charCodeAt(i) ^ expected.charCodeAt(i)
+    if (diff !== 0) return null
+    return { storeId: payload.storeId }
+  } catch {
+    return null
+  }
+}
 
 // Stripe Connect OAuth コールバック
 // GET /api/onboarding/stripe/callback?code=...&state=...
@@ -21,14 +41,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${appUrl}/admin/settings?stripe_error=invalid_callback`)
   }
 
-  let storeId: string
-  try {
-    const decoded = JSON.parse(Buffer.from(state, 'base64url').toString('utf-8'))
-    storeId = decoded.storeId
-    if (!storeId) throw new Error()
-  } catch {
+  const verified = verifyState(state)
+  if (!verified) {
     return NextResponse.redirect(`${appUrl}/admin/settings?stripe_error=invalid_state`)
   }
+  const { storeId } = verified
 
   // セッション確認：ログイン済みかつ storeId のオーナーであることを検証
   const supabaseUser = await createSupabaseServerClient()
