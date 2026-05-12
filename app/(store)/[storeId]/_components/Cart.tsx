@@ -152,10 +152,12 @@ export default function Cart({ store, cart, setCart, cartCombos, setCartCombos, 
   // 商品価格は税込前提（飲食店標準）。消費税 10% を内税で表示。
   const taxIncluded = Math.round(totalAmount - totalAmount / 1.1)
 
+  const MAX_QTY = 99
+
   const updateQty = (menuItemId: string, delta: number) => {
     setCart(prev =>
       prev
-        .map(c => c.menuItemId === menuItemId ? { ...c, qty: c.qty + delta } : c)
+        .map(c => c.menuItemId === menuItemId ? { ...c, qty: Math.min(MAX_QTY, c.qty + delta) } : c)
         .filter(c => c.qty > 0)
     )
   }
@@ -163,7 +165,7 @@ export default function Cart({ store, cart, setCart, cartCombos, setCartCombos, 
   const updateComboQty = (comboId: string, delta: number) => {
     setCartCombos(prev =>
       prev
-        .map(c => c.comboId === comboId ? { ...c, qty: c.qty + delta } : c)
+        .map(c => c.comboId === comboId ? { ...c, qty: Math.min(MAX_QTY, c.qty + delta) } : c)
         .filter(c => c.qty > 0)
     )
   }
