@@ -5,6 +5,7 @@ import { createPayment } from '@/lib/payment'
 import { headers } from 'next/headers'
 import { checkRateLimitAsync } from '@/lib/rate-limit'
 import { logger } from '@/lib/logger'
+import { isUuid } from '@/lib/validation'
 
 // ゲスト注文の INSERT は RLS のゲスト用 INSERT ポリシーが無いため service_role 必須。
 // ゲスト読み取りも同様に service_role を使い、UUID を access token として扱う。
@@ -56,8 +57,7 @@ export async function createOrderAction(
   }
 
   // storeId UUID 形式チェック
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-  if (!uuidRegex.test(storeId)) {
+  if (!isUuid(storeId)) {
     return { error: '注文データが不正です。' }
   }
 
@@ -107,8 +107,7 @@ export async function createOrderAction(
   // 各アイテムの構造バリデーション
   for (const item of items) {
     if (
-      typeof item.menuItemId !== 'string' ||
-      !uuidRegex.test(item.menuItemId) ||
+      !isUuid(item.menuItemId) ||
       typeof item.qty !== 'number' ||
       !Number.isInteger(item.qty) ||
       item.qty < 1 ||
@@ -136,8 +135,7 @@ export async function createOrderAction(
     }
     for (const cc of combos) {
       if (
-        typeof cc.comboId !== 'string' ||
-        !uuidRegex.test(cc.comboId) ||
+        !isUuid(cc.comboId) ||
         typeof cc.qty !== 'number' ||
         !Number.isInteger(cc.qty) ||
         cc.qty < 1 ||

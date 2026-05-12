@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { getSessionPayload } from '@/lib/session'
+import { isUuid } from '@/lib/validation'
 import type { MenuItemInsert } from '@/lib/database.types'
 
-const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
 async function authorize(id: string) {
-  if (!uuidRegex.test(id)) return { error: '見つかりません', status: 404 }
+  if (!isUuid(id)) return { error: '見つかりません', status: 404 }
   const session = await getSessionPayload()
   if (!session) return { error: '認証が必要です。', status: 401 }
   const supabase = createServiceClient()
