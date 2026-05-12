@@ -194,4 +194,38 @@ describe('PATCH /api/orders/[id]', () => {
     expect(res.status).toBe(200)
     expect(stripeMock.refundsCreate).not.toHaveBeenCalled()
   })
+
+  // waitMinutes 範囲外はサイレント無視 → estimated_ready_at を設定しない
+  it.each([
+    ['0（下限未満）', 0],
+    ['121（上限超え）', 121],
+    ['1.5（小数）', 1.5],
+  ])('waitMinutes=%s のとき estimated_ready_at を設定しない', async (_label, waitMinutes) => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const { updateBuilder } = mockSupabase({
+      orderRow: { id: ORDER_ID, status: 'paid', store_id: STORE_ID, stripe_charge_id: null },
+    })
+    const res = await PATCH(
+      makeRequest({ status: 'accepted', waitMinutes }) as never,
+      makeCtx(ORDER_ID)
+    )
+    expect(res.status).toBe(200)
+    const updateCall = (updateBuilder.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(updateCall.status).toBe('accepted')
+    expect(updateCall.estimated_ready_at).toBeUndefined()
+  })
+
+  it('waitMinutes が文字列のとき estimated_ready_at を設定しない', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const { updateBuilder } = mockSupabase({
+      orderRow: { id: ORDER_ID, status: 'paid', store_id: STORE_ID, stripe_charge_id: null },
+    })
+    const res = await PATCH(
+      makeRequest({ status: 'accepted', waitMinutes: '15' }) as never,
+      makeCtx(ORDER_ID)
+    )
+    expect(res.status).toBe(200)
+    const updateCall = (updateBuilder.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(updateCall.estimated_ready_at).toBeUndefined()
+  })
 })
