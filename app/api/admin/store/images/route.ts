@@ -55,9 +55,14 @@ export async function POST(request: NextRequest) {
 
   const supabase = createServiceClient()
   const ext = extFromMime(file.type)
-  // パスは store_id/kind-<timestamp>.<ext>。古い画像はアップロード後に削除する想定
-  // （ここでは上書き優先で固定パスを使う）
   const path = `${session.storeId}/${kind}.${ext}`
+
+  // 拡張子が異なる既存ファイルを削除（例: logo.jpg → logo.png に変更した場合）
+  const { data: existingFiles } = await supabase.storage.from(BUCKET).list(session.storeId)
+  const existing = (existingFiles ?? []).find(f => f.name.startsWith(kind + '.') && f.name !== `${kind}.${ext}`)
+  if (existing) {
+    await supabase.storage.from(BUCKET).remove([`${session.storeId}/${existing.name}`]).catch(() => {})
+  }
 
   const { error: uploadErr } = await supabase
     .storage
@@ -89,7 +94,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ok: true, url })
 }
 
-// DELETE: 画像を削除（DB の url を null にする・バケットからは消さない）
+// DELETE: 画像を削除（DB の url を null にし、バケットからも削除する）
 export async function DELETE(request: NextRequest) {
   const session = await getSessionPayload()
   if (!session) {
@@ -109,6 +114,16 @@ export async function DELETE(request: NextRequest) {
   }
 
   const supabase = createServiceClient()
+
+  // バケットから該当ファイルを削除
+  const { data: existingFiles } = await supabase.storage.from(BUCKET).list(session.storeId)
+  const toDelete = (existingFiles ?? [])
+    .filter(f => f.name.startsWith(kind + '.'))
+    .map(f => `${session.storeId}/${f.name}`)
+  if (toDelete.length > 0) {
+    await supabase.storage.from(BUCKET).remove(toDelete).catch(() => {})
+  }
+
   const update = kind === 'logo' ? { logo_url: null } : { cover_url: null }
   const { error } = await supabase
     .from('stores')
