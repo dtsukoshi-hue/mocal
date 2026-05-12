@@ -20,8 +20,10 @@ export default async function DashboardPage() {
   const supabase = createServiceClient()
 
   // 本日 (JST) 範囲
-  const todayStart = new Date()
-  todayStart.setHours(0, 0, 0, 0)
+  // setHours は UTC ベースなので JST 深夜 0 時を正確に求める
+  const nowJst = new Date(Date.now() + 9 * 60 * 60 * 1000)
+  const jstDateStr = nowJst.toISOString().slice(0, 10) // "YYYY-MM-DD" in JST
+  const todayStart = new Date(`${jstDateStr}T00:00:00+09:00`)
 
   const [
     { data: store },
