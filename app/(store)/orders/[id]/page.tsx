@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase-server'
+import { isUuid } from '@/lib/validation'
 import OrderStatusView from './_components/OrderStatusView'
 
 interface Props {
@@ -10,8 +11,7 @@ export default async function OrderStatusPage({ params }: Props) {
   const { id } = await params
 
   // UUID 形式チェック（不正な ID で DB に問い合わせない）
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-  if (!uuidRegex.test(id)) notFound()
+  if (!isUuid(id)) notFound()
 
   // ゲスト注文は RLS の SELECT ポリシーが無いため service_role を使用。
   // UUID（122bit）を access token として扱い、最小フィールドのみクライアントへ渡す。

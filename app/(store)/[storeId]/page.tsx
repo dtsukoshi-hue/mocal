@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/database.types'
+import { isUuid } from '@/lib/validation'
 import MenuView from './_components/MenuView'
 
 // 店舗ページは内容更新の頻度が低い（メニュー・営業時間）ので 60s キャッシュ。
@@ -15,8 +16,7 @@ export default async function StorePage({ params }: Props) {
   const { storeId } = await params
 
   // UUID 形式チェック
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-  if (!uuidRegex.test(storeId)) notFound()
+  if (!isUuid(storeId)) notFound()
 
   // 店舗・メニューは公開データ（RLS: USING(true)）なので anon key で参照
   const supabase = createClient<Database>(
