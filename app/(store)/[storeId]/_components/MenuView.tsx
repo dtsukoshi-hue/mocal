@@ -40,6 +40,8 @@ export interface CartCombo {
   qty: number
 }
 
+const MAX_QTY = 99
+
 export default function MenuView({ store, menuItems, combos = [] }: Props) {
   const [cart, setCart] = useState<CartItem[]>([])
   const [cartCombos, setCartCombos] = useState<CartCombo[]>([])
@@ -51,6 +53,7 @@ export default function MenuView({ store, menuItems, combos = [] }: Props) {
     setCart(prev => {
       const existing = prev.find(c => c.menuItemId === item.id)
       if (existing) {
+        if (existing.qty >= MAX_QTY) return prev  // 上限に達していれば何もしない
         return prev.map(c =>
           c.menuItemId === item.id ? { ...c, qty: c.qty + 1 } : c
         )
@@ -82,6 +85,7 @@ export default function MenuView({ store, menuItems, combos = [] }: Props) {
     setCartCombos((prev) => {
       const existing = prev.find((c) => c.comboId === combo.id)
       if (existing) {
+        if (existing.qty >= MAX_QTY) return prev  // 上限に達していれば何もしない
         return prev.map((c) =>
           c.comboId === combo.id ? { ...c, qty: c.qty + 1 } : c
         )
