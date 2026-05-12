@@ -91,7 +91,14 @@ export async function PATCH(
 
   if (status === 'accepted') {
     updateData.accepted_at = now
-    if (waitMinutes) {
+    // waitMinutes は 1〜120 の整数のみ受け付ける（範囲外は無視）
+    if (
+      waitMinutes !== undefined &&
+      typeof waitMinutes === 'number' &&
+      Number.isInteger(waitMinutes) &&
+      waitMinutes >= 1 &&
+      waitMinutes <= 120
+    ) {
       const estimatedReadyAt = new Date(Date.now() + waitMinutes * 60 * 1000)
       updateData.estimated_ready_at = estimatedReadyAt.toISOString()
     }
