@@ -98,6 +98,12 @@ export async function createOrderAction(
     return { error: '注文データが不正です。' }
   }
 
+  // 1 注文あたりの明細上限（DoS 防止・DB insert 保護）
+  const MAX_ITEM_TYPES = 30
+  if (items.length > MAX_ITEM_TYPES) {
+    return { error: `1回の注文で指定できるメニューの種類は ${MAX_ITEM_TYPES} 種類までです。` }
+  }
+
   // 各アイテムの構造バリデーション
   for (const item of items) {
     if (
@@ -123,6 +129,10 @@ export async function createOrderAction(
     }
     if (!Array.isArray(combos)) {
       return { error: '注文データが不正です。' }
+    }
+    const MAX_COMBO_TYPES = 10
+    if (combos.length > MAX_COMBO_TYPES) {
+      return { error: `1回の注文で指定できるセットの種類は ${MAX_COMBO_TYPES} 種類までです。` }
     }
     for (const cc of combos) {
       if (
