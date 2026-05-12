@@ -12,9 +12,18 @@ import { Redis } from '@upstash/redis'
 // in-memory フォールバック（単一インスタンス用・既存挙動互換）
 // ------------------------------------------------------------
 const memoryStore = new Map<string, { count: number; resetAt: number }>()
+const MEMORY_PRUNE_THRESHOLD = 1000
+
+function pruneMemoryStore(now: number) {
+  if (memoryStore.size < MEMORY_PRUNE_THRESHOLD) return
+  for (const [key, record] of memoryStore) {
+    if (record.resetAt < now) memoryStore.delete(key)
+  }
+}
 
 export function checkRateLimit(key: string, max: number, windowMs: number): boolean {
   const now = Date.now()
+  pruneMemoryStore(now)
   const record = memoryStore.get(key)
   if (!record || record.resetAt < now) {
     memoryStore.set(key, { count: 1, resetAt: now + windowMs })
