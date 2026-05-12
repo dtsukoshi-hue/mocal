@@ -61,20 +61,49 @@ export async function POST(request: NextRequest) {
 
       const amountMatch = intent.amount === order.total_amount
 
-      if (!store?.is_open || !amountMatch) {
-        await supabase
-          .from('orders')
-          .update({
-            status: 'cancelled',
-            cancelled_reason_type: !amountMatch ? 'amount_mismatch' : 'store_closed',
-          })
-          .eq('id', orderId)
-        break
-      }
-
       const chargeId = typeof intent.latest_charge === 'string'
         ? intent.latest_charge
         : intent.latest_charge?.id
+
+      if (!store?.is_open || !amountMatch) {
+        const reasonType = !amountMatch ? 'amount_mismatch' : 'store_closed'
+
+        // 決済済み金額の自動返金（chargeId があれば Stripe で返金処理）
+        let finalStatus: 'cancelled' | 'refunded' = 'cancelled'
+        if (chargeId) {
+          try {
+            await stripe.refunds.create({ charge: chargeId })
+            finalStatus = 'refunded'
+          } catch (e) {
+            logger.error('webhook auto-refund failed', { orderId, chargeId, reason: reasonType, error: String(e) })
+          }
+        }
+
+        await supabase
+          .from('orders')
+          .update({
+            status: finalStatus,
+            cancelled_reason_type: reasonType,
+            stripe_charge_id: chargeId ?? null,
+          })
+          .eq('id', orderId)
+
+        // 顧客へキャンセル通知（ベストエフォート）
+        try {
+          const { sendPushToOrder } = await import('@/lib/push')
+          await sendPushToOrder(orderId, {
+            title: '注文がキャンセルされました',
+            body: reasonType === 'store_closed'
+              ? '受付停止中のため注文をキャンセルしました。返金処理を行います。'
+              : '注文の金額に問題が発生したためキャンセルしました。返金処理を行います。',
+            url: `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/orders/${orderId}`,
+          })
+        } catch (e) {
+          logger.warn('webhook cancel push failed', { orderId, error: String(e) })
+        }
+
+        break
+      }
 
       // 公式レシート URL を取得（Stripe が決済完了時に自動生成）
       // Direct Charges でも latest_charge は platform に紐づくため

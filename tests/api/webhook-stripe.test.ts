@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // Stripe / Supabase / push を mock
 const stripeMock = vi.hoisted(() => ({
   constructEvent: vi.fn(),
+  refundsCreate: vi.fn(),
 }))
 
 const pushMock = vi.hoisted(() => ({
@@ -12,6 +13,7 @@ const pushMock = vi.hoisted(() => ({
 vi.mock('@/lib/stripe', () => ({
   stripe: {
     webhooks: { constructEvent: stripeMock.constructEvent },
+    refunds: { create: stripeMock.refundsCreate },
   },
 }))
 
@@ -210,6 +212,57 @@ describe('POST /api/webhook/stripe', () => {
     await POST(makeRequest() as never)
     expect(calls.orderUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ status: 'cancelled', cancelled_reason_type: 'payment_failed' })
+    )
+  })
+
+  it('auto-refunds and sets refunded when store is closed and charge exists', async () => {
+    stripeMock.constructEvent.mockReturnValue({
+      id: 'evt_closed_refund',
+      type: 'payment_intent.succeeded',
+      data: {
+        object: {
+          id: 'pi',
+          amount: 800,
+          metadata: { order_id: ORDER_ID },
+          latest_charge: 'ch_closed',
+        },
+      },
+    })
+    stripeMock.refundsCreate.mockResolvedValue({ id: 'ref_ok' })
+    const calls = setupSupabaseMock({
+      orderRow: { store_id: STORE_ID, total_amount: 800, status: 'pending', order_number: 1001 },
+      storeRow: { is_open: false, name: 'Cafe' },
+    })
+
+    await POST(makeRequest() as never)
+    expect(stripeMock.refundsCreate).toHaveBeenCalledWith({ charge: 'ch_closed' })
+    expect(calls.orderUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'refunded', cancelled_reason_type: 'store_closed', stripe_charge_id: 'ch_closed' })
+    )
+  })
+
+  it('sets cancelled (not refunded) when store closed but refund fails', async () => {
+    stripeMock.constructEvent.mockReturnValue({
+      id: 'evt_closed_refund_fail',
+      type: 'payment_intent.succeeded',
+      data: {
+        object: {
+          id: 'pi',
+          amount: 800,
+          metadata: { order_id: ORDER_ID },
+          latest_charge: 'ch_fail',
+        },
+      },
+    })
+    stripeMock.refundsCreate.mockRejectedValue(new Error('stripe error'))
+    const calls = setupSupabaseMock({
+      orderRow: { store_id: STORE_ID, total_amount: 800, status: 'pending', order_number: 1001 },
+      storeRow: { is_open: false, name: 'Cafe' },
+    })
+
+    await POST(makeRequest() as never)
+    expect(calls.orderUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'cancelled', cancelled_reason_type: 'store_closed' })
     )
   })
 
