@@ -5,11 +5,11 @@
 // 保存内容は最小限（id と保存タイムスタンプのみ）。
 // 表示時はサーバーから最新ステータスを取得する。
 
+import { UUID_REGEX } from './validation'
+
 const STORAGE_KEY = 'mocal:order_history'
 const MAX_ENTRIES = 20            // 過剰なローカルストレージ占有を防ぐ
 const RETENTION_MS = 30 * 24 * 60 * 60 * 1000 // 30 日
-
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export interface StoredOrder {
   id: string         // 注文 UUID
