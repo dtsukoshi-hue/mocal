@@ -1,11 +1,17 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import type { Database, OrderStatus } from '@/lib/database.types'
 import { saveOrderToHistory } from '@/lib/order-history'
 import CustomerPushSubscriber from './CustomerPushSubscriber'
+
+// Supabase anon キーの Realtime は RLS (orders_user_own_select) で
+// 匿名ユーザーに届かない可能性が高い。20 秒ポーリングをフォールバックとして設ける。
+const POLL_INTERVAL_MS = 20_000
+const TERMINAL_STATUSES = new Set(['completed', 'cancelled', 'refunded', 'no_show'])
 
 type Order = {
   id: string
@@ -52,12 +58,23 @@ function getStepIndex(status: string): number {
 
 export default function OrderStatusView({ order: initialOrder }: Props) {
   const [order, setOrder] = useState(initialOrder)
+  const router = useRouter()
+  const refreshedAt = useRef(0)
+
+  // router.refresh() 後に新しい initialOrder が props として届いたら state に同期する
+  useEffect(() => {
+    setOrder(initialOrder)
+  // initialOrder オブジェクトの参照は毎 refresh で変わるが、
+  // status と estimated_ready_at の変化だけ監視すれば十分
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialOrder.status, initialOrder.estimated_ready_at])
 
   // ブラウザの履歴に保存（再訪問時に /orders ページから一覧で見られるようにする）
   useEffect(() => {
     saveOrderToHistory(order.id)
   }, [order.id])
 
+  // Realtime サブスクリプション（RLS が通れば即時更新）
   useEffect(() => {
     const supabase = createBrowserClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -76,12 +93,28 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
         },
         (payload) => {
           setOrder(prev => ({ ...prev, ...payload.new }))
+          refreshedAt.current = Date.now() // Realtime が届いたらポーリングリセット
         }
       )
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order.id])
+
+  // ポーリングフォールバック（Realtime が届かない場合も定期的にサーバーデータを再取得）
+  // 終了ステータスになったらポーリング停止
+  useEffect(() => {
+    if (TERMINAL_STATUSES.has(order.status)) return
+    const id = setInterval(() => {
+      const now = Date.now()
+      if (now - refreshedAt.current < 3_000) return
+      refreshedAt.current = now
+      router.refresh()
+    }, POLL_INTERVAL_MS)
+    return () => clearInterval(id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order.status])
 
   const config = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.pending
   const isNormalFlow = NORMAL_STATUSES.has(order.status)
