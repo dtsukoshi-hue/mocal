@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       }
 
       // 公式レシート URL を取得（Stripe が決済完了時に自動生成）
-      // Direct Charges でも latest_charge は platform に紐づくため
+      // Destination Charges では latest_charge はプラットフォームに紐づくため
       // 追加ヘッダ不要で retrieve できる。失敗時はスキップ。
       let receiptUrl: string | null = null
       if (chargeId) {
