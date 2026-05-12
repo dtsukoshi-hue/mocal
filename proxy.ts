@@ -49,9 +49,19 @@ function buildCsp(nonce: string): string {
 
 // Edge Runtime rate limiter (in-memory, per-instance)
 const edgeRateLimitStore = new Map<string, { count: number; resetAt: number }>()
+const PRUNE_THRESHOLD = 500
+
+// 期限切れエントリを削除してメモリ肥大化を防ぐ（サイズが閾値を超えたときのみ実行）
+function pruneEdgeRateLimitStore(now: number) {
+  if (edgeRateLimitStore.size < PRUNE_THRESHOLD) return
+  for (const [key, record] of edgeRateLimitStore) {
+    if (record.resetAt < now) edgeRateLimitStore.delete(key)
+  }
+}
 
 function edgeCheckRateLimit(key: string, max: number, windowMs: number): boolean {
   const now = Date.now()
+  pruneEdgeRateLimitStore(now)
   const record = edgeRateLimitStore.get(key)
   if (!record || record.resetAt < now) {
     edgeRateLimitStore.set(key, { count: 1, resetAt: now + windowMs })
