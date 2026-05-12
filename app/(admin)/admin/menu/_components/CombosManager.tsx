@@ -141,12 +141,18 @@ export default function CombosManager({ menuItems }: Props) {
 
   async function toggleAvailable(c: Combo) {
     setLoading(c.id)
-    await fetch(`/api/admin/combos/${c.id}`, {
+    setError(null)
+    const res = await fetch(`/api/admin/combos/${c.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ is_available: !c.is_available }),
     })
     setLoading(null)
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setError(data.error ?? '更新に失敗しました')
+      return
+    }
     await reload()
     router.refresh()
   }
@@ -154,8 +160,14 @@ export default function CombosManager({ menuItems }: Props) {
   async function deleteCombo(id: string) {
     if (!confirm('このセットを削除しますか？')) return
     setLoading(id)
-    await fetch(`/api/admin/combos/${id}`, { method: 'DELETE' })
+    setError(null)
+    const res = await fetch(`/api/admin/combos/${id}`, { method: 'DELETE' })
     setLoading(null)
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setError(data.error ?? '削除に失敗しました')
+      return
+    }
     await reload()
     router.refresh()
   }
