@@ -197,4 +197,38 @@ describe('createOrderAction', () => {
     const r = await createOrderAction(undefined, fd)
     expect(r).toEqual({ error: '決済の準備に失敗しました。時間をおいて再試行してください。' })
   })
+
+  it('rejects items array exceeding 30 types', async () => {
+    // 31 distinct UUIDs — すべて同じ形式だが末尾インデックスを変える
+    const tooManyItems = JSON.stringify(
+      Array.from({ length: 31 }, (_, i) => ({
+        menuItemId: `${ITEM_A.slice(0, -2)}${i.toString().padStart(2, '0')}`,
+        name: `item${i}`,
+        price: 100,
+        qty: 1,
+      }))
+    )
+    const fd = makeFormData({ storeId: STORE_ID, pickupType: 'standard', items: tooManyItems })
+    const r = await createOrderAction(undefined, fd)
+    expect(r).toMatchObject({ error: expect.stringContaining('30 種類') })
+  })
+
+  it('rejects combos array exceeding 10 types', async () => {
+    // 11 distinct combo UUIDs
+    const validItems = JSON.stringify([{ menuItemId: ITEM_A, name: 'A', price: 100, qty: 1 }])
+    const tooManyCombos = JSON.stringify(
+      Array.from({ length: 11 }, (_, i) => ({
+        comboId: `${ITEM_B.slice(0, -2)}${i.toString().padStart(2, '0')}`,
+        qty: 1,
+      }))
+    )
+    const fd = makeFormData({
+      storeId: STORE_ID,
+      pickupType: 'standard',
+      items: validItems,
+      combos: tooManyCombos,
+    })
+    const r = await createOrderAction(undefined, fd)
+    expect(r).toMatchObject({ error: expect.stringContaining('10 種類') })
+  })
 })
