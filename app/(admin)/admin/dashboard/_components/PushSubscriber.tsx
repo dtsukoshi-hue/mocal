@@ -71,9 +71,9 @@ export default function PushSubscriber() {
   if (status === 'subscribed' || status === 'unsupported') return null
 
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mx-4 mt-4 flex flex-col gap-2">
+    <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mx-4 mt-4 flex flex-col gap-2">
       <div className="flex items-center justify-between gap-4">
-        <p className="text-sm text-blue-800">
+        <p className="text-sm text-amber-900">
           {status === 'denied'
             ? 'ブラウザの設定から通知を許可してください'
             : '新規注文をプッシュ通知で受け取りますか？'}
@@ -82,7 +82,7 @@ export default function PushSubscriber() {
           <button
             onClick={subscribe}
             disabled={loading}
-            className="text-sm font-semibold text-white bg-blue-500 hover:bg-blue-600 disabled:opacity-50 px-3 py-1.5 rounded-lg whitespace-nowrap"
+            className="text-sm font-semibold text-white bg-amber-700 hover:bg-amber-800 disabled:opacity-50 px-3 py-1.5 rounded-lg whitespace-nowrap"
           >
             {loading ? '登録中...' : '通知を有効にする'}
           </button>

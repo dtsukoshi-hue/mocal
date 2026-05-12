@@ -187,13 +187,13 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
                     <div className="flex flex-col items-center gap-1">
                       <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
                         done    ? 'bg-emerald-500 text-white' :
-                        active  ? 'bg-blue-500 text-white ring-4 ring-blue-100' :
+                        active  ? 'bg-amber-600 text-white ring-4 ring-amber-100' :
                                   'bg-gray-100 text-gray-400'
                       }`}>
                         {done ? '✓' : i + 1}
                       </div>
                       <span className={`text-[10px] text-center leading-tight ${
-                        active ? 'text-blue-600 font-semibold' :
+                        active ? 'text-amber-700 font-semibold' :
                         done   ? 'text-emerald-600' :
                                  'text-gray-400'
                       }`}>

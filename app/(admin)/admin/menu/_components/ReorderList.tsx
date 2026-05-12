@@ -82,7 +82,7 @@ export default function ReorderList({ items: initial, onDone }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-800">
+      <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
         並び替えモード：項目をドラッグして順序を変更してください
       </div>
 

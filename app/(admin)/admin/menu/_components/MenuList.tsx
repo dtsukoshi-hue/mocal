@@ -250,7 +250,7 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
             <button
               onClick={addItem}
               disabled={loading === 'add'}
-              className="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold py-2 rounded-lg disabled:opacity-50"
+              className="flex-1 bg-amber-700 hover:bg-amber-800 text-white text-sm font-semibold py-2 rounded-lg disabled:opacity-50"
             >
               {loading === 'add' ? '追加中...' : '追加する'}
             </button>
@@ -265,7 +265,7 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
       ) : (
         <button
           onClick={() => { setShowAdd(true); setError(null) }}
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold py-3 rounded-xl"
+          className="w-full bg-amber-700 hover:bg-amber-800 text-white text-sm font-semibold py-3 rounded-xl"
         >
           ＋ メニューを追加
         </button>
@@ -287,12 +287,12 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
                   onChange={(e) => setRenameValue(e.target.value)}
                   placeholder="新しいカテゴリ名（空で未分類に）"
                   maxLength={30}
-                  className="border border-gray-200 rounded-lg px-3 py-1 text-sm flex-1"
+                  className="border border-gray-200 rounded-lg px-3 py-1 text-sm flex-1 focus:outline-none focus:ring-1 focus:ring-amber-400"
                 />
                 <button
                   onClick={saveRename}
                   disabled={loading === 'rename'}
-                  className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg disabled:opacity-50"
+                  className="text-xs bg-amber-700 hover:bg-amber-800 text-white px-3 py-1 rounded-lg disabled:opacity-50"
                 >
                   {loading === 'rename' ? '保存中' : '保存'}
                 </button>
@@ -328,7 +328,7 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
                     <button
                       onClick={() => saveEdit(item.id)}
                       disabled={loading === item.id}
-                      className="flex-1 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold py-2 rounded-lg disabled:opacity-50"
+                      className="flex-1 bg-gray-900 hover:bg-gray-700 text-white text-sm font-semibold py-2 rounded-lg disabled:opacity-50"
                     >
                       {loading === item.id ? '保存中...' : '保存'}
                     </button>
@@ -378,7 +378,7 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
                       <p className="text-sm text-gray-600 mt-0.5">¥{item.price.toLocaleString()}</p>
                       {item.image_url && (
                         <div className="flex gap-2 mt-1.5">
-                          <label className="text-xs text-blue-500 hover:text-blue-700 cursor-pointer">
+                          <label className="text-xs text-amber-700 hover:text-amber-800 cursor-pointer">
                             画像を変更
                             <input
                               type="file"
@@ -414,7 +414,7 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
                     </button>
                     <button
                       onClick={() => startEdit(item)}
-                      className="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-100 text-sm font-semibold py-2 rounded-lg"
+                      className="flex-1 bg-amber-50 text-amber-700 hover:bg-amber-100 text-sm font-semibold py-2 rounded-lg"
                     >
                       編集
                     </button>
@@ -453,7 +453,7 @@ function ItemForm({
           placeholder="絵文字"
           value={form.emoji}
           onChange={(e) => onChange({ ...form, emoji: e.target.value })}
-          className="border rounded-lg px-3 py-2 text-sm w-20"
+          className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-20 focus:outline-none focus:ring-1 focus:ring-amber-400"
           maxLength={2}
         />
         <input
@@ -461,7 +461,7 @@ function ItemForm({
           placeholder="メニュー名 *"
           value={form.name}
           onChange={(e) => onChange({ ...form, name: e.target.value })}
-          className="border rounded-lg px-3 py-2 text-sm flex-1"
+          className="border border-gray-200 rounded-lg px-3 py-2 text-sm flex-1 focus:outline-none focus:ring-1 focus:ring-amber-400"
         />
       </div>
       <div className="flex gap-2">
@@ -470,7 +470,7 @@ function ItemForm({
           placeholder="価格（税込・円） *"
           value={form.price}
           onChange={(e) => onChange({ ...form, price: e.target.value })}
-          className="border rounded-lg px-3 py-2 text-sm flex-1"
+          className="border border-gray-200 rounded-lg px-3 py-2 text-sm flex-1 focus:outline-none focus:ring-1 focus:ring-amber-400"
           min={0}
         />
         <input
@@ -480,7 +480,7 @@ function ItemForm({
           value={form.category}
           onChange={(e) => onChange({ ...form, category: e.target.value })}
           maxLength={30}
-          className="border rounded-lg px-3 py-2 text-sm flex-1"
+          className="border border-gray-200 rounded-lg px-3 py-2 text-sm flex-1 focus:outline-none focus:ring-1 focus:ring-amber-400"
         />
         <datalist id="menu-categories">
           {categories.map((c) => <option key={c} value={c} />)}
@@ -492,7 +492,7 @@ function ItemForm({
         onChange={(e) => onChange({ ...form, description: e.target.value })}
         maxLength={200}
         rows={2}
-        className="w-full border rounded-lg px-3 py-2 text-sm resize-none"
+        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-amber-400"
       />
     </div>
   )

@@ -178,7 +178,24 @@ export default function CombosManager({ menuItems }: Props) {
   }
 
   if (combos === null) {
-    return <p className="text-sm text-gray-400 py-6 text-center">読み込み中...</p>
+    return (
+      <div className="space-y-3">
+        {[0, 1].map((i) => (
+          <div key={i} className="bg-white rounded-xl shadow-sm p-4 animate-pulse space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="h-4 w-32 bg-gray-100 rounded" />
+              <div className="h-4 w-16 bg-gray-100 rounded" />
+            </div>
+            <div className="h-3 w-48 bg-gray-100 rounded" />
+            <div className="flex gap-2">
+              <div className="h-8 flex-1 bg-gray-100 rounded-lg" />
+              <div className="h-8 flex-1 bg-gray-100 rounded-lg" />
+              <div className="h-8 flex-1 bg-gray-100 rounded-lg" />
+            </div>
+          </div>
+        ))}
+      </div>
+    )
   }
 
   return (
@@ -196,7 +213,7 @@ export default function CombosManager({ menuItems }: Props) {
             <button
               onClick={saveAdd}
               disabled={loading === 'add'}
-              className="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold py-2 rounded-lg disabled:opacity-50"
+              className="flex-1 bg-amber-700 hover:bg-amber-800 text-white text-sm font-semibold py-2 rounded-lg disabled:opacity-50"
             >
               {loading === 'add' ? '追加中...' : '追加する'}
             </button>
@@ -231,7 +248,7 @@ export default function CombosManager({ menuItems }: Props) {
                   <button
                     onClick={() => saveEdit(c.id)}
                     disabled={loading === c.id}
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold py-2 rounded-lg disabled:opacity-50"
+                    className="flex-1 bg-gray-900 hover:bg-gray-700 text-white text-sm font-semibold py-2 rounded-lg disabled:opacity-50"
                   >
                     {loading === c.id ? '保存中...' : '保存'}
                   </button>
@@ -319,7 +336,7 @@ function ComboRow({
         </button>
         <button
           onClick={onEdit}
-          className="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-100 text-sm font-semibold py-2 rounded-lg"
+          className="flex-1 bg-amber-50 text-amber-700 hover:bg-amber-100 text-sm font-semibold py-2 rounded-lg"
         >
           編集
         </button>
@@ -377,7 +394,7 @@ function ComboForm({
           value={draft.emoji}
           onChange={(e) => onChange({ ...draft, emoji: e.target.value })}
           maxLength={2}
-          className="border rounded-lg px-3 py-2 text-sm w-20"
+          className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-20 focus:outline-none focus:ring-1 focus:ring-amber-400"
         />
         <input
           type="text"
@@ -385,7 +402,7 @@ function ComboForm({
           value={draft.name}
           onChange={(e) => onChange({ ...draft, name: e.target.value })}
           maxLength={60}
-          className="border rounded-lg px-3 py-2 text-sm flex-1"
+          className="border border-gray-200 rounded-lg px-3 py-2 text-sm flex-1 focus:outline-none focus:ring-1 focus:ring-amber-400"
         />
       </div>
       <input
@@ -394,7 +411,7 @@ function ComboForm({
         value={draft.description}
         onChange={(e) => onChange({ ...draft, description: e.target.value })}
         maxLength={200}
-        className="w-full border rounded-lg px-3 py-2 text-sm"
+        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber-400"
       />
       <div className="flex items-center gap-2">
         <span className="text-xs text-gray-500 shrink-0">価格差分</span>
@@ -404,7 +421,7 @@ function ComboForm({
           value={draft.price_delta}
           onChange={(e) => onChange({ ...draft, price_delta: e.target.value })}
           step={10}
-          className="border rounded-lg px-3 py-2 text-sm w-32"
+          className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-32 focus:outline-none focus:ring-1 focus:ring-amber-400"
         />
         <span className="text-[10px] text-gray-400">負の値で割引、正の値で追加料金</span>
       </div>

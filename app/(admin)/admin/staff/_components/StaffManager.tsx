@@ -134,7 +134,7 @@ export default function StaffManager() {
             value={addEmail}
             onChange={(e) => setAddEmail(e.target.value)}
             autoComplete="off"
-            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
+            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-amber-400"
           />
           <input
             type="password"
@@ -143,7 +143,7 @@ export default function StaffManager() {
             onChange={(e) => setAddPassword(e.target.value)}
             autoComplete="new-password"
             minLength={8}
-            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
+            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-amber-400"
           />
           <div className="flex gap-2 pt-1">
             <button
@@ -164,7 +164,7 @@ export default function StaffManager() {
       ) : (
         <button
           onClick={() => setShowAdd(true)}
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold py-3 rounded-xl"
+          className="w-full bg-amber-700 hover:bg-amber-800 text-white text-sm font-semibold py-3 rounded-xl"
         >
           ＋ スタッフを追加
         </button>
@@ -217,7 +217,7 @@ export default function StaffManager() {
             <div className="flex gap-2 pt-1">
               <button
                 onClick={() => { setPwForId(s.id); setPwValue('') }}
-                className="flex-1 text-xs bg-blue-50 hover:bg-blue-100 text-blue-600 py-1.5 rounded-lg font-semibold"
+                className="flex-1 text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 py-1.5 rounded-lg font-semibold"
               >
                 パスワード変更
               </button>
