@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-stone-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-sm p-8 text-center space-y-4">
         <div className="text-4xl">🔍</div>
         <h1 className="text-lg font-bold text-gray-900">ページが見つかりません</h1>
