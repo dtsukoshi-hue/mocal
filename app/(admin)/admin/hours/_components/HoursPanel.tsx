@@ -265,7 +265,15 @@ export default function HoursPanel({ isOpen: initialIsOpen, waitMinutes: initial
         </div>
 
         {!hoursLoaded ? (
-          <p className="text-sm text-gray-400 py-6 text-center">読み込み中...</p>
+          <div className="space-y-2 py-2">
+            {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="flex items-center gap-2 py-1 animate-pulse">
+                <div className="w-6 h-4 bg-gray-100 rounded" />
+                <div className="w-16 h-6 bg-gray-100 rounded-full" />
+                <div className="flex-1 h-6 bg-gray-100 rounded" />
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="space-y-1.5">
             {hours.map((row) => (

@@ -171,7 +171,20 @@ export default function StaffManager() {
       )}
 
       {/* リスト */}
-      {loading && <p className="text-center text-gray-400 text-sm py-6">読み込み中...</p>}
+      {loading && (
+        <div className="space-y-3">
+          {[0, 1].map((i) => (
+            <div key={i} className="bg-white rounded-2xl border border-gray-100 p-4 animate-pulse space-y-2">
+              <div className="h-4 w-48 bg-gray-100 rounded" />
+              <div className="h-3 w-32 bg-gray-100 rounded" />
+              <div className="flex gap-2 pt-1">
+                <div className="h-7 flex-1 bg-gray-100 rounded-lg" />
+                <div className="h-7 flex-1 bg-gray-100 rounded-lg" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {!loading && list && list.length === 0 && (
         <p className="text-center text-gray-400 text-sm py-6">

@@ -41,7 +41,7 @@ const NORMAL_STATUSES = new Set<string>(['paid', 'accepted', 'preparing', 'ready
 
 const STATUS_CONFIG: Record<string, { label: string; icon: string; description: string; color: string }> = {
   pending:   { label: '決済処理中',   icon: '⏳', description: '決済を確認しています...',                     color: 'text-gray-500' },
-  paid:      { label: '注文受付済',   icon: '✅', description: '店舗の受付をお待ちください',                  color: 'text-blue-600' },
+  paid:      { label: '注文受付済',   icon: '✅', description: '店舗の受付をお待ちください',                  color: 'text-amber-700' },
   accepted:  { label: '受付済',       icon: '👨‍🍳', description: '調理を開始します',                          color: 'text-purple-600' },
   preparing: { label: '調理中',       icon: '🍳', description: '準備中です。もうしばらくお待ちください',     color: 'text-orange-600' },
   ready:     { label: '準備完了！',   icon: '🎉', description: 'カウンターへお越しください',                  color: 'text-emerald-600' },
