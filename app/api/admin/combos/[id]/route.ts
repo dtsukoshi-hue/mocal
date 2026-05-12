@@ -151,12 +151,12 @@ export async function PATCH(
       if (typeof o.qty !== 'number' || !Number.isInteger(o.qty) || o.qty < 1 || o.qty > 99) {
         return NextResponse.json({ error: '数量が不正です。' }, { status: 400 })
       }
-      const id = o.menu_item_id as string
-      if (seen.has(id)) {
+      const menuItemId = o.menu_item_id as string
+      if (seen.has(menuItemId)) {
         return NextResponse.json({ error: 'メニューが重複しています。' }, { status: 400 })
       }
-      seen.add(id)
-      cleanItems.push({ menu_item_id: id, qty: o.qty })
+      seen.add(menuItemId)
+      cleanItems.push({ menu_item_id: menuItemId, qty: o.qty })
     }
 
     // 自店舗のメニューであることを再確認
