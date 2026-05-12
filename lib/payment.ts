@@ -35,7 +35,9 @@ export async function createPayment(
   }
 
   if (stripeConnectedAccountId) {
-    // Direct Charges: 店舗アカウントに直接請求・mocal は application_fee_amount を受け取る
+    // Destination Charges: プラットフォームが決済を受け取り、
+    // 指定アカウントへ transfer_data.destination で転送。
+    // application_fee_amount は mocal の手数料として差し引かれる。
     params.application_fee_amount = Math.floor(amountJpy * MOCAL_FEE_RATE)
     params.transfer_data = { destination: stripeConnectedAccountId }
   }
@@ -50,21 +52,20 @@ export async function createPayment(
 
 /**
  * 決済を返金する（cancelled 経由が必須）
+ *
+ * Destination Charges の返金:
+ *   - refund_application_fee: true → プラットフォームが受け取った手数料を戻す
+ *   - reverse_transfer: true       → 転送先アカウントへの入金も取り消す
+ *   - stripeAccount ヘッダーは不要（プラットフォームアカウントの charge を返金）
  */
 export async function refundPayment(
   stripeChargeId: string,
-  stripeConnectedAccountId?: string | null
 ): Promise<RefundPaymentResult> {
-  const params: Parameters<typeof stripe.refunds.create>[0] = {
+  const refund = await stripe.refunds.create({
     charge: stripeChargeId,
-  }
-
-  // Direct Charges の場合は接続アカウントの Stripe-Account ヘッダーが必要
-  const options = stripeConnectedAccountId
-    ? { stripeAccount: stripeConnectedAccountId }
-    : undefined
-
-  const refund = await stripe.refunds.create(params, options)
+    refund_application_fee: true,
+    reverse_transfer: true,
+  })
 
   return { refundId: refund.id }
 }
