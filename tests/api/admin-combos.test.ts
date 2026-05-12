@@ -12,6 +12,7 @@ vi.mock('@/lib/supabase-server', () => ({
   createServiceClient: vi.fn(),
 }))
 
+import type { NextRequest } from 'next/server'
 import { POST as combosPost, GET as combosGet } from '@/app/api/admin/combos/route'
 import { createServiceClient } from '@/lib/supabase-server'
 
@@ -19,12 +20,12 @@ const STORE_ID = '11111111-1111-4111-8111-111111111111'
 const ITEM_A = '22222222-2222-4222-8222-222222222222'
 const ITEM_B = '33333333-3333-4333-8333-333333333333'
 
-function req(method: string, body: unknown = {}): Request {
+function req(method: string, body: unknown = {}): NextRequest {
   return new Request('http://localhost/api/admin/combos', {
     method,
     headers: { 'Content-Type': 'application/json' },
     body: typeof body === 'string' ? body : JSON.stringify(body),
-  })
+  }) as unknown as NextRequest
 }
 
 beforeEach(() => {

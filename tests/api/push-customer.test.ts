@@ -4,17 +4,18 @@ vi.mock('@/lib/supabase-server', () => ({
   createServiceClient: vi.fn(),
 }))
 
+import type { NextRequest } from 'next/server'
 import { POST as listPost, DELETE as listDelete } from '@/app/api/push/customer/route'
 import { createServiceClient } from '@/lib/supabase-server'
 
 const VALID_ENDPOINT = 'https://fcm.googleapis.com/fcm/send/abc-' + 'x'.repeat(40)
 
-function req(method: string, body: unknown): Request {
+function req(method: string, body: unknown): NextRequest {
   return new Request('http://localhost/api/push/customer', {
     method,
     headers: { 'Content-Type': 'application/json' },
     body: typeof body === 'string' ? body : JSON.stringify(body),
-  })
+  }) as unknown as NextRequest
 }
 
 beforeEach(() => {
