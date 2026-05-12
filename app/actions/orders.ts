@@ -78,8 +78,8 @@ export async function createOrderAction(
     }
     // 30 日後より遠い予約は拒否（運用ガード）
     const max = Date.now() + 30 * 24 * 60 * 60 * 1000
-    if (t.getTime() < Date.now() + 15 * 60 * 1000) {
-      return { error: '受取日時は15分以上先を指定してください。' }
+    if (t.getTime() < Date.now() + 30 * 60 * 1000) {
+      return { error: '受取日時は30分以上先を指定してください。' }
     }
     if (t.getTime() > max) {
       return { error: '受取日時は30日以内で指定してください。' }
