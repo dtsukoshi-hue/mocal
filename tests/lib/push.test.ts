@@ -13,10 +13,11 @@ vi.mock('@/lib/supabase-server', () => ({
   createServiceClient: vi.fn(),
 }))
 
-import { sendPushToStore } from '@/lib/push'
+import { sendPushToStore, sendPushToOrder } from '@/lib/push'
 import { createServiceClient } from '@/lib/supabase-server'
 
 const STORE_ID = '11111111-1111-4111-8111-111111111111'
+const ORDER_ID = '22222222-2222-4222-8222-222222222222'
 
 function mockSupabaseSubs(rows: Array<{ endpoint: string; p256dh: string; auth: string }> | null) {
   const deleteEq = vi.fn().mockResolvedValue({ error: null })
@@ -104,5 +105,69 @@ describe('sendPushToStore', () => {
       expect.any(String),
       expect.any(String)
     )
+  })
+})
+
+// sendPushToOrder は order_push_subscriptions テーブルを使う点のみ異なる
+describe('sendPushToOrder', () => {
+  function mockOrderSubs(rows: Array<{ endpoint: string; p256dh: string; auth: string }> | null) {
+    const deleteIn = vi.fn().mockResolvedValue({ error: null })
+    vi.mocked(createServiceClient).mockReturnValue({
+      from: vi.fn().mockImplementation((table: string) => {
+        if (table === 'order_push_subscriptions') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ data: rows ?? null, error: null }),
+            }),
+            delete: vi.fn().mockReturnValue({ in: deleteIn }),
+          }
+        }
+        throw new Error(`unexpected table: ${table}`)
+      }),
+    } as never)
+    return { deleteIn }
+  }
+
+  it('queries order_push_subscriptions by order_id', async () => {
+    const fromMock = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+      }),
+    })
+    vi.mocked(createServiceClient).mockReturnValue({ from: fromMock } as never)
+
+    await sendPushToOrder(ORDER_ID, { title: 't', body: 'b' })
+
+    expect(fromMock).toHaveBeenCalledWith('order_push_subscriptions')
+    const eqCall = fromMock.mock.results[0].value.select().eq
+    expect(eqCall).toHaveBeenCalledWith('order_id', ORDER_ID)
+  })
+
+  it('sends notification to subscriber', async () => {
+    mockOrderSubs([{ endpoint: 'https://ep', p256dh: 'pk', auth: 'ak' }])
+    webpushMock.sendNotification.mockResolvedValue({ statusCode: 201 })
+
+    await sendPushToOrder(ORDER_ID, { title: '準備完了', body: 'お越しください' })
+
+    expect(webpushMock.sendNotification).toHaveBeenCalledTimes(1)
+    const [sub, payloadStr] = webpushMock.sendNotification.mock.calls[0]
+    expect(sub).toEqual({ endpoint: 'https://ep', keys: { p256dh: 'pk', auth: 'ak' } })
+    expect(JSON.parse(payloadStr)).toMatchObject({ title: '準備完了', body: 'お越しください' })
+  })
+
+  it('removes 410 expired subscriptions from order_push_subscriptions', async () => {
+    const { deleteIn } = mockOrderSubs([
+      { endpoint: 'https://alive', p256dh: 'p', auth: 'a' },
+      { endpoint: 'https://dead',  p256dh: 'p', auth: 'a' },
+    ])
+    webpushMock.sendNotification.mockImplementation((sub: { endpoint: string }) =>
+      sub.endpoint === 'https://dead'
+        ? Promise.reject({ statusCode: 410 })
+        : Promise.resolve({ statusCode: 201 })
+    )
+
+    await sendPushToOrder(ORDER_ID, { title: 't', body: 'b' })
+
+    expect(deleteIn).toHaveBeenCalledWith('endpoint', ['https://dead'])
   })
 })
