@@ -49,11 +49,15 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: '認証が必要です。' }, { status: 401 })
   }
 
-  let body: { endpoint: string }
+  let body: { endpoint?: unknown }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'リクエストが不正です。' }, { status: 400 })
+  }
+
+  if (typeof body.endpoint !== 'string' || !body.endpoint) {
+    return NextResponse.json({ error: 'エンドポイントが不正です。' }, { status: 400 })
   }
 
   const supabase = createServiceClient()

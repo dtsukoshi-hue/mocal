@@ -109,6 +109,16 @@ describe('DELETE /api/push/subscribe', () => {
     expect(res.status).toBe(400)
   })
 
+  it('returns 400 when endpoint is missing or not a string', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const res1 = await DELETE(req('DELETE', {}) as never)
+    expect(res1.status).toBe(400)
+    const res2 = await DELETE(req('DELETE', { endpoint: null }) as never)
+    expect(res2.status).toBe(400)
+    const res3 = await DELETE(req('DELETE', { endpoint: 123 }) as never)
+    expect(res3.status).toBe(400)
+  })
+
   it('only deletes subscriptions belonging to this store', async () => {
     sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
     const eq2 = vi.fn().mockResolvedValue({ error: null })
