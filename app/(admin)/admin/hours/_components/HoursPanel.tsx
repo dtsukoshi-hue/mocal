@@ -298,14 +298,14 @@ export default function HoursPanel({ isOpen: initialIsOpen, waitMinutes: initial
                       type="time"
                       value={row.open_time}
                       onChange={(e) => updateRow(row.weekday, { open_time: e.target.value })}
-                      className="border border-gray-200 rounded-lg px-2 py-1 text-sm"
+                      className="border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-amber-400"
                     />
                     <span className="text-gray-400">〜</span>
                     <input
                       type="time"
                       value={row.close_time}
                       onChange={(e) => updateRow(row.weekday, { close_time: e.target.value })}
-                      className="border border-gray-200 rounded-lg px-2 py-1 text-sm"
+                      className="border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-amber-400"
                     />
                     <input
                       type="time"
@@ -313,7 +313,7 @@ export default function HoursPanel({ isOpen: initialIsOpen, waitMinutes: initial
                       onChange={(e) => updateRow(row.weekday, { last_order: e.target.value })}
                       placeholder="LO"
                       title="ラストオーダー"
-                      className="border border-gray-200 rounded-lg px-2 py-1 text-sm w-20 text-gray-500"
+                      className="border border-gray-200 rounded-lg px-2 py-1 text-sm w-20 text-gray-500 focus:outline-none focus:ring-1 focus:ring-amber-400"
                     />
                   </>
                 ) : (
