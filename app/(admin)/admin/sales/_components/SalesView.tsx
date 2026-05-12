@@ -269,7 +269,7 @@ export default function SalesView({ orders, currentRange }: Props) {
                   <span className={`text-xs font-bold w-6 text-center shrink-0 ${
                     i === 0 ? 'text-amber-500' :
                     i === 1 ? 'text-gray-400' :
-                    i === 2 ? 'text-orange-700' :
+                    i === 2 ? 'text-amber-700' :
                               'text-gray-300'
                   }`}>{i + 1}</span>
                   <span className="text-sm text-gray-900 truncate">{item.name}</span>
