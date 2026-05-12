@@ -182,13 +182,31 @@ export default function OrderCard({ order }: { order: Order }) {
               }
             }
             for (const [cid, items] of comboMap.entries()) {
-              groups.push({
-                type: 'combo',
-                comboId: cid,
-                label: items[0]?.combo_label ?? 'セット',
-                items,
-                key: `c-${cid}`,
-              })
+              // 同一 combo_id でも複数個注文時は複数コピーに展開される。
+              // アイテム名が重複した時点で新しいコピーとして分割する。
+              const copies: OrderItem[][] = []
+              let currentCopy: OrderItem[] = []
+              const seenNames = new Set<string>()
+              for (const it of items) {
+                if (seenNames.has(it.name)) {
+                  copies.push(currentCopy)
+                  currentCopy = []
+                  seenNames.clear()
+                }
+                currentCopy.push(it)
+                seenNames.add(it.name)
+              }
+              if (currentCopy.length > 0) copies.push(currentCopy)
+              for (let copyIdx = 0; copyIdx < copies.length; copyIdx++) {
+                const copyItems = copies[copyIdx]
+                groups.push({
+                  type: 'combo',
+                  comboId: cid,
+                  label: copyItems[0]?.combo_label ?? 'セット',
+                  items: copyItems,
+                  key: `c-${cid}-${copyIdx}`,
+                })
+              }
             }
             return groups.map((g) => {
               if (g.type === 'item') {
