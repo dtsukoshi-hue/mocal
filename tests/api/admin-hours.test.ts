@@ -26,13 +26,13 @@ function req(method: string, body?: unknown): NextRequest {
   }) as unknown as NextRequest
 }
 
-function validHours() {
+function validHours(): { weekday: number; is_open: boolean; open_time: string; close_time: string; last_order: string | null }[] {
   return Array.from({ length: 7 }, (_, weekday) => ({
     weekday,
     is_open: weekday >= 1 && weekday <= 5, // 月〜金のみ営業
     open_time: '10:00',
     close_time: '22:00',
-    last_order: '21:30',
+    last_order: '21:30' as string | null,
   }))
 }
 
