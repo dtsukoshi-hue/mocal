@@ -165,7 +165,9 @@ describe('PATCH /api/orders/[id]', () => {
 
     const res = await PATCH(makeRequest({ status: 'cancelled' }) as never, makeCtx(ORDER_ID))
     expect(res.status).toBe(200)
-    expect(stripeMock.refundsCreate).toHaveBeenCalledWith({ charge: 'ch_test' })
+    expect(stripeMock.refundsCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ charge: 'ch_test', refund_application_fee: true, reverse_transfer: true })
+    )
     const updateCall = (updateBuilder.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
     expect(updateCall.status).toBe('refunded')
   })
