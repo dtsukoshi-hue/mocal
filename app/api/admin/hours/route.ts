@@ -11,7 +11,7 @@ interface HoursInput {
   last_order: string | null
 }
 
-const TIME_REGEX = /^[0-2]\d:[0-5]\d(?::[0-5]\d)?$/
+const TIME_REGEX = /^(?:2[0-3]|[01]\d):[0-5]\d(?::[0-5]\d)?$/
 
 function validateInput(items: unknown): { ok: true; data: HoursInput[] } | { ok: false; error: string } {
   if (!Array.isArray(items)) return { ok: false, error: 'items が配列ではありません。' }
