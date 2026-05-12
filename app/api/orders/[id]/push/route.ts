@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { headers } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase-server'
 import { isUuid } from '@/lib/validation'
+import { checkRateLimitAsync } from '@/lib/rate-limit'
 import { logger } from '@/lib/logger'
 
 // POST /api/orders/[id]/push
@@ -12,6 +14,14 @@ export async function POST(
   const { id } = await ctx.params
   if (!isUuid(id)) {
     return NextResponse.json({ error: '注文が見つかりません。' }, { status: 404 })
+  }
+
+  const ip = (await headers()).get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
+  if (!(await checkRateLimitAsync('order-push-subscribe', ip, 20, 60_000))) {
+    return NextResponse.json(
+      { error: 'リクエストが多すぎます。しばらく待ってから再試行してください。' },
+      { status: 429 }
+    )
   }
 
   let subscription: PushSubscriptionJSON

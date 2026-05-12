@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { headers } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase-server'
+import { checkRateLimitAsync } from '@/lib/rate-limit'
 import { logger } from '@/lib/logger'
 
 // 顧客マイページからこの端末（endpoint）が購読中の通知を一覧 / 一括解除する。
@@ -12,8 +14,20 @@ function isValidEndpoint(v: unknown): v is string {
   return typeof v === 'string' && v.length >= MIN_ENDPOINT_LENGTH && v.startsWith('https://')
 }
 
+async function getIp(): Promise<string> {
+  return (await headers()).get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
+}
+
 // POST /api/push/customer/list（GET だと endpoint がクエリに乗って漏洩しやすいので POST 採用）
 export async function POST(request: NextRequest) {
+  const ip = await getIp()
+  if (!(await checkRateLimitAsync('customer-push-list', ip, 30, 60_000))) {
+    return NextResponse.json(
+      { error: 'リクエストが多すぎます。しばらく待ってから再試行してください。' },
+      { status: 429 }
+    )
+  }
+
   let body: { endpoint?: unknown }
   try {
     body = await request.json()
@@ -76,6 +90,14 @@ export async function POST(request: NextRequest) {
 
 // DELETE: この endpoint の全購読を解除
 export async function DELETE(request: NextRequest) {
+  const ip = await getIp()
+  if (!(await checkRateLimitAsync('customer-push-delete', ip, 20, 60_000))) {
+    return NextResponse.json(
+      { error: 'リクエストが多すぎます。しばらく待ってから再試行してください。' },
+      { status: 429 }
+    )
+  }
+
   let body: { endpoint?: unknown }
   try {
     body = await request.json()

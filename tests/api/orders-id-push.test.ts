@@ -1,5 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('next/headers', () => ({
+  headers: vi.fn(() => Promise.resolve({ get: () => '127.0.0.1' })),
+}))
+
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: vi.fn(() => true),
+  checkRateLimitAsync: vi.fn(async () => true),
+}))
+
 vi.mock('@/lib/supabase-server', () => ({
   createServiceClient: vi.fn(),
 }))
