@@ -70,7 +70,7 @@ export default function AdminLoginPage() {
               id="password"
               name="password"
               type="password"
-              autoComplete="off"
+              autoComplete="current-password"
               onKeyDown={handleKeyDown}
               className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
