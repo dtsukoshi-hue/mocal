@@ -67,20 +67,32 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
 
   async function toggleAvailable(item: MenuItem) {
     setLoading(item.id)
-    await fetch(`/api/admin/menu/${item.id}`, {
+    setError(null)
+    const res = await fetch(`/api/admin/menu/${item.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ is_available: !item.is_available }),
     })
-    router.refresh()
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setError(data.error ?? '更新に失敗しました')
+    } else {
+      router.refresh()
+    }
     setLoading(null)
   }
 
   async function deleteItem(id: string) {
     if (!confirm('削除しますか？')) return
     setLoading(id)
-    await fetch(`/api/admin/menu/${id}`, { method: 'DELETE' })
-    router.refresh()
+    setError(null)
+    const res = await fetch(`/api/admin/menu/${id}`, { method: 'DELETE' })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setError(data.error ?? '削除に失敗しました')
+    } else {
+      router.refresh()
+    }
     setLoading(null)
   }
 
@@ -130,7 +142,7 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
     if (isNaN(price) || price < 0) return setError('価格が不正です')
     setLoading(id)
     setError(null)
-    await fetch(`/api/admin/menu/${id}`, {
+    const res = await fetch(`/api/admin/menu/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -141,6 +153,12 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
         emoji: editForm.emoji,
       }),
     })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setError(data.error ?? '更新に失敗しました')
+      setLoading(null)
+      return
+    }
     setEditingId(null)
     router.refresh()
     setLoading(null)
