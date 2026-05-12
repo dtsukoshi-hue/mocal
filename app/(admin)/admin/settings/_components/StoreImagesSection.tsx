@@ -16,6 +16,7 @@ export default function StoreImagesSection({ initialLogoUrl, initialCoverUrl }: 
   const [coverUrl, setCoverUrl] = useState<string | null>(initialCoverUrl)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState<Kind | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<Kind | null>(null)
 
   async function handleUpload(kind: Kind, file: File) {
     setLoading(kind)
@@ -38,8 +39,8 @@ export default function StoreImagesSection({ initialLogoUrl, initialCoverUrl }: 
   }
 
   async function handleDelete(kind: Kind) {
-    if (!confirm('画像を削除しますか？')) return
     setLoading(kind)
+    setConfirmDelete(null)
     setError(null)
     const res = await fetch('/api/admin/store/images', {
       method: 'DELETE',
@@ -84,14 +85,34 @@ export default function StoreImagesSection({ initialLogoUrl, initialCoverUrl }: 
               alt="カバー画像"
               className="w-full h-40 object-cover rounded-xl bg-gray-100"
             />
-            <button
-              type="button"
-              onClick={() => handleDelete('cover')}
-              disabled={loading !== null}
-              className="absolute top-2 right-2 bg-white/90 hover:bg-white text-red-600 text-xs font-semibold px-3 py-1 rounded-lg shadow disabled:opacity-50"
-            >
-              削除
-            </button>
+            {confirmDelete === 'cover' ? (
+              <div className="absolute top-2 right-2 flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => handleDelete('cover')}
+                  disabled={loading !== null}
+                  className="bg-red-500 hover:bg-red-600 text-white text-xs font-semibold px-2.5 py-1 rounded-lg shadow disabled:opacity-50"
+                >
+                  削除する
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(null)}
+                  className="bg-white/90 hover:bg-white text-gray-700 text-xs font-semibold px-2.5 py-1 rounded-lg shadow"
+                >
+                  戻る
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete('cover')}
+                disabled={loading !== null}
+                className="absolute top-2 right-2 bg-white/90 hover:bg-white text-red-600 text-xs font-semibold px-3 py-1 rounded-lg shadow disabled:opacity-50"
+              >
+                削除
+              </button>
+            )}
           </div>
         ) : (
           <div className="w-full h-40 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center text-sm text-gray-400">
@@ -120,14 +141,34 @@ export default function StoreImagesSection({ initialLogoUrl, initialCoverUrl }: 
                 alt="ロゴ"
                 className="w-20 h-20 object-cover rounded-xl bg-gray-100"
               />
-              <button
-                type="button"
-                onClick={() => handleDelete('logo')}
-                disabled={loading !== null}
-                className="absolute -top-2 -right-2 bg-white/95 hover:bg-white text-red-600 text-[10px] font-semibold px-2 py-0.5 rounded-full shadow border border-gray-200 disabled:opacity-50"
-              >
-                ×
-              </button>
+              {confirmDelete === 'logo' ? (
+                <div className="absolute -top-3 left-0 flex gap-1 z-10">
+                  <button
+                    type="button"
+                    onClick={() => handleDelete('logo')}
+                    disabled={loading !== null}
+                    className="bg-red-500 hover:bg-red-600 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full shadow disabled:opacity-50 whitespace-nowrap"
+                  >
+                    削除する
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(null)}
+                    className="bg-white/95 hover:bg-white text-gray-600 text-[10px] font-semibold px-2 py-0.5 rounded-full shadow border border-gray-200 whitespace-nowrap"
+                  >
+                    戻る
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete('logo')}
+                  disabled={loading !== null}
+                  className="absolute -top-2 -right-2 bg-white/95 hover:bg-white text-red-600 text-[10px] font-semibold px-2 py-0.5 rounded-full shadow border border-gray-200 disabled:opacity-50"
+                >
+                  ×
+                </button>
+              )}
             </div>
           ) : (
             <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center text-xs text-gray-400">

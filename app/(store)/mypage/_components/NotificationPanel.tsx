@@ -39,6 +39,7 @@ export default function NotificationPanel() {
   const [subs, setSubs] = useState<CustomerSub[] | null>(null)
   const [loading, setLoading] = useState<'check' | 'unsub' | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [confirmUnsub, setConfirmUnsub] = useState(false)
 
   // マウント時に既存のサブスクリプションをチェック
   useEffect(() => {
@@ -80,7 +81,7 @@ export default function NotificationPanel() {
 
   async function unsubscribeAll() {
     if (!endpoint) return
-    if (!confirm('この端末の全ての通知を解除しますか？')) return
+    setConfirmUnsub(false)
     setLoading('unsub')
     setError(null)
     try {
@@ -175,14 +176,37 @@ export default function NotificationPanel() {
               </li>
             ))}
           </ul>
-          <button
-            type="button"
-            onClick={unsubscribeAll}
-            disabled={loading === 'unsub'}
-            className="w-full text-sm font-semibold border border-red-200 text-red-600 hover:bg-red-50 rounded-xl py-2.5 transition-colors disabled:opacity-50"
-          >
-            {loading === 'unsub' ? '解除中...' : 'この端末の通知を全て解除'}
-          </button>
+          {confirmUnsub ? (
+            <div className="bg-red-50 border border-red-100 rounded-xl px-3 py-3 space-y-2">
+              <p className="text-xs text-red-700 font-semibold">この端末の全ての通知を解除しますか？</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={unsubscribeAll}
+                  disabled={loading === 'unsub'}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold py-2 rounded-lg disabled:opacity-50"
+                >
+                  {loading === 'unsub' ? '解除中...' : '解除する'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmUnsub(false)}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold py-2 rounded-lg"
+                >
+                  キャンセル
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmUnsub(true)}
+              disabled={loading === 'unsub'}
+              className="w-full text-sm font-semibold border border-red-200 text-red-600 hover:bg-red-50 rounded-xl py-2.5 transition-colors disabled:opacity-50"
+            >
+              {loading === 'unsub' ? '解除中...' : 'この端末の通知を全て解除'}
+            </button>
+          )}
         </>
       )}
     </section>

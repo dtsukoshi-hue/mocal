@@ -38,6 +38,8 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
   const [renamingCategory, setRenamingCategory] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const [reorderMode, setReorderMode] = useState(false)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [confirmDeleteImageId, setConfirmDeleteImageId] = useState<string | null>(null)
 
   // 既存カテゴリ一覧（重複除去・空文字を除外）
   const categories = useMemo(() => {
@@ -83,9 +85,9 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
   }
 
   async function deleteItem(id: string) {
-    if (!confirm('削除しますか？')) return
     setLoading(id)
     setError(null)
+    setConfirmDeleteId(null)
     const res = await fetch(`/api/admin/menu/${id}`, { method: 'DELETE' })
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
@@ -116,9 +118,9 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
   }
 
   async function removeImage(id: string) {
-    if (!confirm('画像を削除しますか？')) return
     setLoading(id)
     setError(null)
+    setConfirmDeleteImageId(null)
     await fetch(`/api/admin/menu/${id}/image`, { method: 'DELETE' })
     router.refresh()
     setLoading(null)
@@ -377,7 +379,7 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
                       )}
                       <p className="text-sm text-gray-600 mt-0.5">¥{item.price.toLocaleString()}</p>
                       {item.image_url && (
-                        <div className="flex gap-2 mt-1.5">
+                        <div className="flex gap-2 mt-1.5 flex-wrap">
                           <label className="text-xs text-amber-700 hover:text-amber-800 cursor-pointer">
                             画像を変更
                             <input
@@ -390,42 +392,71 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
                               }}
                             />
                           </label>
-                          <button
-                            onClick={() => removeImage(item.id)}
-                            className="text-xs text-red-500 hover:text-red-700"
-                          >
-                            画像を削除
-                          </button>
+                          {confirmDeleteImageId === item.id ? (
+                            <>
+                              <span className="text-xs text-red-600">削除しますか？</span>
+                              <button onClick={() => removeImage(item.id)} className="text-xs text-red-600 font-semibold hover:text-red-800">はい</button>
+                              <button onClick={() => setConfirmDeleteImageId(null)} className="text-xs text-gray-500 hover:text-gray-700">キャンセル</button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => setConfirmDeleteImageId(item.id)}
+                              className="text-xs text-red-400 hover:text-red-600"
+                            >
+                              画像を削除
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => toggleAvailable(item)}
-                      disabled={loading === item.id}
-                      className={`flex-1 text-sm font-semibold py-2 rounded-lg transition-colors disabled:opacity-50 ${
-                        item.is_available
-                          ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                          : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                      }`}
-                    >
-                      {item.is_available ? '提供中' : '提供停止中'}
-                    </button>
-                    <button
-                      onClick={() => startEdit(item)}
-                      className="flex-1 bg-amber-50 text-amber-700 hover:bg-amber-100 text-sm font-semibold py-2 rounded-lg"
-                    >
-                      編集
-                    </button>
-                    <button
-                      onClick={() => deleteItem(item.id)}
-                      disabled={loading === item.id}
-                      className="flex-1 bg-red-50 text-red-500 hover:bg-red-100 text-sm font-semibold py-2 rounded-lg disabled:opacity-50"
-                    >
-                      削除
-                    </button>
-                  </div>
+                  {confirmDeleteId === item.id ? (
+                    <div className="bg-red-50 border border-red-100 rounded-xl px-3 py-2.5 space-y-2">
+                      <p className="text-xs text-red-700 font-semibold">「{item.name}」を削除しますか？</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => deleteItem(item.id)}
+                          disabled={loading === item.id}
+                          className="flex-1 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold py-1.5 rounded-lg disabled:opacity-50"
+                        >
+                          {loading === item.id ? '削除中...' : '削除する'}
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold py-1.5 rounded-lg"
+                        >
+                          キャンセル
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => toggleAvailable(item)}
+                        disabled={loading === item.id}
+                        className={`flex-1 text-sm font-semibold py-2 rounded-lg transition-colors disabled:opacity-50 ${
+                          item.is_available
+                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                        }`}
+                      >
+                        {item.is_available ? '提供中' : '提供停止中'}
+                      </button>
+                      <button
+                        onClick={() => startEdit(item)}
+                        className="flex-1 bg-amber-50 text-amber-700 hover:bg-amber-100 text-sm font-semibold py-2 rounded-lg"
+                      >
+                        編集
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(item.id)}
+                        disabled={loading === item.id}
+                        className="flex-1 bg-red-50 text-red-500 hover:bg-red-100 text-sm font-semibold py-2 rounded-lg disabled:opacity-50"
+                      >
+                        削除
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
             </div>

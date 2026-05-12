@@ -20,6 +20,7 @@ export default function StaffManager() {
   const [pwForId, setPwForId] = useState<string | null>(null)
   const [pwValue, setPwValue] = useState('')
   const [success, setSuccess] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   async function load() {
     setLoading(true)
@@ -76,8 +77,8 @@ export default function StaffManager() {
   }
 
   async function deleteStaff(id: string, email: string) {
-    if (!confirm(`${email} を削除しますか？`)) return
     clearMessages()
+    setConfirmDeleteId(null)
     setActionLoading(id)
     try {
       const res = await fetch(`/api/admin/staff/${id}`, { method: 'DELETE' })
@@ -226,6 +227,25 @@ export default function StaffManager() {
                 取消
               </button>
             </div>
+          ) : confirmDeleteId === s.id ? (
+            <div className="bg-red-50 border border-red-100 rounded-xl px-3 py-2.5 space-y-2">
+              <p className="text-xs text-red-700 font-semibold">{s.email} を削除しますか？</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => deleteStaff(s.id, s.email)}
+                  disabled={actionLoading === s.id}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold py-1.5 rounded-lg disabled:opacity-50"
+                >
+                  {actionLoading === s.id ? '削除中...' : '削除する'}
+                </button>
+                <button
+                  onClick={() => setConfirmDeleteId(null)}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold py-1.5 rounded-lg"
+                >
+                  キャンセル
+                </button>
+              </div>
+            </div>
           ) : (
             <div className="flex gap-2 pt-1">
               <button
@@ -235,7 +255,7 @@ export default function StaffManager() {
                 パスワード変更
               </button>
               <button
-                onClick={() => deleteStaff(s.id, s.email)}
+                onClick={() => setConfirmDeleteId(s.id)}
                 disabled={actionLoading === s.id}
                 className="flex-1 text-xs bg-red-50 hover:bg-red-100 text-red-500 py-1.5 rounded-lg font-semibold disabled:opacity-50"
               >

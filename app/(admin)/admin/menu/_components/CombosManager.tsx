@@ -49,6 +49,7 @@ export default function CombosManager({ menuItems }: Props) {
   const [editDraft, setEditDraft] = useState<DraftCombo>(EMPTY_DRAFT)
   const [showAdd, setShowAdd] = useState(false)
   const [addDraft, setAddDraft] = useState<DraftCombo>(EMPTY_DRAFT)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -158,9 +159,9 @@ export default function CombosManager({ menuItems }: Props) {
   }
 
   async function deleteCombo(id: string) {
-    if (!confirm('このセットを削除しますか？')) return
     setLoading(id)
     setError(null)
+    setConfirmDeleteId(null)
     const res = await fetch(`/api/admin/combos/${id}`, { method: 'DELETE' })
     setLoading(null)
     if (!res.ok) {
@@ -268,6 +269,9 @@ export default function CombosManager({ menuItems }: Props) {
                 onEdit={() => startEdit(c)}
                 onToggle={() => toggleAvailable(c)}
                 onDelete={() => deleteCombo(c.id)}
+                confirmDelete={confirmDeleteId === c.id}
+                onConfirmDelete={() => setConfirmDeleteId(c.id)}
+                onCancelDelete={() => setConfirmDeleteId(null)}
               />
             )}
           </div>
@@ -279,6 +283,7 @@ export default function CombosManager({ menuItems }: Props) {
 
 function ComboRow({
   combo, menuItems, isLoading, onEdit, onToggle, onDelete,
+  confirmDelete, onConfirmDelete, onCancelDelete,
 }: {
   combo: Combo
   menuItems: MenuItemLite[]
@@ -286,6 +291,9 @@ function ComboRow({
   onEdit: () => void
   onToggle: () => void
   onDelete: () => void
+  confirmDelete: boolean
+  onConfirmDelete: () => void
+  onCancelDelete: () => void
 }) {
   const baseSum = combo.items.reduce((s, ci) => {
     const m = menuItems.find((x) => x.id === ci.menu_item_id)
@@ -322,32 +330,53 @@ function ComboRow({
           </span>
         </div>
       </div>
-      <div className="flex gap-2 pt-1">
-        <button
-          onClick={onToggle}
-          disabled={isLoading}
-          className={`flex-1 text-sm font-semibold py-2 rounded-lg transition-colors disabled:opacity-50 ${
-            combo.is_available
-              ? 'bg-green-100 text-green-700 hover:bg-green-200'
-              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-          }`}
-        >
-          {combo.is_available ? '提供中' : '提供停止中'}
-        </button>
-        <button
-          onClick={onEdit}
-          className="flex-1 bg-amber-50 text-amber-700 hover:bg-amber-100 text-sm font-semibold py-2 rounded-lg"
-        >
-          編集
-        </button>
-        <button
-          onClick={onDelete}
-          disabled={isLoading}
-          className="flex-1 bg-red-50 text-red-500 hover:bg-red-100 text-sm font-semibold py-2 rounded-lg disabled:opacity-50"
-        >
-          削除
-        </button>
-      </div>
+      {confirmDelete ? (
+        <div className="bg-red-50 border border-red-100 rounded-xl px-3 py-2.5 space-y-2 pt-1">
+          <p className="text-xs text-red-700 font-semibold">「{combo.name}」を削除しますか？</p>
+          <div className="flex gap-2">
+            <button
+              onClick={onDelete}
+              disabled={isLoading}
+              className="flex-1 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold py-1.5 rounded-lg disabled:opacity-50"
+            >
+              {isLoading ? '削除中...' : '削除する'}
+            </button>
+            <button
+              onClick={onCancelDelete}
+              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold py-1.5 rounded-lg"
+            >
+              キャンセル
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex gap-2 pt-1">
+          <button
+            onClick={onToggle}
+            disabled={isLoading}
+            className={`flex-1 text-sm font-semibold py-2 rounded-lg transition-colors disabled:opacity-50 ${
+              combo.is_available
+                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+            }`}
+          >
+            {combo.is_available ? '提供中' : '提供停止中'}
+          </button>
+          <button
+            onClick={onEdit}
+            className="flex-1 bg-amber-50 text-amber-700 hover:bg-amber-100 text-sm font-semibold py-2 rounded-lg"
+          >
+            編集
+          </button>
+          <button
+            onClick={onConfirmDelete}
+            disabled={isLoading}
+            className="flex-1 bg-red-50 text-red-500 hover:bg-red-100 text-sm font-semibold py-2 rounded-lg disabled:opacity-50"
+          >
+            削除
+          </button>
+        </div>
+      )}
     </>
   )
 }
