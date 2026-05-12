@@ -42,24 +42,31 @@ export default function SalesView({ orders, currentRange }: Props) {
     return { total, count, avg }
   }, [orders])
 
+  // JST オフセット: +9h
+  const JST_OFFSET_MS = 9 * 60 * 60 * 1000
+
   // 日次売上
   const dailySales = useMemo(() => {
     const map = new Map<string, { date: string; total: number; count: number }>()
     for (const o of orders) {
-      const day = o.created_at.slice(0, 10)
+      // UTC → JST に変換してから日付文字列を取得
+      const jstDate = new Date(new Date(o.created_at).getTime() + JST_OFFSET_MS)
+      const day = jstDate.toISOString().slice(0, 10)
       const existing = map.get(day) ?? { date: day, total: 0, count: 0 }
       existing.total += o.total_amount
       existing.count += 1
       map.set(day, existing)
     }
     return Array.from(map.values()).sort((a, b) => a.date.localeCompare(b.date))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orders])
 
-  // 時間帯別注文数（0〜23時）
+  // 時間帯別注文数（0〜23時、JST）
   const hourlyCounts = useMemo(() => {
     const counts = new Array(24).fill(0)
     for (const o of orders) {
-      const h = new Date(o.created_at).getHours()
+      const jstDate = new Date(new Date(o.created_at).getTime() + JST_OFFSET_MS)
+      const h = jstDate.getUTCHours()
       counts[h]++
     }
     return counts
