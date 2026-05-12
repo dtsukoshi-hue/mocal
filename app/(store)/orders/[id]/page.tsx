@@ -25,7 +25,6 @@ export default async function OrderStatusPage({ params }: Props) {
       status,
       total_amount,
       estimated_ready_at,
-      store_id,
       customer_note,
       stores(name),
       order_items(name, qty, price)

@@ -19,7 +19,6 @@ type Order = {
   status: string
   total_amount: number
   estimated_ready_at: string | null
-  store_id: string
   customer_note: string | null
   stores: { name: string } | null
   order_items: { name: string; qty: number; price: number }[]
