@@ -242,8 +242,13 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
     setLoading(`img-${id}`)
     setError(null)
     setConfirmDeleteImageId(null)
-    await fetch(`/api/admin/menu/${id}/image`, { method: 'DELETE' })
-    router.refresh()
+    const res = await fetch(`/api/admin/menu/${id}/image`, { method: 'DELETE' })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setError(data.error ?? '画像の削除に失敗しました')
+    } else {
+      router.refresh()
+    }
     setLoading(null)
   }
 
