@@ -96,7 +96,7 @@ export default function OrderHistoryView() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-100 text-red-600 text-sm rounded-xl px-4 py-3">
+      <div role="alert" className="bg-red-50 border border-red-100 text-red-600 text-sm rounded-xl px-4 py-3">
         {error}
       </div>
     )
