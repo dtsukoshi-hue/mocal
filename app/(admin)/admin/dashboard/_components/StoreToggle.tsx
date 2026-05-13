@@ -15,7 +15,6 @@ export default function StoreToggle({ isOpen, overrideUntil: initialOverride }: 
   const [overrideUntil, setOverrideUntil] = useState<string | null>(initialOverride ?? null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  // マウント時点の現在時刻で判定（Date.now を render で呼ばない）
   const [mountedAt] = useState(() => Date.now())
   const overrideActive =
     overrideUntil !== null && new Date(overrideUntil).getTime() > mountedAt
@@ -61,17 +60,19 @@ export default function StoreToggle({ isOpen, overrideUntil: initialOverride }: 
   }
 
   return (
-    <div className="flex flex-col items-start gap-1.5">
+    <div className="flex flex-col items-end gap-1">
       <button
         onClick={toggle}
         disabled={isPending}
-        className={`inline-flex items-center gap-2 text-sm font-semibold px-4 py-1.5 rounded-full transition-colors disabled:opacity-50 ${
+        className={`inline-flex items-center gap-2 text-xs font-bold px-4 py-1.5 rounded-full transition-all disabled:opacity-50 ${
           optimistic
-            ? 'bg-green-100 text-green-700 hover:bg-green-200'
-            : 'bg-red-100 text-red-600 hover:bg-red-200'
+            ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+            : 'bg-gray-800 text-white hover:bg-gray-700'
         }`}
       >
-        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${optimistic ? 'bg-green-500' : 'bg-red-400'}`} />
+        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+          optimistic ? 'bg-white/50 animate-pulse' : 'bg-gray-500'
+        }`} />
         {optimistic ? '受付中' : '受付停止中'}
       </button>
 
@@ -80,19 +81,19 @@ export default function StoreToggle({ isOpen, overrideUntil: initialOverride }: 
           type="button"
           onClick={clearOverride}
           disabled={isPending}
-          className="inline-flex items-center gap-1.5 text-xs text-amber-700/80 hover:text-amber-900 transition-colors disabled:opacity-50 group"
+          className="inline-flex items-center gap-1 text-[10px] text-amber-600 hover:text-amber-800 transition-colors disabled:opacity-50"
         >
-          <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+          <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
             <circle cx="12" cy="12" r="10" />
             <path strokeLinecap="round" d="M12 6v6l4 2" />
           </svg>
-          <span>スケジュール自動制御をオフ中</span>
-          <span className="underline underline-offset-2 decoration-amber-400 group-hover:decoration-amber-600">解除する</span>
+          自動制御オフ中
+          <span className="underline underline-offset-2">· 解除する</span>
         </button>
       )}
 
       {errorMessage && (
-        <p className="text-xs text-red-500">{errorMessage}</p>
+        <p className="text-[10px] text-red-500 text-right">{errorMessage}</p>
       )}
     </div>
   )
