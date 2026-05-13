@@ -91,7 +91,7 @@ export default async function DashboardPage() {
           <>
             {newOrders.length > 0 && (
               <Section title="🔴 新規注文" count={newOrders.length}>
-                {newOrders.map((o) => <OrderCard key={o.id} order={o} />)}
+                {newOrders.map((o) => <OrderCard key={o.id} order={o} defaultWaitMinutes={store?.wait_minutes ?? 15} />)}
               </Section>
             )}
             {cookingOrders.length > 0 && (

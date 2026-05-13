@@ -71,12 +71,12 @@ function elapsedMinutes(fromIso: string, nowMs: number): number {
   return Math.floor((nowMs - new Date(fromIso).getTime()) / 60_000)
 }
 
-export default function OrderCard({ order }: { order: Order }) {
+export default function OrderCard({ order, defaultWaitMinutes = 15 }: { order: Order; defaultWaitMinutes?: number }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [waitMinutes, setWaitMinutes] = useState(15)
+  const [waitMinutes, setWaitMinutes] = useState(defaultWaitMinutes)
   const [confirmCancel, setConfirmCancel] = useState(false)
   // 経過分数を 30 秒ごとに更新
   const [now, setNow] = useState(() => Date.now())

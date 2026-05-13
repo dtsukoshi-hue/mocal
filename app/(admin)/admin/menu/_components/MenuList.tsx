@@ -155,22 +155,29 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
   }, [categories, pendingCategories])
 
   const grouped = useMemo(() => {
+    // Build category groups preserving the sort_order from the server.
+    // `items` is already sorted by sort_order, so insertion order equals
+    // admin-defined order (catIdx * 10000 + itemIdx * 10 scheme).
     const map = new Map<string, MenuItem[]>()
+    const orderedKeys: string[] = []
     for (const item of items) {
       const key = item.category?.trim() || UNCATEGORIZED
-      if (!map.has(key)) map.set(key, [])
+      if (!map.has(key)) {
+        map.set(key, [])
+        if (key !== UNCATEGORIZED) orderedKeys.push(key)
+      }
       map.get(key)!.push(item)
     }
-    // Include pending categories that have no items yet
+    // Pending (empty) categories appear after real ones
     for (const pc of pendingCategories) {
-      if (!map.has(pc)) map.set(pc, [])
+      if (!map.has(pc)) {
+        map.set(pc, [])
+        orderedKeys.push(pc)
+      }
     }
-    const sortedKeys = Array.from(map.keys()).sort((a, b) => {
-      if (a === UNCATEGORIZED) return 1
-      if (b === UNCATEGORIZED) return -1
-      return a.localeCompare(b, 'ja')
-    })
-    return sortedKeys.map((k) => ({ category: k, items: map.get(k)! }))
+    // Uncategorised items always go last
+    if (map.has(UNCATEGORIZED)) orderedKeys.push(UNCATEGORIZED)
+    return orderedKeys.map((k) => ({ category: k, items: map.get(k)! }))
   }, [items, pendingCategories])
 
   // ── Reorder mode: build CategoryGroup[] for CategoryReorderList
