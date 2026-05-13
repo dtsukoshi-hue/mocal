@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
@@ -26,6 +26,31 @@ export default function CustomerPushSubscriber({ orderId }: Props) {
   const [status, setStatus] = useState<'idle' | 'subscribed' | 'denied' | 'unsupported'>(detectInitialStatus)
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  // ページリロード後もサブスクリプション済み状態を維持する
+  useEffect(() => {
+    if (status !== 'idle') return
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return
+    navigator.serviceWorker.getRegistration()
+      .then(async (reg) => {
+        if (!reg) return
+        const sub = await reg.pushManager.getSubscription()
+        if (!sub) return
+        // このオーダー向けにサーバー登録済みか確認（既存の customer endpoint を流用）
+        const res = await fetch('/api/push/customer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        }).catch(() => null)
+        if (res?.ok) {
+          const data = await res.json().catch(() => ({}))
+          const subs: { order_id: string }[] = data.subscriptions ?? []
+          if (subs.some((s) => s.order_id === orderId)) setStatus('subscribed')
+        }
+      })
+      .catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId])
 
   async function subscribe() {
     setLoading(true)
