@@ -110,7 +110,7 @@ export default function StripeConnectSection() {
       )}
 
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-2.5">{error}</p>
+        <p role="alert" className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-2.5">{error}</p>
       )}
 
       <button

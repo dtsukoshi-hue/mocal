@@ -266,7 +266,7 @@ export default function OrderCard({ order, defaultWaitMinutes = 15 }: { order: O
         )}
 
         {error && (
-          <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+          <p role="alert" className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>
         )}
 
         {/* キャンセル確認 */}

@@ -436,7 +436,7 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
   return (
     <div className="space-y-4">
       {error && (
-        <div className="bg-red-50 text-red-700 text-sm px-4 py-2.5 rounded-xl border border-red-100">
+        <div role="alert" className="bg-red-50 text-red-700 text-sm px-4 py-2.5 rounded-xl border border-red-100">
           {error}
         </div>
       )}
@@ -539,7 +539,7 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
             </label>
 
             {importError && (
-              <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-2.5">{importError}</p>
+              <p role="alert" className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-2.5">{importError}</p>
             )}
             {importSuccess !== null && (
               <p className="text-sm text-emerald-700 bg-emerald-50 rounded-xl px-4 py-2.5">

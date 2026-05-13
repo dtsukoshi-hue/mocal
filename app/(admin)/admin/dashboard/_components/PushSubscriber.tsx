@@ -104,7 +104,7 @@ export default function PushSubscriber() {
         )}
       </div>
       {errorMsg && (
-        <p className="text-xs text-red-600">{errorMsg}</p>
+        <p role="alert" className="text-xs text-red-600">{errorMsg}</p>
       )}
     </div>
   )

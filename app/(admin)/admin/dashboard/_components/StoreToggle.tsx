@@ -173,7 +173,7 @@ export default function StoreToggle({
         )}
 
         {errorMessage && (
-          <p className="text-[10px] text-red-500 text-right">{errorMessage}</p>
+          <p role="alert" className="text-[10px] text-red-500 text-right">{errorMessage}</p>
         )}
       </div>
 
