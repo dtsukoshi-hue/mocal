@@ -122,7 +122,7 @@ export default function StaffManager() {
         <div role="alert" className="bg-red-50 text-red-700 text-sm px-4 py-2 rounded-lg">{error}</div>
       )}
       {success && (
-        <div className="bg-emerald-50 text-emerald-700 text-sm px-4 py-2 rounded-lg">{success}</div>
+        <div role="status" className="bg-emerald-50 text-emerald-700 text-sm px-4 py-2 rounded-lg">{success}</div>
       )}
 
       {/* 追加フォーム */}

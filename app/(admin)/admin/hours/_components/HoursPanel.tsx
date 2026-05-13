@@ -329,7 +329,7 @@ export default function HoursPanel({ isOpen: initialIsOpen, waitMinutes: initial
         )}
 
         {error && <p role="alert" className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-2.5">{error}</p>}
-        {success && <p className="text-sm text-emerald-700 bg-emerald-50 rounded-xl px-4 py-2.5">保存しました</p>}
+        {success && <p role="status" className="text-sm text-emerald-700 bg-emerald-50 rounded-xl px-4 py-2.5">保存しました</p>}
 
         <button
           onClick={saveHours}
