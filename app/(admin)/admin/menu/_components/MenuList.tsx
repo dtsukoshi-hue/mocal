@@ -542,7 +542,7 @@ export default function MenuList({ items }: { items: MenuItem[] }) {
               <p role="alert" className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-2.5">{importError}</p>
             )}
             {importSuccess !== null && (
-              <p className="text-sm text-emerald-700 bg-emerald-50 rounded-xl px-4 py-2.5">
+              <p role="status" className="text-sm text-emerald-700 bg-emerald-50 rounded-xl px-4 py-2.5">
                 {importSuccess} 件のメニューをインポートしました
               </p>
             )}
