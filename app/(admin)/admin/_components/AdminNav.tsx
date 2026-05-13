@@ -36,9 +36,9 @@ export default function AdminNav({ active, role, rightSlot, backLabel, backHref,
                 {backLabel}
               </Link>
             ) : (
-              <span className="text-base font-black tracking-tight text-gray-900 shrink-0">
+              <span className="text-lg font-black tracking-tight text-gray-900 shrink-0">
                 <span className="text-amber-600">m</span>ocal
-                <span className="text-gray-400 font-normal text-sm ml-1.5">店舗管理</span>
+                <span className="text-gray-500 font-semibold text-sm ml-2">店舗管理</span>
               </span>
             )}
             {title && <h1 className="text-base font-bold text-gray-900 shrink-0">{title}</h1>}
