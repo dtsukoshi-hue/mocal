@@ -15,7 +15,17 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   const url = event.notification.data?.url
-  if (url) {
-    event.waitUntil(clients.openWindow(url))
-  }
+  if (!url) return
+  // 既に同じ URL を開いているタブがあればそちらをフォーカスする
+  // なければ新しいウィンドウで開く
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url === url && 'focus' in client) {
+          return client.focus()
+        }
+      }
+      return clients.openWindow(url)
+    })
+  )
 })
