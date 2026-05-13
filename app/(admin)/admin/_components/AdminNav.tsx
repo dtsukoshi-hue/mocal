@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { logoutAction } from '@/app/actions/auth'
 
 interface Props {
   active: 'orders' | 'menu' | 'hours' | 'reports' | 'history' | 'settings' | 'staff'
@@ -47,14 +46,6 @@ export default function AdminNav({ active, role, rightSlot, backLabel, backHref,
 
           <div className="flex items-center gap-1 shrink-0">
             {rightSlot}
-            <form action={logoutAction}>
-              <button
-                type="submit"
-                className="text-sm text-gray-400 hover:text-gray-600 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
-              >
-                ログアウト
-              </button>
-            </form>
           </div>
         </div>
 

@@ -8,6 +8,7 @@ import StoreSettingsForm from './_components/StoreSettingsForm'
 import StripeConnectSection from './_components/StripeConnectSection'
 import StoreImagesSection from './_components/StoreImagesSection'
 import AdminNav from '../_components/AdminNav'
+import { logoutAction } from '@/app/actions/auth'
 
 export default async function StoreSettingsPage() {
   const cookieStore = await cookies()
@@ -42,6 +43,21 @@ export default async function StoreSettingsPage() {
           initialCoverUrl={store.cover_url ?? null}
         />
         <StripeConnectSection />
+
+        {/* ── ログアウト */}
+        <div className="pt-4 pb-8">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <form action={logoutAction}>
+              <button
+                type="submit"
+                className="w-full px-5 py-4 text-left text-sm font-semibold text-red-500 hover:bg-red-50 transition-colors"
+              >
+                ログアウト
+              </button>
+            </form>
+          </div>
+          <p className="text-center text-[10px] text-gray-400 mt-4">mocal 店舗管理</p>
+        </div>
       </main>
     </div>
   )
