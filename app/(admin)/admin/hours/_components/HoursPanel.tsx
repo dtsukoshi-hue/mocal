@@ -196,20 +196,24 @@ export default function HoursPanel({ isOpen: initialIsOpen, waitMinutes: initial
           </button>
         </div>
         {overrideActive ? (
-          <div className="flex items-center justify-between gap-3 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
-            <div className="text-xs text-amber-800 leading-tight">
-              <p className="font-bold">🔒 手動上書き中</p>
-              <p className="text-[11px] text-amber-700">
-                {overrideUntilLabel} まで自動制御を停止しています
-              </p>
+          <div className="flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 bg-amber-50 border border-amber-100">
+            <div className="flex items-center gap-2 min-w-0">
+              <svg className="w-3.5 h-3.5 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+                <circle cx="12" cy="12" r="10" />
+                <path strokeLinecap="round" d="M12 6v6l4 2" />
+              </svg>
+              <div className="text-xs text-amber-800 leading-snug min-w-0">
+                <span className="font-semibold">スケジュール自動制御をオフ中</span>
+                <span className="text-amber-600/80"> — {overrideUntilLabel} まで</span>
+              </div>
             </div>
             <button
               type="button"
               onClick={clearOverride}
               disabled={loading === 'clear'}
-              className="text-xs font-semibold bg-white border border-amber-300 text-amber-700 hover:bg-amber-100 px-3 py-1.5 rounded-lg disabled:opacity-50 whitespace-nowrap"
+              className="text-xs font-semibold text-amber-700 hover:text-amber-900 underline underline-offset-2 decoration-amber-400 hover:decoration-amber-600 disabled:opacity-50 whitespace-nowrap shrink-0 transition-colors"
             >
-              {loading === 'clear' ? '解除中...' : '自動制御に戻す'}
+              {loading === 'clear' ? '解除中...' : '解除する'}
             </button>
           </div>
         ) : (

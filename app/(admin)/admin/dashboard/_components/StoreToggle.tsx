@@ -61,31 +61,36 @@ export default function StoreToggle({ isOpen, overrideUntil: initialOverride }: 
   }
 
   return (
-    <div className="flex flex-col items-start gap-1">
-      <div className="flex items-center gap-1.5">
+    <div className="flex flex-col items-start gap-1.5">
+      <button
+        onClick={toggle}
+        disabled={isPending}
+        className={`inline-flex items-center gap-2 text-sm font-semibold px-4 py-1.5 rounded-full transition-colors disabled:opacity-50 ${
+          optimistic
+            ? 'bg-green-100 text-green-700 hover:bg-green-200'
+            : 'bg-red-100 text-red-600 hover:bg-red-200'
+        }`}
+      >
+        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${optimistic ? 'bg-green-500' : 'bg-red-400'}`} />
+        {optimistic ? '受付中' : '受付停止中'}
+      </button>
+
+      {overrideActive && (
         <button
-          onClick={toggle}
+          type="button"
+          onClick={clearOverride}
           disabled={isPending}
-          className={`text-sm font-semibold px-3 py-1.5 rounded-full transition-colors disabled:opacity-50 ${
-            optimistic
-              ? 'bg-green-100 text-green-700 hover:bg-green-200'
-              : 'bg-red-100 text-red-600 hover:bg-red-200'
-          }`}
+          className="inline-flex items-center gap-1.5 text-xs text-amber-700/80 hover:text-amber-900 transition-colors disabled:opacity-50 group"
         >
-          {optimistic ? '受付中' : '受付停止中'}
+          <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+            <circle cx="12" cy="12" r="10" />
+            <path strokeLinecap="round" d="M12 6v6l4 2" />
+          </svg>
+          <span>スケジュール自動制御をオフ中</span>
+          <span className="underline underline-offset-2 decoration-amber-400 group-hover:decoration-amber-600">解除する</span>
         </button>
-        {overrideActive && (
-          <button
-            type="button"
-            onClick={clearOverride}
-            disabled={isPending}
-            title="営業時間に基づく自動制御に戻す"
-            className="text-[10px] font-semibold bg-amber-100 text-amber-700 hover:bg-amber-200 px-2 py-1 rounded-full transition-colors disabled:opacity-50 inline-flex items-center gap-1"
-          >
-            🔒 手動
-          </button>
-        )}
-      </div>
+      )}
+
       {errorMessage && (
         <p className="text-xs text-red-500">{errorMessage}</p>
       )}
