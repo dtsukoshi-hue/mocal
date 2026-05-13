@@ -119,7 +119,7 @@ export default function StaffManager() {
   return (
     <div className="space-y-4">
       {error && (
-        <div className="bg-red-50 text-red-700 text-sm px-4 py-2 rounded-lg">{error}</div>
+        <div role="alert" className="bg-red-50 text-red-700 text-sm px-4 py-2 rounded-lg">{error}</div>
       )}
       {success && (
         <div className="bg-emerald-50 text-emerald-700 text-sm px-4 py-2 rounded-lg">{success}</div>

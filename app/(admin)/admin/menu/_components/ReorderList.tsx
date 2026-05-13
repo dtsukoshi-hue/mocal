@@ -87,7 +87,7 @@ export default function ReorderList({ items: initial, onDone }: Props) {
       </div>
 
       {error && (
-        <div className="bg-red-50 text-red-700 text-sm px-4 py-2 rounded-lg">{error}</div>
+        <div role="alert" className="bg-red-50 text-red-700 text-sm px-4 py-2 rounded-lg">{error}</div>
       )}
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

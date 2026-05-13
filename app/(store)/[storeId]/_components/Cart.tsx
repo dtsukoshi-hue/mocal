@@ -487,7 +487,7 @@ export default function Cart({ store, cart, setCart, cartCombos, setCartCombos, 
         </p>
 
         {state && 'error' in state && (
-          <div className="bg-red-50 rounded-xl px-4 py-3 text-sm text-red-600">
+          <div role="alert" className="bg-red-50 rounded-xl px-4 py-3 text-sm text-red-600">
             {state.error}
           </div>
         )}
