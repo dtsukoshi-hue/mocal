@@ -135,15 +135,15 @@ export default function StoreToggle({
         <button
           onClick={openSheet}
           disabled={isPending}
-          className={`inline-flex items-center gap-2 text-xs font-bold px-4 py-1.5 rounded-full transition-all disabled:opacity-50 ${
+          className={`inline-flex items-center gap-2.5 text-sm font-bold px-5 py-2 rounded-full transition-all disabled:opacity-50 ${
             optimistic
               ? 'bg-emerald-500 text-white hover:bg-emerald-600'
               : 'bg-gray-800 text-white hover:bg-gray-700'
           }`}
         >
           <span
-            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-              optimistic ? 'bg-white/50 animate-pulse' : 'bg-gray-500'
+            className={`w-2 h-2 rounded-full shrink-0 ${
+              optimistic ? 'bg-white/60 animate-pulse' : 'bg-gray-500'
             }`}
           />
           {optimistic ? '受付中' : '受付停止中'}
