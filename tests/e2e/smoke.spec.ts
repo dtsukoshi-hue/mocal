@@ -24,7 +24,7 @@ test.describe('smoke', () => {
     const res = await request.get('/manifest.webmanifest')
     expect(res.status()).toBe(200)
     const body = await res.json()
-    expect(body.name).toBe('mocal')
+    expect(body.short_name).toBe('mocal')
   })
 
   test('admin login page renders without auth', async ({ page }) => {
