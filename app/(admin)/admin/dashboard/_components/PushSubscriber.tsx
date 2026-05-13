@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
@@ -23,6 +23,21 @@ export default function PushSubscriber() {
   const [status, setStatus] = useState<'idle' | 'subscribed' | 'denied' | 'unsupported'>(detectInitialStatus)
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  // 既存のサブスクリプションを確認（ページ再読み込みで再表示しない）
+  useEffect(() => {
+    if (status !== 'idle') return
+    if (typeof window === 'undefined') return
+    if (!('serviceWorker' in navigator)) return
+    navigator.serviceWorker.getRegistration()
+      .then(async (reg) => {
+        if (!reg) return
+        const sub = await reg.pushManager.getSubscription()
+        if (sub) setStatus('subscribed')
+      })
+      .catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function subscribe() {
     setLoading(true)
