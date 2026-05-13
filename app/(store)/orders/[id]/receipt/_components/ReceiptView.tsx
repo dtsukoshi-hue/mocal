@@ -14,6 +14,50 @@ interface ReceiptOrder {
   order_items: { name: string; qty: number; price: number; combo_id: string | null; combo_label: string | null }[]
 }
 
+type ReceiptRow =
+  | { type: 'item'; name: string; qty: number; amount: number }
+  | { type: 'combo'; label: string; contents: string; amount: number }
+
+/** コンボ行を集約してレシート用行リストを生成する。
+ *  同一 combo_id の行は合算して 1 行に。個別アイテムはそのまま。 */
+function buildReceiptRows(
+  items: ReceiptOrder['order_items']
+): ReceiptRow[] {
+  const rows: ReceiptRow[] = []
+  // combo_id → { label, total, parts }
+  const comboMap = new Map<string, { label: string; amount: number; parts: string[] }>()
+
+  for (const it of items) {
+    if (it.combo_id) {
+      const key = it.combo_id
+      const existing = comboMap.get(key)
+      if (existing) {
+        existing.amount += it.price * it.qty
+        existing.parts.push(`${it.name}×${it.qty}`)
+      } else {
+        comboMap.set(key, {
+          label: it.combo_label ?? 'セット',
+          amount: it.price * it.qty,
+          parts: [`${it.name}×${it.qty}`],
+        })
+      }
+    } else {
+      rows.push({ type: 'item', name: it.name, qty: it.qty, amount: it.price * it.qty })
+    }
+  }
+
+  for (const combo of comboMap.values()) {
+    rows.push({
+      type: 'combo',
+      label: combo.label,
+      contents: combo.parts.join('・'),
+      amount: combo.amount,
+    })
+  }
+
+  return rows
+}
+
 export default function ReceiptView({ order }: { order: ReceiptOrder }) {
   const tax = Math.round(order.total_amount - order.total_amount / 1.1)
   const subtotal = order.total_amount
@@ -79,15 +123,30 @@ export default function ReceiptView({ order }: { order: ReceiptOrder }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {order.order_items.map((item, i) => (
-                  <tr key={i}>
-                    <td className="py-2 text-gray-900">{item.name}</td>
-                    <td className="py-2 text-right text-gray-700 tabular-nums">{item.qty}</td>
-                    <td className="py-2 text-right text-gray-900 tabular-nums">
-                      ¥{(item.price * item.qty).toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
+                {buildReceiptRows(order.order_items).map((row, i) =>
+                  row.type === 'item' ? (
+                    <tr key={i}>
+                      <td className="py-2 text-gray-900">{row.name}</td>
+                      <td className="py-2 text-right text-gray-700 tabular-nums">{row.qty}</td>
+                      <td className="py-2 text-right text-gray-900 tabular-nums">
+                        ¥{row.amount.toLocaleString()}
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr key={i}>
+                      <td className="py-2 text-gray-900">
+                        <span className="font-semibold">🎁 {row.label}</span>
+                        <span className="block text-xs text-gray-400 mt-0.5">
+                          {row.contents}
+                        </span>
+                      </td>
+                      <td className="py-2 text-right text-gray-700 tabular-nums">1</td>
+                      <td className="py-2 text-right text-gray-900 tabular-nums">
+                        ¥{row.amount.toLocaleString()}
+                      </td>
+                    </tr>
+                  )
+                )}
               </tbody>
             </table>
           </section>
