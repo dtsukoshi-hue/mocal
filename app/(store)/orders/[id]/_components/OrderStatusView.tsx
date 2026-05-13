@@ -8,10 +8,46 @@ import type { Database, OrderStatus } from '@/lib/database.types'
 import { saveOrderToHistory } from '@/lib/order-history'
 import CustomerPushSubscriber from './CustomerPushSubscriber'
 
+type OrderRow =
+  | { type: 'item'; name: string; qty: number; amount: number }
+  | { type: 'combo'; label: string; contents: string; amount: number }
+
+/** combo_id ごとにアイテムを集約してレシートと同じ形式で行を生成する */
+function buildOrderRows(items: OrderItem[]): OrderRow[] {
+  const rows: OrderRow[] = []
+  const comboMap = new Map<string, { label: string; amount: number; parts: string[] }>()
+
+  for (const it of items) {
+    if (it.combo_id) {
+      const existing = comboMap.get(it.combo_id)
+      if (existing) {
+        existing.amount += it.price * it.qty
+        existing.parts.push(`${it.name}×${it.qty}`)
+      } else {
+        comboMap.set(it.combo_id, {
+          label: it.combo_label ?? 'セット',
+          amount: it.price * it.qty,
+          parts: [`${it.name}×${it.qty}`],
+        })
+      }
+    } else {
+      rows.push({ type: 'item', name: it.name, qty: it.qty, amount: it.price * it.qty })
+    }
+  }
+
+  for (const combo of comboMap.values()) {
+    rows.push({ type: 'combo', label: combo.label, contents: combo.parts.join('・'), amount: combo.amount })
+  }
+
+  return rows
+}
+
 // Supabase anon キーの Realtime は RLS (orders_user_own_select) で
 // 匿名ユーザーに届かない可能性が高い。20 秒ポーリングをフォールバックとして設ける。
 const POLL_INTERVAL_MS = 20_000
 const TERMINAL_STATUSES = new Set(['completed', 'cancelled', 'refunded', 'no_show'])
+
+type OrderItem = { name: string; qty: number; price: number; combo_id: string | null; combo_label: string | null }
 
 type Order = {
   id: string
@@ -21,7 +57,7 @@ type Order = {
   estimated_ready_at: string | null
   customer_note: string | null
   stores: { name: string } | null
-  order_items: { name: string; qty: number; price: number }[]
+  order_items: OrderItem[]
 }
 
 interface Props {
@@ -228,15 +264,25 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
         <div className="bg-white rounded-2xl shadow-sm p-5 space-y-3">
           <h3 className="text-sm font-semibold text-gray-700">注文内容</h3>
           <ul className="divide-y divide-gray-50 text-sm">
-            {order.order_items.map((item, i) => (
-              <li key={i} className="flex justify-between py-2 text-gray-700">
-                <span>
-                  {item.name}
-                  <span className="text-gray-400 ml-1">× {item.qty}</span>
-                </span>
-                <span className="text-gray-600">¥{(item.price * item.qty).toLocaleString()}</span>
-              </li>
-            ))}
+            {buildOrderRows(order.order_items).map((row, i) =>
+              row.type === 'item' ? (
+                <li key={i} className="flex justify-between py-2 text-gray-700">
+                  <span>
+                    {row.name}
+                    <span className="text-gray-400 ml-1">× {row.qty}</span>
+                  </span>
+                  <span className="text-gray-600">¥{row.amount.toLocaleString()}</span>
+                </li>
+              ) : (
+                <li key={i} className="py-2">
+                  <div className="flex justify-between text-gray-700">
+                    <span className="font-semibold">🎁 {row.label}</span>
+                    <span className="text-gray-600">¥{row.amount.toLocaleString()}</span>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-0.5">{row.contents}</p>
+                </li>
+              )
+            )}
           </ul>
           <div className="flex justify-between font-bold text-gray-900 pt-2 border-t border-gray-100">
             <span>合計</span>

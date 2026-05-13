@@ -27,7 +27,7 @@ export default async function OrderStatusPage({ params }: Props) {
       estimated_ready_at,
       customer_note,
       stores(name),
-      order_items(name, qty, price)
+      order_items(name, qty, price, combo_id, combo_label)
     `)
     .eq('id', id)
     .single()
