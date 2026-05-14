@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/database.types'
+import type { Metadata } from 'next'
 import { isUuid } from '@/lib/validation'
 import MenuView from './_components/MenuView'
 
@@ -12,6 +13,51 @@ interface Props {
   params: Promise<{ storeId: string }>
 }
 
+function makeSupabase() {
+  return createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { storeId } = await params
+  if (!isUuid(storeId)) return {}
+
+  const { data: store } = await makeSupabase()
+    .from('stores')
+    .select('name, cuisine_type, area, cover_url')
+    .eq('id', storeId)
+    .single()
+
+  if (!store) return {}
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mocal-iota.vercel.app'
+  const title = `${store.name} — テイクアウト注文`
+  const description = [
+    store.cuisine_type,
+    store.area ? `${store.area}エリア` : null,
+    'mocal でテイクアウト事前注文',
+  ].filter(Boolean).join(' · ')
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${appUrl}/${storeId}`,
+      ...(store.cover_url ? { images: [{ url: store.cover_url, width: 1200, height: 630 }] } : {}),
+    },
+    twitter: {
+      card: store.cover_url ? 'summary_large_image' : 'summary',
+      title,
+      description,
+      ...(store.cover_url ? { images: [store.cover_url] } : {}),
+    },
+  }
+}
+
 export default async function StorePage({ params }: Props) {
   const { storeId } = await params
 
@@ -19,10 +65,7 @@ export default async function StorePage({ params }: Props) {
   if (!isUuid(storeId)) notFound()
 
   // 店舗・メニューは公開データ（RLS: USING(true)）なので anon key で参照
-  const supabase = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  const supabase = makeSupabase()
 
   // 店舗情報取得
   const { data: store } = await supabase

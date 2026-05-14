@@ -12,12 +12,24 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mocal-iota.vercel.app'
+
 export const metadata: Metadata = {
   title: {
-    default: 'mocal',
+    default: 'mocal — テイクアウト事前注文',
     template: '%s | mocal',
   },
-  description: 'テイクアウト事前注文プラットフォーム',
+  description: '待たずに受け取れるテイクアウト事前注文。お気に入りのお店をスマホで注文、準備完了を通知でお知らせ。',
+  metadataBase: new URL(APP_URL),
+  openGraph: {
+    siteName: 'mocal',
+    locale: 'ja_JP',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    site: '@mocal_jp',
+  },
   // 管理画面は子レイアウトで上書きして noindex 化する
   robots: {
     index: true,
