@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* スクロールバーを非表示にするユーティリティ（管理画面の横スクロールナビ用） */
+.scrollbar-none {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

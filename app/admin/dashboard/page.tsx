@@ -94,8 +94,8 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
+          <div className="flex items-center gap-2 shrink-0">
             <h1 className="text-lg font-bold text-gray-900">注文管理</h1>
             {paidCount > 0 && (
               <span className="bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
@@ -103,19 +103,20 @@ export default async function DashboardPage() {
               </span>
             )}
           </div>
-          <div className="flex items-center gap-3">
-            <Link href="/admin/history" className="text-sm text-gray-500 hover:text-gray-700">履歴</Link>
-            <Link href="/admin/reports" className="text-sm text-gray-500 hover:text-gray-700">レポート</Link>
-            <Link href="/admin/menu" className="text-sm text-gray-500 hover:text-gray-700">メニュー</Link>
-            <Link href="/admin/members" className="text-sm text-gray-500 hover:text-gray-700">スタッフ</Link>
-            <Link href="/admin/settings" className="text-sm text-gray-500 hover:text-gray-700">設定</Link>
+          {/* モバイルでも横スクロールで全リンクにアクセスできるようにする */}
+          <nav className="flex items-center gap-3 overflow-x-auto scrollbar-none flex-1 min-w-0">
+            <Link href="/admin/history" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">履歴</Link>
+            <Link href="/admin/reports" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">レポート</Link>
+            <Link href="/admin/menu" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">メニュー</Link>
+            <Link href="/admin/members" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">スタッフ</Link>
+            <Link href="/admin/settings" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">設定</Link>
             <StorePushSubscribe storeId={session.storeId} />
             <form action={logoutAction}>
-              <button type="submit" className="text-sm text-gray-500 hover:text-gray-700">
+              <button type="submit" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">
                 ログアウト
               </button>
             </form>
-          </div>
+          </nav>
         </div>
       </header>
 
