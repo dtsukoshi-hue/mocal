@@ -89,6 +89,7 @@ export async function PATCH(
     estimated_ready_at?: string
     ready_at?: string
     no_show_at?: string
+    no_show_push_sent?: boolean
     cancelled_reason_type?: CancelledReasonType
   } = { status }
 
@@ -123,7 +124,11 @@ export async function PATCH(
     }
   }
   if (status === 'ready') updateData.ready_at = now
-  if (status === 'no_show') updateData.no_show_at = now
+  if (status === 'no_show') {
+    updateData.no_show_at = now
+    // push は後述の sendPushToOrder で送信するため送信済みとしてマーク（cron の重複送信防止）
+    updateData.no_show_push_sent = true
+  }
 
   // キャンセル時：Stripe 返金を自動実行し refunded へ遷移
   if (status === 'cancelled' && order.stripe_charge_id) {
