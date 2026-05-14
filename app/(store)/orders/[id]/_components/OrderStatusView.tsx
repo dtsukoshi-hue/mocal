@@ -35,6 +35,61 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; icon: string; descript
   no_show:   { label: '未受取',       icon: '⏰', description: '受取時間が過ぎました' },
 }
 
+// 通常フローのステップ（pending→completed）
+const PROGRESS_STEPS: OrderStatus[] = ['pending', 'paid', 'accepted', 'preparing', 'ready', 'completed']
+
+function OrderProgressBar({ status }: { status: string }) {
+  // キャンセル・返金・未受取はプログレスバー非表示
+  if (['cancelled', 'refunded', 'no_show'].includes(status)) return null
+
+  const currentIdx = PROGRESS_STEPS.indexOf(status as OrderStatus)
+  const stepLabels = ['決済中', '受付済', '受理', '調理中', '準備完了', '受取完了']
+
+  return (
+    <div className="px-4 pb-2" aria-label="注文進捗">
+      <div className="flex items-center">
+        {PROGRESS_STEPS.map((step, i) => {
+          const isDone = i < currentIdx
+          const isCurrent = i === currentIdx
+          const isLast = i === PROGRESS_STEPS.length - 1
+          return (
+            <div key={step} className="flex items-center flex-1 last:flex-none">
+              <div className="flex flex-col items-center">
+                <div
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                    isDone
+                      ? 'bg-orange-500 text-white'
+                      : isCurrent
+                        ? 'bg-orange-500 text-white ring-2 ring-orange-200'
+                        : 'bg-gray-200 text-gray-400'
+                  }`}
+                >
+                  {isDone ? '✓' : i + 1}
+                </div>
+                <span
+                  className={`mt-1 text-center leading-tight whitespace-nowrap text-gray-500 transition-colors ${
+                    isCurrent ? 'text-orange-600 font-semibold' : isDone ? 'text-gray-400' : 'text-gray-300'
+                  }`}
+                  style={{ fontSize: '9px' }}
+                >
+                  {stepLabels[i]}
+                </span>
+              </div>
+              {!isLast && (
+                <div
+                  className={`h-0.5 flex-1 mx-0.5 mb-4 transition-colors ${
+                    i < currentIdx ? 'bg-orange-400' : 'bg-gray-200'
+                  }`}
+                />
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function OrderStatusView({ order: initialOrder }: Props) {
   const [order, setOrder] = useState(initialOrder)
 
@@ -65,6 +120,7 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
   }, [order.id])
 
   const config = STATUS_CONFIG[order.status as OrderStatus] ?? STATUS_CONFIG.pending
+  const isTerminal = ['completed', 'cancelled', 'refunded', 'no_show'].includes(order.status)
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -75,9 +131,13 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
             注文 #{order.order_number}
           </h1>
         </div>
+        {/* プログレスバー */}
+        <div className="max-w-lg mx-auto pt-2">
+          <OrderProgressBar status={order.status} />
+        </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-8 flex-1 space-y-6">
+      <main className="max-w-lg mx-auto px-4 py-6 flex-1 space-y-4 w-full">
         {/* ステータス表示 */}
         <div className="bg-white rounded-2xl shadow-sm p-8 text-center" aria-live="polite" aria-atomic="true">
           <div className="text-5xl mb-4" aria-hidden="true">{config.icon}</div>
@@ -85,35 +145,35 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
           <p className="text-sm text-gray-500">{config.description}</p>
 
           {order.pickup_type === 'scheduled' && order.scheduled_at && (
-            <p className="mt-4 text-sm font-semibold text-indigo-600">
-              受取指定時刻：{new Date(order.scheduled_at).toLocaleTimeString('ja-JP', {
+            <div className="mt-4 inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-sm font-semibold px-3 py-1.5 rounded-full">
+              🕐 受取指定：{new Date(order.scheduled_at).toLocaleTimeString('ja-JP', {
                 hour: '2-digit',
                 minute: '2-digit',
                 timeZone: 'Asia/Tokyo',
               })}
-            </p>
+            </div>
           )}
 
           {order.estimated_ready_at && ['accepted', 'preparing'].includes(order.status) && (
-            <p className="mt-4 text-sm font-semibold text-orange-600">
-              受取予定：{new Date(order.estimated_ready_at).toLocaleTimeString('ja-JP', {
+            <div className="mt-4 inline-flex items-center gap-1.5 bg-orange-50 text-orange-700 text-sm font-semibold px-3 py-1.5 rounded-full">
+              ⏱ 受取予定：{new Date(order.estimated_ready_at).toLocaleTimeString('ja-JP', {
                 hour: '2-digit',
                 minute: '2-digit',
                 timeZone: 'Asia/Tokyo',
               })}
-            </p>
+            </div>
           )}
 
-          {/* pending の時はポーリングを案内 */}
+          {/* ページ自動更新の案内（pending） */}
           {order.status === 'pending' && (
-            <p className="mt-3 text-xs text-gray-400">
+            <p className="mt-4 text-xs text-gray-400">
               このページは自動で更新されます
             </p>
           )}
         </div>
 
-        {/* 通知購読ボタン（完了・キャンセル以外は表示） */}
-        {!['completed', 'cancelled', 'refunded', 'no_show'].includes(order.status) && (
+        {/* 通知購読ボタン（完了・キャンセル系以外） */}
+        {!isTerminal && (
           <PushSubscribeButton orderId={order.id} />
         )}
 

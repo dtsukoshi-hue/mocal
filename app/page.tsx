@@ -4,32 +4,54 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <main className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
+        {/* ロゴ */}
+        <div className="mb-10">
+          <h1 className="text-5xl font-bold tracking-tight">
             mo<span className="text-orange-500">cal</span>
           </h1>
-          <p className="mt-2 text-gray-500 text-sm">テイクアウト事前注文プラットフォーム</p>
-        </div>
-
-        <div className="max-w-sm space-y-4 text-sm text-gray-600">
-          <p className="leading-relaxed">
-            お気に入りのお店の QR コードを読み取るか、<br />
-            お店から共有された URL からご注文ください。
+          <p className="mt-3 text-gray-500 text-sm leading-relaxed">
+            テイクアウト事前注文プラットフォーム
           </p>
         </div>
 
-        <div className="mt-12 flex flex-col items-center gap-3">
+        {/* バリュープロポジション */}
+        <div className="max-w-xs mb-10 space-y-3">
+          <div className="flex items-start gap-3 text-left bg-orange-50 rounded-xl px-4 py-3">
+            <span className="text-xl">📱</span>
+            <div>
+              <p className="text-sm font-semibold text-gray-800">QR コードで即注文</p>
+              <p className="text-xs text-gray-500 mt-0.5">お店の QR を読み取るだけ。アプリ不要。</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 text-left bg-orange-50 rounded-xl px-4 py-3">
+            <span className="text-xl">⏰</span>
+            <div>
+              <p className="text-sm font-semibold text-gray-800">待ち時間ゼロ</p>
+              <p className="text-xs text-gray-500 mt-0.5">事前決済で受取時間を短縮。</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 text-left bg-orange-50 rounded-xl px-4 py-3">
+            <span className="text-xl">🔔</span>
+            <div>
+              <p className="text-sm font-semibold text-gray-800">準備完了を通知</p>
+              <p className="text-xs text-gray-500 mt-0.5">できあがったらプッシュ通知でお知らせ。</p>
+            </div>
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="flex flex-col items-center gap-3 w-full max-w-xs">
           <Link
             href="/onboarding"
-            className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl px-6 py-3 text-sm transition-colors"
+            className="w-full text-center bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl px-6 py-3.5 text-sm transition-colors shadow-sm"
           >
-            店舗として登録する
+            店舗として登録する →
           </Link>
           <Link
             href="/admin/login"
-            className="text-sm text-gray-400 hover:text-gray-600"
+            className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
           >
-            店舗ログイン
+            すでに登録済みの方はこちら
           </Link>
         </div>
       </main>

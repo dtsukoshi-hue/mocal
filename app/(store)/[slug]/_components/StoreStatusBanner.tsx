@@ -16,7 +16,7 @@ export default function StoreStatusBanner({ isOpen, waitMinutes }: Props) {
       >
         {isOpen ? '受付中' : '受付停止中'}
       </span>
-      {isOpen && (
+      {isOpen && waitMinutes > 0 && (
         <span className="text-xs text-gray-500">
           約{waitMinutes}分
         </span>

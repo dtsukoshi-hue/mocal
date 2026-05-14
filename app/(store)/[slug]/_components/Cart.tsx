@@ -16,10 +16,10 @@ const stripePromise = loadStripe(
 function generateTimeSlots(waitMinutes: number): { label: string; iso: string }[] {
   const slots: { label: string; iso: string }[] = []
   const now = new Date()
-  // 最初のスロット: 店舗の待ち時間（最低30分）以上先を切り上げ
-  const minOffsetMs = Math.max(waitMinutes, 30) * 60_000
+  // 最初のスロット: 店舗の待ち時間（最低15分）以上先を30分単位で切り上げ
+  const minOffsetMs = Math.max(waitMinutes, 15) * 60_000
   const base = new Date(Math.ceil((now.getTime() + minOffsetMs) / (30 * 60_000)) * (30 * 60_000))
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 5; i++) {
     const t = new Date(base.getTime() + i * 30 * 60_000)
     slots.push({
       label: t.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' }),

@@ -49,6 +49,7 @@ export default function MenuView({ store, menuItems }: Props) {
   }, [store.id])
 
   const categories = [...new Set(menuItems.map(item => item.category ?? 'その他'))]
+  const categoriesKey = categories.join('\0')
 
   // Intersection Observer でスクロール中のカテゴリーを追跡
   useEffect(() => {
@@ -67,7 +68,8 @@ export default function MenuView({ store, menuItems }: Props) {
 
     sectionRefs.current.forEach(el => observer.observe(el))
     return () => observer.disconnect()
-  }, [categories.length])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoriesKey])
 
   const scrollToCategory = (category: string) => {
     sectionRefs.current.get(category)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
