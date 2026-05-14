@@ -8,7 +8,7 @@ import StoreStatusBanner from './StoreStatusBanner'
 
 interface Props {
   store: Pick<Store, 'id' | 'name' | 'description' | 'is_open' | 'wait_minutes' | 'logo_url' | 'cover_url'>
-  menuItems: Pick<MenuItem, 'id' | 'name' | 'description' | 'price' | 'category' | 'emoji' | 'is_available' | 'sort_order'>[]
+  menuItems: Pick<MenuItem, 'id' | 'name' | 'description' | 'price' | 'category' | 'emoji' | 'image_url' | 'is_available' | 'sort_order'>[]
 }
 
 export interface CartItem {
@@ -206,15 +206,22 @@ export default function MenuView({ store, menuItems }: Props) {
                     className="w-full flex items-center justify-between bg-white rounded-xl px-4 py-3 shadow-sm text-left disabled:opacity-50 hover:bg-orange-50 transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      {item.emoji && (
-                        <span className="text-2xl">{item.emoji}</span>
-                      )}
+                      {item.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={item.image_url}
+                          alt=""
+                          className="w-12 h-12 rounded-lg object-cover shrink-0 bg-gray-100"
+                        />
+                      ) : item.emoji ? (
+                        <span className="text-2xl w-10 text-center shrink-0">{item.emoji}</span>
+                      ) : null}
                       <div>
                         <span className="text-sm font-medium text-gray-900">
                           {item.name}
                         </span>
                         {item.description && (
-                          <p className="text-xs text-gray-400 mt-0.5 leading-snug">
+                          <p className="text-xs text-gray-400 mt-0.5 leading-snug line-clamp-2">
                             {item.description}
                           </p>
                         )}

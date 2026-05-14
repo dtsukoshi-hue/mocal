@@ -60,7 +60,7 @@ export default async function StorePage({ params }: Props) {
 
   const { data: menuItems } = await supabase
     .from('menu_items')
-    .select('id, name, description, price, category, emoji, is_available, sort_order')
+    .select('id, name, description, price, category, emoji, image_url, is_available, sort_order')
     .eq('store_id', store.id)
     .eq('is_available', true)
     .order('sort_order', { ascending: true })
