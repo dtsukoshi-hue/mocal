@@ -60,13 +60,11 @@ describe('createPayment', () => {
 })
 
 describe('refundPayment', () => {
-  it('refunds via charge id with Destination Charges params', async () => {
+  it('refunds via charge id (Destination Charges: charge id のみ)', async () => {
     stripeMock.refundsCreate.mockResolvedValue({ id: 're_test' })
     const r = await refundPayment('ch_test')
     expect(stripeMock.refundsCreate).toHaveBeenCalledWith({
       charge: 'ch_test',
-      refund_application_fee: true,
-      reverse_transfer: true,
     })
     expect(r.refundId).toBe('re_test')
   })
