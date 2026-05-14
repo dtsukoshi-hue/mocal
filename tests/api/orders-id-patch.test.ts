@@ -285,4 +285,17 @@ describe('PATCH /api/orders/[id]', () => {
     expect(eta).toBeGreaterThan(Date.now() + 19 * 60 * 1000)
     expect(eta).toBeLessThan(Date.now() + 22 * 60 * 1000)
   })
+
+  it('no_show 遷移時に no_show_push_sent=true と no_show_at を設定する', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const { updateBuilder } = mockSupabase({
+      orderRow: { id: ORDER_ID, status: 'ready', store_id: STORE_ID, stripe_charge_id: null },
+    })
+    const res = await PATCH(makeRequest({ status: 'no_show' }) as never, makeCtx(ORDER_ID))
+    expect(res.status).toBe(200)
+    const updateCall = (updateBuilder.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(updateCall.status).toBe('no_show')
+    expect(updateCall.no_show_at).toBeDefined()
+    expect(updateCall.no_show_push_sent).toBe(true)
+  })
 })
