@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { createBrowserClient } from '@supabase/ssr'
 import type { Database, OrderStatus } from '@/lib/database.types'
 import PushSubscribeButton from './PushSubscribeButton'
@@ -90,8 +91,46 @@ function OrderProgressBar({ status }: { status: string }) {
   )
 }
 
+const LS_HISTORY_KEY = 'mocal_order_history'
+
+type HistoryEntry = {
+  id: string
+  orderNumber: number
+  storeName: string
+  totalAmount: number
+  createdAt: string  // ISO string saved at first visit
+}
+
+function saveToHistory(order: Order) {
+  try {
+    const raw = localStorage.getItem(LS_HISTORY_KEY)
+    const history: HistoryEntry[] = raw ? JSON.parse(raw) : []
+    // すでに保存済みなら更新しない
+    if (history.some((e) => e.id === order.id)) return
+    const entry: HistoryEntry = {
+      id: order.id,
+      orderNumber: order.order_number,
+      storeName: order.stores?.name ?? '',
+      totalAmount: order.total_amount,
+      createdAt: new Date().toISOString(),
+    }
+    // 最新を先頭に、最大 50 件保持
+    const updated = [entry, ...history].slice(0, 50)
+    localStorage.setItem(LS_HISTORY_KEY, JSON.stringify(updated))
+  } catch {
+    // localStorage 操作失敗は無視
+  }
+}
+
 export default function OrderStatusView({ order: initialOrder }: Props) {
   const [order, setOrder] = useState(initialOrder)
+
+  // 注文履歴を localStorage に保存（初回のみ）
+  useEffect(() => {
+    saveToHistory(initialOrder)
+  // 初回のみ実行
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Supabase Realtime でステータスをリアルタイム更新
   useEffect(() => {
@@ -175,6 +214,16 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
         {/* 通知購読ボタン（完了・キャンセル系以外） */}
         {!isTerminal && (
           <PushSubscribeButton orderId={order.id} />
+        )}
+
+        {/* 領収書リンク（完了・返金済） */}
+        {['completed', 'refunded'].includes(order.status) && (
+          <Link
+            href={`/orders/${order.id}/receipt`}
+            className="flex items-center justify-center gap-2 w-full rounded-xl border border-gray-200 text-gray-600 text-sm font-medium py-3 hover:bg-gray-50 transition-colors"
+          >
+            🧾 領収書を表示する
+          </Link>
         )}
 
         {/* 注文内容 */}
