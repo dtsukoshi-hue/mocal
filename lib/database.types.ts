@@ -27,6 +27,18 @@ export type StoreRole = 'owner' | 'staff'
 
 export type WaitMinutes = 10 | 15 | 20 | 30 | 40 | 60
 
+// day_of_week: 0=日, 1=月, 2=火, 3=水, 4=木, 5=金, 6=土（JS の getDay() に合わせる）
+export type StoreHour = {
+  id: string
+  store_id: string
+  day_of_week: 0 | 1 | 2 | 3 | 4 | 5 | 6
+  open_time: string   // "HH:MM"
+  close_time: string  // "HH:MM"
+  is_closed: boolean
+  created_at: string
+  updated_at: string
+}
+
 // ------------------------------------------------------------
 // テーブル行型（type を使用 — interface は Record<string,unknown> を満たさない）
 // ------------------------------------------------------------
@@ -196,6 +208,20 @@ export type OrderItemInsert = {
 export type Database = {
   public: {
     Tables: {
+      store_hours: {
+        Row: StoreHour
+        Insert: Omit<StoreHour, 'id' | 'created_at' | 'updated_at'> & { id?: string; created_at?: string; updated_at?: string }
+        Update: Partial<Omit<StoreHour, 'id' | 'store_id' | 'day_of_week' | 'created_at' | 'updated_at'>>
+        Relationships: [
+          {
+            foreignKeyName: 'store_hours_store_id_fkey'
+            columns: ['store_id']
+            isOneToOne: false
+            referencedRelation: 'stores'
+            referencedColumns: ['id']
+          }
+        ]
+      }
       stores: {
         Row: Store
         Insert: StoreInsert

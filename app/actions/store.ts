@@ -5,6 +5,57 @@ import { createServiceClient } from '@/lib/supabase-server'
 import { verifyStoreSession } from '@/lib/dal'
 import type { WaitMinutes } from '@/lib/database.types'
 
+// ------------------------------------------------------------
+// 営業時間
+// ------------------------------------------------------------
+
+/** フォームから送られてきた 7 曜日分の営業時間を upsert する */
+export async function saveStoreHoursAction(
+  _prev: { error?: string; success?: boolean } | undefined,
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await verifyStoreSession()
+  const supabase = createServiceClient()
+
+  // formData 形式: is_closed_{dow}, open_{dow}, close_{dow}
+  type Row = {
+    store_id: string
+    day_of_week: 0 | 1 | 2 | 3 | 4 | 5 | 6
+    open_time: string
+    close_time: string
+    is_closed: boolean
+  }
+  const rows = (Array.from({ length: 7 }, (_, dow) => {
+    const isClosed = formData.get(`is_closed_${dow}`) === '1'
+    const openTime  = String(formData.get(`open_${dow}`)  ?? '10:00').slice(0, 5)
+    const closeTime = String(formData.get(`close_${dow}`) ?? '20:00').slice(0, 5)
+    // HH:MM 形式の簡易バリデーション
+    const timeRe = /^\d{2}:\d{2}$/
+    if (!timeRe.test(openTime) || !timeRe.test(closeTime)) return null
+    return {
+      store_id: session.storeId,
+      day_of_week: dow as 0 | 1 | 2 | 3 | 4 | 5 | 6,
+      open_time: openTime,
+      close_time: closeTime,
+      is_closed: isClosed,
+    }
+  }).filter((r): r is Row => r !== null))
+
+  if (rows.length !== 7) return { error: '時間の形式が不正です（HH:MM で入力してください）。' }
+
+  const { error } = await supabase
+    .from('store_hours')
+    .upsert(rows, { onConflict: 'store_id,day_of_week' })
+
+  if (error) {
+    console.error('[store/hours]', error)
+    return { error: '営業時間の保存に失敗しました。' }
+  }
+
+  revalidatePath('/admin/hours')
+  return { success: true }
+}
+
 const VALID_WAIT_MINUTES = [10, 15, 20, 30, 40, 60] as const
 
 export async function updateStoreProfileAction(

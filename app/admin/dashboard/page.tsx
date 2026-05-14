@@ -108,6 +108,7 @@ export default async function DashboardPage() {
             <Link href="/admin/history" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">履歴</Link>
             <Link href="/admin/reports" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">レポート</Link>
             <Link href="/admin/menu" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">メニュー</Link>
+            <Link href="/admin/hours" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">営業時間</Link>
             <Link href="/admin/members" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">スタッフ</Link>
             <Link href="/admin/settings" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">設定</Link>
             <StorePushSubscribe storeId={session.storeId} />
