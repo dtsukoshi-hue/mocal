@@ -6,14 +6,14 @@ let _vapidInitialized = false
 
 function ensureVapid() {
   if (_vapidInitialized) return
-  if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY || !process.env.VAPID_SUBJECT) {
-    throw new Error('VAPID 環境変数が設定されていません。')
+  // NEXT_PUBLIC_VAPID_PUBLIC_KEY はクライアント側でも使用するため NEXT_PUBLIC_ プレフィックス付き
+  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+  const privateKey = process.env.VAPID_PRIVATE_KEY
+  const subject = process.env.VAPID_SUBJECT
+  if (!publicKey || !privateKey || !subject) {
+    throw new Error('VAPID 環境変数が設定されていません（NEXT_PUBLIC_VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY / VAPID_SUBJECT）。')
   }
-  webpush.setVapidDetails(
-    process.env.VAPID_SUBJECT,
-    process.env.VAPID_PUBLIC_KEY,
-    process.env.VAPID_PRIVATE_KEY
-  )
+  webpush.setVapidDetails(subject, publicKey, privateKey)
   _vapidInitialized = true
 }
 
