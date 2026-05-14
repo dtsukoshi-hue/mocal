@@ -2,13 +2,16 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import type { Database, MenuItem, Store } from '@/lib/database.types'
+import type { Database, MenuItem, Store, StoreHour } from '@/lib/database.types'
 import Cart from './Cart'
 import StoreStatusBanner from './StoreStatusBanner'
+
+type HourRow = Pick<StoreHour, 'day_of_week' | 'open_time' | 'close_time' | 'is_closed'>
 
 interface Props {
   store: Pick<Store, 'id' | 'name' | 'description' | 'is_open' | 'wait_minutes' | 'logo_url' | 'cover_url'>
   menuItems: Pick<MenuItem, 'id' | 'name' | 'description' | 'price' | 'category' | 'emoji' | 'image_url' | 'is_available' | 'sort_order'>[]
+  storeHours: HourRow[]
 }
 
 export interface CartItem {
@@ -19,7 +22,9 @@ export interface CartItem {
   emoji: string | null
 }
 
-export default function MenuView({ store, menuItems }: Props) {
+const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
+
+export default function MenuView({ store, menuItems, storeHours }: Props) {
   const [cart, setCart] = useState<CartItem[]>([])
   const [showCart, setShowCart] = useState(false)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
@@ -176,6 +181,26 @@ export default function MenuView({ store, menuItems }: Props) {
           <div className="rounded-xl bg-gray-100 text-gray-600 text-sm text-center py-6">
             現在、受付を停止しています
           </div>
+        )}
+
+        {/* 営業時間（設定がある場合のみ表示） */}
+        {storeHours.length > 0 && (
+          <details className="bg-white rounded-xl shadow-sm">
+            <summary className="px-4 py-3 text-sm font-medium text-gray-700 cursor-pointer select-none list-none flex items-center justify-between">
+              <span>営業時間</span>
+              <span className="text-gray-400 text-xs">▼</span>
+            </summary>
+            <div className="border-t border-gray-100 px-4 py-3 space-y-1">
+              {storeHours.map(h => (
+                <div key={h.day_of_week} className="flex justify-between text-xs text-gray-600">
+                  <span className="w-5 font-medium">{DAY_LABELS[h.day_of_week]}</span>
+                  {h.is_closed
+                    ? <span className="text-gray-400">定休日</span>
+                    : <span>{h.open_time.slice(0, 5)} 〜 {h.close_time.slice(0, 5)}</span>}
+                </div>
+              ))}
+            </div>
+          </details>
         )}
 
         {categories.length === 0 && (

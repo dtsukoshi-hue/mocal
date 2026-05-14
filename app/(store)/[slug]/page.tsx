@@ -58,15 +58,22 @@ export default async function StorePage({ params }: Props) {
 
   if (!store) notFound()
 
-  const { data: menuItems } = await supabase
-    .from('menu_items')
-    .select('id, name, description, price, category, emoji, image_url, is_available, sort_order')
-    .eq('store_id', store.id)
-    .eq('is_available', true)
-    .order('sort_order', { ascending: true })
-    .order('created_at', { ascending: true })
+  const [{ data: menuItems }, { data: storeHours }] = await Promise.all([
+    supabase
+      .from('menu_items')
+      .select('id, name, description, price, category, emoji, image_url, is_available, sort_order')
+      .eq('store_id', store.id)
+      .eq('is_available', true)
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('store_hours')
+      .select('day_of_week, open_time, close_time, is_closed')
+      .eq('store_id', store.id)
+      .order('day_of_week'),
+  ])
 
   return (
-    <MenuView store={store} menuItems={menuItems ?? []} />
+    <MenuView store={store} menuItems={menuItems ?? []} storeHours={storeHours ?? []} />
   )
 }
