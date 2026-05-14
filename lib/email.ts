@@ -22,6 +22,15 @@ export interface OrderConfirmEmailData {
   orderStatusUrl: string
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 export async function sendOrderConfirmEmail(data: OrderConfirmEmailData): Promise<void> {
   const {
     to, orderNumber, storeName, items, totalAmount,
@@ -33,8 +42,11 @@ export async function sendOrderConfirmEmail(data: OrderConfirmEmailData): Promis
     : `受取予定：約${waitMinutes}分後`
 
   const itemsHtml = items
-    .map(i => `<tr><td style="padding:6px 0;color:#374151;">${i.name} × ${i.qty}</td><td style="padding:6px 0;text-align:right;color:#374151;">¥${(i.price * i.qty).toLocaleString()}</td></tr>`)
+    .map(i => `<tr><td style="padding:6px 0;color:#374151;">${escapeHtml(i.name)} × ${i.qty}</td><td style="padding:6px 0;text-align:right;color:#374151;">¥${(i.price * i.qty).toLocaleString()}</td></tr>`)
     .join('')
+
+  // orderStatusUrl はサーバー側で組み立てた信頼できる URL のみ渡ること
+  const safeStoreUrl = orderStatusUrl.startsWith('http') ? orderStatusUrl : '#'
 
   const html = `<!DOCTYPE html>
 <html lang="ja">
@@ -43,14 +55,14 @@ export async function sendOrderConfirmEmail(data: OrderConfirmEmailData): Promis
   <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
     <div style="background:#f97316;padding:24px;text-align:center;">
       <p style="color:rgba(255,255,255,0.8);margin:0 0 4px;font-size:13px;">mocal テイクアウト注文確認</p>
-      <h1 style="color:#fff;margin:0;font-size:24px;font-weight:700;">${storeName}</h1>
+      <h1 style="color:#fff;margin:0;font-size:24px;font-weight:700;">${escapeHtml(storeName)}</h1>
     </div>
     <div style="padding:24px;">
       <p style="color:#6b7280;font-size:13px;margin:0 0 4px;">注文番号</p>
       <p style="color:#111827;font-size:28px;font-weight:800;margin:0 0 20px;">#${orderNumber}</p>
 
       <div style="background:#fff7ed;border-radius:10px;padding:14px;margin-bottom:20px;">
-        <p style="color:#ea580c;font-size:13px;font-weight:600;margin:0;">${pickupInfo}</p>
+        <p style="color:#ea580c;font-size:13px;font-weight:600;margin:0;">${escapeHtml(pickupInfo)}</p>
       </div>
 
       <table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
@@ -61,7 +73,7 @@ export async function sendOrderConfirmEmail(data: OrderConfirmEmailData): Promis
         </tr>
       </table>
 
-      <a href="${orderStatusUrl}" style="display:block;background:#f97316;color:#fff;text-align:center;padding:14px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;margin-top:20px;">
+      <a href="${safeStoreUrl}" style="display:block;background:#f97316;color:#fff;text-align:center;padding:14px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;margin-top:20px;">
         注文状況を確認する
       </a>
 

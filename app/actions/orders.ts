@@ -86,6 +86,7 @@ export async function createOrderAction(
 
   if (!store) return { error: '店舗が見つかりません。' }
   if (!store.is_open) return { error: '現在受付を停止しています。' }
+  if (!store.stripe_account_id) return { error: 'この店舗は現在オンライン決済を受け付けていません。' }
 
   // 時間指定注文: 店舗の待ち時間を下回っていないか再チェック（クライアント側の検証を補完）
   if (scheduledAt) {
