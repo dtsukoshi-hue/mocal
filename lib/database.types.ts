@@ -93,6 +93,7 @@ export type Order = {
   accepted_at: string | null
   ready_at: string | null
   no_show_at: string | null
+  no_show_push_sent: boolean
   cancelled_reason_type: CancelledReasonType | null
   cancelled_reason_detail: string | null
   stripe_payment_intent_id: string | null
@@ -245,6 +246,7 @@ export type OrderInsert = {
   accepted_at?: string | null
   ready_at?: string | null
   no_show_at?: string | null
+  no_show_push_sent?: boolean
   cancelled_reason_type?: CancelledReasonType | null
   cancelled_reason_detail?: string | null
   stripe_payment_intent_id?: string | null
