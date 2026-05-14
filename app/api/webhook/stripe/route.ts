@@ -104,10 +104,25 @@ export async function POST(request: NextRequest) {
       // 金額整合チェック（JPY は amount がそのまま円）
       const amountMatch = intent.amount === order.total_amount
 
-      // Charge ID を取得（返金に使用）
+      // Charge ID と receipt_url を取得（返金・領収書に使用）
       const chargeId = typeof intent.latest_charge === 'string'
         ? intent.latest_charge
         : intent.latest_charge?.id ?? null
+
+      // Charge オブジェクトから receipt_url を取得（CustomerFacing に表示するため）
+      let receiptUrl: string | null = null
+      if (chargeId) {
+        try {
+          const charge = await getStripe().charges.retrieve(
+            chargeId,
+            undefined,
+            store?.stripe_account_id ? { stripeAccount: store.stripe_account_id } : undefined
+          )
+          receiptUrl = charge.receipt_url ?? null
+        } catch (err) {
+          console.error('[webhook] charge 取得失敗:', err)
+        }
+      }
 
       if (!store?.is_open || !amountMatch) {
         // チェック NG → cancelled → refunded（仕様書 6.3）
@@ -154,6 +169,7 @@ export async function POST(request: NextRequest) {
         .update({
           status: 'paid',
           stripe_charge_id: chargeId,
+          ...(receiptUrl ? { stripe_receipt_url: receiptUrl } : {}),
         })
         .eq('id', orderId)
 
