@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
+import { refundPayment } from '@/lib/payment'
 import { sendPushToStore } from '@/lib/push'
 import { createServiceClient } from '@/lib/supabase-server'
 import { logger } from '@/lib/logger'
@@ -72,12 +73,7 @@ export async function POST(request: NextRequest) {
         let finalStatus: 'cancelled' | 'refunded' = 'cancelled'
         if (chargeId) {
           try {
-            await stripe.refunds.create({
-              charge: chargeId,
-              // Destination Charges: 転送先への返金 + 手数料も戻す
-              refund_application_fee: true,
-              reverse_transfer: true,
-            })
+            await refundPayment(chargeId)
             finalStatus = 'refunded'
           } catch (e) {
             logger.error('webhook auto-refund failed', { orderId, chargeId, reason: reasonType, error: String(e) })

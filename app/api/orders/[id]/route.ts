@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { getSessionPayload } from '@/lib/session'
-import { stripe } from '@/lib/stripe'
+import { refundPayment } from '@/lib/payment'
 import { logger } from '@/lib/logger'
 import { sendPushToOrder } from '@/lib/push'
 import {
@@ -109,12 +109,7 @@ export async function PATCH(
   // キャンセル時：Stripe 返金を自動実行し refunded へ遷移
   if (status === 'cancelled' && order.stripe_charge_id) {
     try {
-      await stripe.refunds.create({
-        charge: order.stripe_charge_id,
-        // Destination Charges: 転送先への返金 + 手数料も戻す
-        refund_application_fee: true,
-        reverse_transfer: true,
-      })
+      await refundPayment(order.stripe_charge_id)
       updateData.status = 'refunded'
     } catch (e) {
       logger.error('Stripe refund error', { orderId: id, chargeId: order.stripe_charge_id, error: String(e) })

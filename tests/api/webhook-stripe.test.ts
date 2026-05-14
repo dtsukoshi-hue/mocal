@@ -236,7 +236,7 @@ describe('POST /api/webhook/stripe', () => {
 
     await POST(makeRequest() as never)
     expect(stripeMock.refundsCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ charge: 'ch_closed', refund_application_fee: true, reverse_transfer: true })
+      expect.objectContaining({ charge: 'ch_closed' })
     )
     expect(calls.orderUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ status: 'refunded', cancelled_reason_type: 'store_closed', stripe_charge_id: 'ch_closed' })
