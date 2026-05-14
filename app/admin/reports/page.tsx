@@ -37,7 +37,10 @@ export default async function ReportsPage({ searchParams }: Props) {
 
   // JST の今日の日付（UTC サーバーでは toISOString が UTC 日付を返すため Intl を使用）
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tokyo' }).format(new Date())
-  const targetDate = dateParam ?? today
+  // dateParam の形式チェック（不正値はフォールバック）
+  const targetDate = (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) && !isNaN(new Date(dateParam + 'T12:00:00').getTime()))
+    ? dateParam
+    : today
 
   let rangeStart: string
   let rangeEnd: string
@@ -83,27 +86,29 @@ export default async function ReportsPage({ searchParams }: Props) {
   const startTs = `${rangeStart}T00:00:00+09:00`
   const endTs = `${rangeEnd}T23:59:59+09:00`
 
-  const { data: orders } = await supabase
-    .from('orders')
-    .select('id, total_amount, status, order_items(name, price, qty)')
-    .eq('store_id', session.storeId)
-    .in('status', ['completed', 'no_show'])
-    .gte('created_at', startTs)
-    .lte('created_at', endTs)
+  // 完了系注文とキャンセル系件数を並列取得
+  const [{ data: orders }, { count: cancelCount }] = await Promise.all([
+    supabase
+      .from('orders')
+      .select('id, total_amount, status, order_items(name, price, qty)')
+      .eq('store_id', session.storeId)
+      .in('status', ['completed', 'no_show'])
+      .gte('created_at', startTs)
+      .lte('created_at', endTs),
+    supabase
+      .from('orders')
+      .select('id', { count: 'exact', head: true })
+      .eq('store_id', session.storeId)
+      .in('status', ['cancelled', 'refunded'])
+      .gte('created_at', startTs)
+      .lte('created_at', endTs),
+  ])
 
   const completedOrders = (orders ?? []).filter(o => o.status === 'completed')
   const totalSales = completedOrders.reduce((sum, o) => sum + o.total_amount, 0)
   const orderCount = completedOrders.length
   const noShowCount = (orders ?? []).filter(o => o.status === 'no_show').length
   const avgOrder = orderCount > 0 ? Math.round(totalSales / orderCount) : 0
-
-  const { count: cancelCount } = await supabase
-    .from('orders')
-    .select('id', { count: 'exact', head: true })
-    .eq('store_id', session.storeId)
-    .in('status', ['cancelled', 'refunded'])
-    .gte('created_at', startTs)
-    .lte('created_at', endTs)
 
   const itemMap = new Map<string, { name: string; qty: number; revenue: number }>()
   for (const order of completedOrders) {

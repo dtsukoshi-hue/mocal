@@ -37,10 +37,21 @@ export async function registerStoreAction(
   })
 
   if (signUpErr || !authData.user) {
-    if (signUpErr?.message?.includes('already registered')) {
+    // Supabase: メール重複は status 422 または "already registered" メッセージ
+    const isAlreadyRegistered =
+      (signUpErr as { status?: number } | null)?.status === 422 ||
+      signUpErr?.message?.toLowerCase().includes('already registered') ||
+      signUpErr?.message?.toLowerCase().includes('already been registered')
+    if (isAlreadyRegistered) {
       return { error: 'このメールアドレスはすでに登録されています。' }
     }
     return { error: '登録に失敗しました。しばらく経ってから再試行してください。' }
+  }
+
+  // メール確認が必須の場合 session は null になる
+  // → セッションが無い状態で /admin/settings にリダイレクトするとログイン画面に戻ってしまう
+  if (!authData.session) {
+    return { error: '確認メールを送信しました。受信したリンクからログインした後、再度設定を行ってください。' }
   }
 
   const userId = authData.user.id

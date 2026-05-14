@@ -15,44 +15,49 @@ export default async function DashboardPage() {
   const session = await verifyStoreSession()
   const supabase = await createSupabaseServerClient()
 
-  // 店舗の受付状態・デフォルト待ち時間
-  const { data: storeStatus } = await supabase
-    .from('stores')
-    .select('is_open, wait_minutes')
-    .eq('id', session.storeId)
-    .single()
-
   // 今日の売上 KPI（JST の当日 00:00 起点）
   // setHours は UTC サーバーでは JST のゼロ時にならないため Intl を使用
   const todayJST = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tokyo' }).format(new Date())
   const todayStart = new Date(`${todayJST}T00:00:00+09:00`)
-  const { data: todayOrders } = await supabase
-    .from('orders')
-    .select('total_amount')
-    .eq('store_id', session.storeId)
-    .in('status', ['paid', 'accepted', 'preparing', 'ready', 'completed', 'no_show'])
-    .gte('created_at', todayStart.toISOString())
+
+  // 店舗ステータス・KPI・対応中注文を並列取得（相互に独立）
+  const [
+    { data: storeStatus },
+    { data: todayOrders },
+    { data: orders },
+  ] = await Promise.all([
+    supabase
+      .from('stores')
+      .select('is_open, wait_minutes')
+      .eq('id', session.storeId)
+      .single(),
+    supabase
+      .from('orders')
+      .select('total_amount')
+      .eq('store_id', session.storeId)
+      .in('status', ['paid', 'accepted', 'preparing', 'ready', 'completed', 'no_show'])
+      .gte('created_at', todayStart.toISOString()),
+    supabase
+      .from('orders')
+      .select(`
+        id,
+        order_number,
+        status,
+        total_amount,
+        pickup_type,
+        scheduled_at,
+        estimated_ready_at,
+        customer_note,
+        created_at,
+        order_items(name, qty, price)
+      `)
+      .eq('store_id', session.storeId)
+      .in('status', ['paid', 'accepted', 'preparing', 'ready'])
+      .order('created_at', { ascending: true }),
+  ])
 
   const todaySales = (todayOrders ?? []).reduce((sum, o) => sum + o.total_amount, 0)
   const todayCount = (todayOrders ?? []).length
-
-  const { data: orders } = await supabase
-    .from('orders')
-    .select(`
-      id,
-      order_number,
-      status,
-      total_amount,
-      pickup_type,
-      scheduled_at,
-      estimated_ready_at,
-      customer_note,
-      created_at,
-      order_items(name, qty, price)
-    `)
-    .eq('store_id', session.storeId)
-    .in('status', ['paid', 'accepted', 'preparing', 'ready'])
-    .order('created_at', { ascending: true })
 
   // scheduled_at が設定されている注文を優先：受取時刻の近い順に先頭表示
   const sortedOrders = (orders ?? []).slice().sort((a, b) => {
