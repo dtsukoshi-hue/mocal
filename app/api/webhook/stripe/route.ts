@@ -110,14 +110,11 @@ export async function POST(request: NextRequest) {
         : intent.latest_charge?.id ?? null
 
       // Charge オブジェクトから receipt_url を取得（CustomerFacing に表示するため）
+      // Destination Charges では charge はプラットフォームに存在するため stripeAccount 不要
       let receiptUrl: string | null = null
       if (chargeId) {
         try {
-          const charge = await getStripe().charges.retrieve(
-            chargeId,
-            undefined,
-            store?.stripe_account_id ? { stripeAccount: store.stripe_account_id } : undefined
-          )
+          const charge = await getStripe().charges.retrieve(chargeId)
           receiptUrl = charge.receipt_url ?? null
         } catch (err) {
           console.error('[webhook] charge 取得失敗:', err)

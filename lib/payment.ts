@@ -18,6 +18,12 @@ export interface RefundPaymentResult {
  * @param amountJpy  金額（日本円・整数）
  * @param orderId    mocal の注文ID（Stripe メタデータに保存）
  * @param stripeConnectedAccountId  店舗の Stripe Connect アカウントID（未設定時はプラットフォームで受ける）
+ *
+ * Destination Charges パターンを使用:
+ *   - PaymentIntent はプラットフォームアカウントで作成
+ *   - charge はプラットフォームに作成され、transfer_data で接続アカウントへ自動送金
+ *   - application_fee_amount = mocal の手数料（送金額から差し引かれる）
+ *   - charge 取得・返金はプラットフォーム側で行う（stripeAccount ヘッダー不要）
  */
 export async function createPayment(
   amountJpy: number,
@@ -38,7 +44,7 @@ export async function createPayment(
   }
 
   if (stripeConnectedAccountId) {
-    // Direct Charges: 店舗アカウントに直接請求・mocal は application_fee_amount を受け取る
+    // Destination Charges: プラットフォームで charge を作成し接続アカウントへ自動送金
     params.application_fee_amount = Math.floor(amountJpy * MOCAL_FEE_RATE)
     params.transfer_data = { destination: stripeConnectedAccountId }
   }
@@ -53,22 +59,20 @@ export async function createPayment(
 
 /**
  * 決済を返金する（cancelled 経由が必須）
+ *
+ * Destination Charges では charge はプラットフォームに存在するため、
+ * stripeAccount ヘッダーなしでプラットフォーム側から返金する。
+ * Stripe が自動的に接続アカウントへの transfer を逆転させる。
  */
 export async function refundPayment(
   stripeChargeId: string,
-  stripeConnectedAccountId?: string | null
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _stripeConnectedAccountId?: string | null
 ): Promise<RefundPaymentResult> {
   const stripe = getStripe()
-  const params: Parameters<typeof stripe.refunds.create>[0] = {
-    charge: stripeChargeId,
-  }
 
-  // Direct Charges の場合は接続アカウントの Stripe-Account ヘッダーが必要
-  const options = stripeConnectedAccountId
-    ? { stripeAccount: stripeConnectedAccountId }
-    : undefined
-
-  const refund = await stripe.refunds.create(params, options)
+  // Destination Charges: charge はプラットフォームに存在するため stripeAccount 不要
+  const refund = await stripe.refunds.create({ charge: stripeChargeId })
 
   return { refundId: refund.id }
 }
