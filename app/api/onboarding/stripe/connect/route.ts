@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createHmac, randomBytes } from 'crypto'
 import { verifyStoreSession } from '@/lib/dal'
 
@@ -13,7 +13,7 @@ function signState(payload: object): string {
 
 // Stripe Connect OAuth 開始
 // GET /api/onboarding/stripe/connect → Stripe の OAuth ページへリダイレクト
-export async function GET(_request: NextRequest) {
+export async function GET() {
   const session = await verifyStoreSession()
 
   const clientId = process.env.STRIPE_CLIENT_ID

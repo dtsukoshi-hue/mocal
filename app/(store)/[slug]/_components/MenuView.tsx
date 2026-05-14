@@ -46,6 +46,8 @@ export default function MenuView({ store, menuItems }: Props) {
       )
       .subscribe()
     return () => { supabase.removeChannel(channel) }
+  // store.id 以外（store.is_open, store.wait_minutes）は Realtime で同期するため依存配列から除外
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store.id])
 
   const categories = [...new Set(menuItems.map(item => item.category ?? 'その他'))]

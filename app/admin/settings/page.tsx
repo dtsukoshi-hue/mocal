@@ -48,6 +48,7 @@ export default async function SettingsPage({ searchParams }: Props) {
                 次のステップ：Stripe に接続してカード決済を有効にしましょう。接続しないと注文を受け付けられません。
               </p>
             </div>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- API routeへの遷移のため<a>が正しい */}
             <a
               href="/api/onboarding/stripe/connect"
               className="inline-flex items-center gap-2 bg-[#635bff] hover:bg-[#4f46e5] text-white text-sm font-bold rounded-lg px-5 py-2.5 transition-colors"
@@ -105,6 +106,7 @@ export default async function SettingsPage({ searchParams }: Props) {
                 ⚠️ Stripe 未接続のため、現在は決済を受け付けられません
               </div>
             )}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- API routeへの遷移のため<a>が正しい */}
             <a
               href="/api/onboarding/stripe/connect"
               className="inline-flex items-center gap-2 bg-[#635bff] hover:bg-[#4f46e5] text-white text-sm font-medium rounded-lg px-4 py-2 transition-colors"

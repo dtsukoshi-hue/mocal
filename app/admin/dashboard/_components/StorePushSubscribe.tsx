@@ -10,17 +10,19 @@ interface Props {
 const LS_KEY = 'mocal_push_subscribed'
 
 export default function StorePushSubscribe({ storeId }: Props) {
-  const [supported, setSupported] = useState(false)
-  const [subscribed, setSubscribed] = useState(false)
+  // SSR では window が未定義のため遅延初期化で判定
+  const [supported] = useState(() =>
+    typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window
+  )
+  // localStorage ヒントで初期 UI を先行表示（フラッシュ防止）
+  const [subscribed, setSubscribed] = useState(() =>
+    typeof window !== 'undefined' && localStorage.getItem(LS_KEY) === '1'
+  )
   const [loading, setLoading] = useState(false)
   const [testLoading, setTestLoading] = useState(false)
 
   useEffect(() => {
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
-      setSupported(true)
-      // localStorage ヒントで初期 UI を先行表示（フラッシュ防止）
-      if (localStorage.getItem(LS_KEY) === '1') setSubscribed(true)
-
+    if (supported) {
       navigator.serviceWorker
         .register('/sw.js', { scope: '/', updateViaCache: 'none' })
         .then((reg) => reg.pushManager.getSubscription())
@@ -35,6 +37,8 @@ export default function StorePushSubscribe({ storeId }: Props) {
         })
         .catch(() => {})
     }
+  // supported は mount 時に確定した静的値なので依存配列から除外可
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   if (!supported) return null

@@ -315,7 +315,7 @@ export type Database = {
         ]
       }
     }
-    Views: {}
+    Views: Record<never, never>
     Functions: {
       get_user_id_by_email: {
         Args: { p_email: string }
