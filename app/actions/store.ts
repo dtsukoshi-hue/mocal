@@ -97,9 +97,13 @@ export async function toggleStoreOpenAction(isOpen: boolean): Promise<{ error: s
   const session = await verifyStoreSession()
   const supabase = createServiceClient()
 
+  // 手動切り替えは当日 JST 23:59:59 まで有効（cron による自動切り替えを抑制）
+  const jstMidnight = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tokyo' }).format(new Date())
+  const manualOverrideUntil = new Date(`${jstMidnight}T23:59:59+09:00`).toISOString()
+
   const { error } = await supabase
     .from('stores')
-    .update({ is_open: isOpen })
+    .update({ is_open: isOpen, manual_override_until: manualOverrideUntil })
     .eq('id', session.storeId)
 
   if (error) {
