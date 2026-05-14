@@ -52,7 +52,7 @@ export default async function StorePage({ params }: Props) {
 
   const { data: store } = await supabase
     .from('stores')
-    .select('id, name, description, is_open, wait_minutes')
+    .select('id, name, description, is_open, wait_minutes, logo_url, cover_url')
     .eq('slug', slug)
     .single()
 

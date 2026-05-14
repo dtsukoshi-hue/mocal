@@ -7,7 +7,7 @@ import Cart from './Cart'
 import StoreStatusBanner from './StoreStatusBanner'
 
 interface Props {
-  store: Pick<Store, 'id' | 'name' | 'description' | 'is_open' | 'wait_minutes'>
+  store: Pick<Store, 'id' | 'name' | 'description' | 'is_open' | 'wait_minutes' | 'logo_url' | 'cover_url'>
   menuItems: Pick<MenuItem, 'id' | 'name' | 'description' | 'price' | 'category' | 'emoji' | 'is_available' | 'sort_order'>[]
 }
 
@@ -118,17 +118,34 @@ export default function MenuView({ store, menuItems }: Props) {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32">
+      {/* カバー画像（あれば） */}
+      {store.cover_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={store.cover_url}
+          alt=""
+          className="w-full h-36 sm:h-48 object-cover"
+        />
+      )}
+
       {/* ヘッダー */}
       <header className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-lg mx-auto px-4 py-4">
-          <h1 className="text-lg font-bold text-gray-900">{store.name}</h1>
-          {store.description && (
-            <p className="text-xs text-gray-500 mt-0.5 leading-snug">{store.description}</p>
+        <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
+          {store.logo_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={store.logo_url}
+              alt=""
+              className="w-10 h-10 rounded-lg object-cover shrink-0 border border-gray-100"
+            />
           )}
-          <StoreStatusBanner
-            isOpen={isOpen}
-            waitMinutes={waitMinutes}
-          />
+          <div className="min-w-0 flex-1">
+            <h1 className="text-base font-bold text-gray-900 leading-tight">{store.name}</h1>
+            {store.description && (
+              <p className="text-xs text-gray-500 leading-snug line-clamp-1">{store.description}</p>
+            )}
+            <StoreStatusBanner isOpen={isOpen} waitMinutes={waitMinutes} />
+          </div>
         </div>
 
         {/* カテゴリーナビ（2カテゴリー以上の場合のみ表示） */}
