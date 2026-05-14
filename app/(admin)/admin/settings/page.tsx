@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation'
 import StoreSettingsForm from './_components/StoreSettingsForm'
 import StripeConnectSection from './_components/StripeConnectSection'
 import StoreImagesSection from './_components/StoreImagesSection'
+import QRCodeSection from './_components/QRCodeSection'
 import AdminNav from '../_components/AdminNav'
 import { logoutAction } from '@/app/actions/auth'
 
@@ -43,6 +44,7 @@ export default async function StoreSettingsPage() {
           initialCoverUrl={store.cover_url ?? null}
         />
         <StripeConnectSection />
+        <QRCodeSection storeId={sessionData.storeId} storeName={store.name} />
 
         {/* ── ログアウト */}
         <div className="pt-4 pb-8">
