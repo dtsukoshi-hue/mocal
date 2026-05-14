@@ -22,10 +22,22 @@ function validateSlug(value: string): string | null {
 export default function StoreProfileForm({ name, slug, description }: Props) {
   const [state, formAction, isPending] = useActionState(updateStoreProfileAction, undefined)
   const [slugValue, setSlugValue] = useState(slug ?? '')
+  const slugChanged = slugValue !== (slug ?? '') && slug !== null
   const slugError = slugValue !== (slug ?? '') ? validateSlug(slugValue) : null
 
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    if (slugChanged && slugValue !== slug) {
+      const ok = confirm(
+        'URLを変更すると、配布済みの QR コードやリンクがすべて無効になります。\n本当に変更しますか？'
+      )
+      if (!ok) {
+        e.preventDefault()
+      }
+    }
+  }
+
   return (
-    <form action={formAction} className="bg-white rounded-xl shadow-sm p-5 space-y-4">
+    <form action={formAction} onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-5 space-y-4">
       <p className="font-semibold text-gray-900">店舗情報</p>
 
       {state?.error && (
