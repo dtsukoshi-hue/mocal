@@ -55,6 +55,7 @@ export default function HomePage() {
       </main>
 
       <footer className="py-6 text-center text-xs text-gray-400 space-x-4">
+        <Link href="/for-stores" className="hover:text-gray-600">店舗オーナー様へ</Link>
         <Link href="/privacy" className="hover:text-gray-600">プライバシーポリシー</Link>
         <Link href="/tokushoho" className="hover:text-gray-600">特定商取引法に基づく表示</Link>
       </footer>

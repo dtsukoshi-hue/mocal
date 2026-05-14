@@ -5,12 +5,31 @@ import SwRegister from './_components/SwRegister'
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist' })
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mocal.jp'
+
 export const metadata: Metadata = {
-  title: 'mocal — テイクアウト事前注文',
+  metadataBase: new URL(APP_URL),
+  title: {
+    default: 'mocal — テイクアウト事前注文',
+    template: '%s | mocal',
+  },
   description: '公園・お出かけ先での食事をもっと気軽に。飲食店向けテイクアウト事前注文プラットフォーム。',
   applicationName: 'mocal',
   keywords: ['テイクアウト', '事前注文', 'モバイルオーダー', '飲食店'],
   authors: [{ name: 'Entrust合同会社' }],
+  openGraph: {
+    siteName: 'mocal',
+    locale: 'ja_JP',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    site: '@mocal_jp',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 }
 
 export const viewport: Viewport = {
