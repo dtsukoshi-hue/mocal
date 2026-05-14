@@ -237,4 +237,52 @@ describe('PATCH /api/orders/[id]', () => {
     const updateCall = (updateBuilder.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
     expect(updateCall.estimated_ready_at).toBeUndefined()
   })
+
+  it('cancelledReasonType=out_of_stock のとき DB に設定される', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const { updateBuilder } = mockSupabase({
+      orderRow: { id: ORDER_ID, status: 'paid', store_id: STORE_ID, stripe_charge_id: null },
+    })
+    const res = await PATCH(
+      makeRequest({ status: 'cancelled', cancelledReasonType: 'out_of_stock' }) as never,
+      makeCtx(ORDER_ID)
+    )
+    expect(res.status).toBe(200)
+    const updateCall = (updateBuilder.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(updateCall.cancelled_reason_type).toBe('out_of_stock')
+  })
+
+  it('cancelledReasonType が不正なとき store_cancel にフォールバックする', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const { updateBuilder } = mockSupabase({
+      orderRow: { id: ORDER_ID, status: 'paid', store_id: STORE_ID, stripe_charge_id: null },
+    })
+    const res = await PATCH(
+      makeRequest({ status: 'cancelled', cancelledReasonType: 'invalid_reason' }) as never,
+      makeCtx(ORDER_ID)
+    )
+    expect(res.status).toBe(200)
+    const updateCall = (updateBuilder.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(updateCall.cancelled_reason_type).toBe('store_cancel')
+  })
+
+  it('accepted_at が accepted ステータス時に設定される', async () => {
+    sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
+    const { updateBuilder } = mockSupabase({
+      orderRow: { id: ORDER_ID, status: 'paid', store_id: STORE_ID, stripe_charge_id: null },
+      withQueueCount: true,
+    })
+    const res = await PATCH(
+      makeRequest({ status: 'accepted', waitMinutes: 20 }) as never,
+      makeCtx(ORDER_ID)
+    )
+    expect(res.status).toBe(200)
+    const updateCall = (updateBuilder.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(updateCall.accepted_at).toBeDefined()
+    expect(updateCall.estimated_ready_at).toBeDefined()
+    // estimated_ready_at should be ~20 min from now
+    const eta = new Date(updateCall.estimated_ready_at as string).getTime()
+    expect(eta).toBeGreaterThan(Date.now() + 19 * 60 * 1000)
+    expect(eta).toBeLessThan(Date.now() + 22 * 60 * 1000)
+  })
 })
