@@ -9,7 +9,7 @@ import {
   isValidOrderStatusTransition,
   isUuid,
 } from '@/lib/validation'
-import type { OrderStatus } from '@/lib/database.types'
+import type { CancelledReasonType, OrderStatus } from '@/lib/database.types'
 
 // 仕様書 11. 通知トリガー
 const PUSH_PAYLOADS: Record<string, { title: string; body: string }> = {
@@ -39,14 +39,14 @@ export async function PATCH(
     return NextResponse.json({ error: '注文が見つかりません。' }, { status: 404 })
   }
 
-  let body: { status: OrderStatus; waitMinutes?: number }
+  let body: { status: OrderStatus; waitMinutes?: number; cancelledReasonType?: string }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'リクエストが不正です。' }, { status: 400 })
   }
 
-  const { status, waitMinutes } = body
+  const { status, waitMinutes, cancelledReasonType } = body
 
   // status の入力バリデーション
   if (!ALL_ORDER_STATUSES.includes(status)) {
@@ -79,6 +79,8 @@ export async function PATCH(
     )
   }
 
+  const STORE_CANCEL_REASONS: CancelledReasonType[] = ['out_of_stock', 'store_cancel']
+
   const now = new Date().toISOString()
   // Partial<OrderInsert> に変換して型安全に更新
   const updateData: {
@@ -87,7 +89,15 @@ export async function PATCH(
     estimated_ready_at?: string
     ready_at?: string
     no_show_at?: string
+    cancelled_reason_type?: CancelledReasonType
   } = { status }
+
+  if (status === 'cancelled') {
+    const reason = STORE_CANCEL_REASONS.includes(cancelledReasonType as CancelledReasonType)
+      ? (cancelledReasonType as CancelledReasonType)
+      : 'store_cancel'
+    updateData.cancelled_reason_type = reason
+  }
 
   if (status === 'accepted') {
     updateData.accepted_at = now

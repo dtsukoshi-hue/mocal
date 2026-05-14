@@ -78,6 +78,7 @@ export default function OrderCard({ order, defaultWaitMinutes = 15 }: { order: O
   const [error, setError] = useState<string | null>(null)
   const [waitMinutes, setWaitMinutes] = useState(defaultWaitMinutes)
   const [confirmCancel, setConfirmCancel] = useState(false)
+  const [cancelReason, setCancelReason] = useState<'out_of_stock' | 'store_cancel'>('store_cancel')
   // 経過分数を 30 秒ごとに更新
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
@@ -106,6 +107,7 @@ export default function OrderCard({ order, defaultWaitMinutes = 15 }: { order: O
       body: JSON.stringify({
         status,
         ...(status === 'accepted' ? { waitMinutes } : {}),
+        ...(status === 'cancelled' ? { cancelledReasonType: cancelReason } : {}),
       }),
     })
     if (!res.ok) {
@@ -271,14 +273,39 @@ export default function OrderCard({ order, defaultWaitMinutes = 15 }: { order: O
 
         {/* キャンセル確認 */}
         {confirmCancel && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 space-y-2">
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 space-y-3">
             <p className="text-sm font-medium text-red-800">
               #{order.order_number} の注文をキャンセルしますか？
             </p>
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-red-700">キャンセル理由</p>
+              <label className="flex items-center gap-2 text-sm text-red-800 cursor-pointer">
+                <input
+                  type="radio"
+                  name={`cancel-reason-${order.id}`}
+                  value="out_of_stock"
+                  checked={cancelReason === 'out_of_stock'}
+                  onChange={() => setCancelReason('out_of_stock')}
+                  className="accent-red-500"
+                />
+                食材・商品の在庫切れ
+              </label>
+              <label className="flex items-center gap-2 text-sm text-red-800 cursor-pointer">
+                <input
+                  type="radio"
+                  name={`cancel-reason-${order.id}`}
+                  value="store_cancel"
+                  checked={cancelReason === 'store_cancel'}
+                  onChange={() => setCancelReason('store_cancel')}
+                  className="accent-red-500"
+                />
+                その他店舗都合
+              </label>
+            </div>
             <p className="text-xs text-red-600">
               お客様へキャンセル通知が自動で送られます。決済済みの場合は自動で返金されます。
             </p>
-            <div className="flex gap-2 pt-1">
+            <div className="flex gap-2">
               <button
                 onClick={() => setConfirmCancel(false)}
                 disabled={isDisabled}
