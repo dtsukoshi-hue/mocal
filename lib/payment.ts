@@ -53,18 +53,16 @@ export async function createPayment(
 /**
  * 決済を返金する（cancelled 経由が必須）
  *
- * Destination Charges の返金:
- *   - refund_application_fee: true → プラットフォームが受け取った手数料を戻す
- *   - reverse_transfer: true       → 転送先アカウントへの入金も取り消す
- *   - stripeAccount ヘッダーは不要（プラットフォームアカウントの charge を返金）
+ * Destination Charges では charge はプラットフォームに存在するため、
+ * stripeAccount ヘッダーなしでプラットフォーム側から返金する。
+ * Stripe が自動的に接続アカウントへの transfer を逆転させる。
+ * refund_application_fee / reverse_transfer は Direct Charges 専用のため不要。
  */
 export async function refundPayment(
   stripeChargeId: string,
 ): Promise<RefundPaymentResult> {
   const refund = await stripe.refunds.create({
     charge: stripeChargeId,
-    refund_application_fee: true,
-    reverse_transfer: true,
   })
 
   return { refundId: refund.id }
