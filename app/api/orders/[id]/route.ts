@@ -109,7 +109,16 @@ export async function PATCH(
       waitMinutes >= 1 &&
       waitMinutes <= 120
     ) {
-      const estimatedReadyAt = new Date(Date.now() + waitMinutes * 60 * 1000)
+      // キュー補正: 現在 accepted/preparing 状態の注文数 × 3分を上乗せ
+      const QUEUE_CORRECTION_MINUTES = 3
+      const { count: queueCount } = await supabase
+        .from('orders')
+        .select('id', { count: 'exact', head: true })
+        .eq('store_id', order.store_id)
+        .in('status', ['accepted', 'preparing'])
+      const correction = (queueCount ?? 0) * QUEUE_CORRECTION_MINUTES
+      const totalMinutes = waitMinutes + correction
+      const estimatedReadyAt = new Date(Date.now() + totalMinutes * 60 * 1000)
       updateData.estimated_ready_at = estimatedReadyAt.toISOString()
     }
   }

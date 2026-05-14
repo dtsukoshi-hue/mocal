@@ -48,6 +48,7 @@ function makeCtx(id: string) {
 function mockSupabase(opts: {
   orderRow?: { id: string; status: string; store_id: string; stripe_charge_id: string | null } | null
   updateOk?: boolean
+  withQueueCount?: boolean
 }) {
   const selectBuilder: Record<string, unknown> = {}
   selectBuilder.select = vi.fn().mockReturnValue(selectBuilder)
@@ -67,11 +68,18 @@ function mockSupabase(opts: {
       : { data: { id: ORDER_ID, status: 'updated' }, error: null }
   )
 
-  // route 内で from('orders') が 2 回呼ばれる（select 用、update 用）
+  // キュー補正クエリ用モック（accepted かつ waitMinutes が有効な場合の追加呼び出し）
+  // selectBuilder に .in() を追加して queue count クエリを処理
+  selectBuilder.in = vi.fn().mockResolvedValue({ count: 0, error: null })
+
+  // route 内で from('orders') が最大 3 回呼ばれる
+  // 1回目: 注文取得(select→single), 2回目: キュー補正カウント(accepted+有効waitMinutes時のみ), 最後: 更新(update)
   let call = 0
   const fromMock = vi.fn().mockImplementation(() => {
     call++
-    return call === 1 ? selectBuilder : updateBuilder
+    if (call === 1) return selectBuilder
+    if (call === 2 && opts.withQueueCount) return selectBuilder
+    return updateBuilder
   })
 
   vi.mocked(createServiceClient).mockReturnValue({ from: fromMock } as never)
@@ -142,6 +150,7 @@ describe('PATCH /api/orders/[id]', () => {
     sessionMock.getSessionPayload.mockResolvedValue({ storeId: STORE_ID })
     const { updateBuilder } = mockSupabase({
       orderRow: { id: ORDER_ID, status: 'paid', store_id: STORE_ID, stripe_charge_id: null },
+      withQueueCount: true,
     })
     const res = await PATCH(
       makeRequest({ status: 'accepted', waitMinutes: 15 }) as never,
