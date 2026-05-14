@@ -39,6 +39,7 @@ export default async function ReceiptPage({ params }: Props) {
       pickup_type,
       scheduled_at,
       created_at,
+      stripe_receipt_url,
       stores(name),
       order_items(name, qty, price)
     `)
@@ -136,6 +137,20 @@ export default async function ReceiptPage({ params }: Props) {
             </div>
             <p className="text-xs text-gray-400 mt-1 text-right">カード決済済み</p>
           </div>
+
+          {/* Stripe 公式領収書リンク */}
+          {order.stripe_receipt_url && (
+            <div className="border-t pt-4 text-center print:hidden">
+              <a
+                href={order.stripe_receipt_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-orange-600 underline"
+              >
+                Stripe 公式領収書を開く →
+              </a>
+            </div>
+          )}
 
           {/* フッター */}
           <div className="border-t pt-4 text-center">
