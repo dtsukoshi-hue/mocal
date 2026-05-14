@@ -39,6 +39,11 @@ export type Store = {
   stripe_account_id: string | null
   is_open: boolean
   wait_minutes: WaitMinutes
+  manual_override_until: string | null
+  area: string | null
+  cuisine_type: string | null
+  logo_url: string | null
+  cover_url: string | null
   created_at: string
 }
 
@@ -64,6 +69,7 @@ export type MenuItem = {
   price: number
   category: string | null
   emoji: string | null
+  image_url: string | null
   is_available: boolean
   sort_order: number
   created_at: string
@@ -87,6 +93,7 @@ export type Order = {
   cancelled_reason_detail: string | null
   stripe_payment_intent_id: string | null
   stripe_charge_id: string | null
+  stripe_receipt_url: string | null
   alert_30min_sent: boolean
   created_at: string
 }
@@ -98,6 +105,8 @@ export type OrderItem = {
   name: string                  // スナップショット
   price: number                 // スナップショット
   qty: number
+  combo_id: string | null
+  combo_label: string | null
 }
 
 export type ProcessedWebhookEvent = {
@@ -117,6 +126,11 @@ export type StoreInsert = {
   stripe_account_id?: string | null
   is_open?: boolean
   wait_minutes?: WaitMinutes
+  manual_override_until?: string | null
+  area?: string | null
+  cuisine_type?: string | null
+  logo_url?: string | null
+  cover_url?: string | null
   created_at?: string
 }
 
@@ -135,6 +149,7 @@ export type MenuItemInsert = {
   price: number
   category?: string | null
   emoji?: string | null
+  image_url?: string | null
   is_available?: boolean
   sort_order?: number
   created_at?: string
@@ -158,6 +173,7 @@ export type OrderInsert = {
   cancelled_reason_detail?: string | null
   stripe_payment_intent_id?: string | null
   stripe_charge_id?: string | null
+  stripe_receipt_url?: string | null
   alert_30min_sent?: boolean
   created_at?: string
 }
@@ -169,6 +185,8 @@ export type OrderItemInsert = {
   name: string
   price: number
   qty: number
+  combo_id?: string | null
+  combo_label?: string | null
 }
 
 // ------------------------------------------------------------
