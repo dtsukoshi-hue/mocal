@@ -61,6 +61,9 @@ const RATE_LIMITS: { path: string; max: number; windowMs: number }[] = [
   { path: '/api/push/subscribe', max: 20, windowMs: 60_000 },
   // テスト通知: 5回/分/IP（スパム防止）
   { path: '/api/push/test', max: 5, windowMs: 60_000 },
+  // 画像アップロード: 10回/分/IP（5MB×10=50MB/分上限）
+  { path: '/api/admin/store/image', max: 10, windowMs: 60_000 },
+  { path: '/api/admin/menu/image', max: 10, windowMs: 60_000 },
 ]
 
 function checkRateLimit(ip: string, pathname: string): boolean {
