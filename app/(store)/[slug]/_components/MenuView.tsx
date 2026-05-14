@@ -133,7 +133,7 @@ export default function MenuView({ store, menuItems }: Props) {
 
         {/* カテゴリーナビ（2カテゴリー以上の場合のみ表示） */}
         {categories.length > 1 && (
-          <div className="border-t border-gray-100 overflow-x-auto scrollbar-hide">
+          <div className="border-t border-gray-100 overflow-x-auto scrollbar-none">
             <div className="flex gap-1 px-4 py-2 w-max">
               {categories.map(category => (
                 <button
