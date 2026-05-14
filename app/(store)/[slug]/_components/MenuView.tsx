@@ -41,7 +41,7 @@ export default function MenuView({ store, menuItems }: Props) {
         { event: 'UPDATE', schema: 'public', table: 'stores', filter: `id=eq.${store.id}` },
         (payload) => {
           if (typeof payload.new.is_open === 'boolean') setIsOpen(payload.new.is_open)
-          if (typeof payload.new.wait_minutes === 'number') setWaitMinutes(payload.new.wait_minutes)
+          if (typeof payload.new.wait_minutes === 'number') setWaitMinutes(payload.new.wait_minutes as typeof store.wait_minutes)
         }
       )
       .subscribe()
