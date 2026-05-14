@@ -6,6 +6,7 @@ import StoreOpenToggle from './_components/StoreOpenToggle'
 import WaitMinutesForm from './_components/WaitMinutesForm'
 import StoreProfileForm from './_components/StoreProfileForm'
 import QRCode from './_components/QRCode'
+import StoreImageUpload from './_components/StoreImageUpload'
 
 export const metadata: Metadata = { title: '店舗設定 | mocal' }
 
@@ -21,7 +22,7 @@ export default async function SettingsPage({ searchParams }: Props) {
 
   const { data: store } = await supabase
     .from('stores')
-    .select('name, slug, description, is_open, wait_minutes, stripe_account_id')
+    .select('name, slug, description, is_open, wait_minutes, stripe_account_id, logo_url, cover_url')
     .eq('id', session.storeId)
     .single()
 
@@ -74,6 +75,27 @@ export default async function SettingsPage({ searchParams }: Props) {
         {isOwner && <StoreProfileForm name={store?.name ?? ''} slug={store?.slug ?? null} description={store?.description ?? null} />}
 
         <WaitMinutesForm defaultWaitMinutes={store?.wait_minutes ?? 20} />
+
+        {/* 店舗画像（owner のみ） */}
+        {isOwner && (
+          <div className="bg-white rounded-xl shadow-sm p-5 space-y-5">
+            <p className="font-semibold text-gray-900">店舗画像</p>
+            <StoreImageUpload
+              type="logo"
+              currentUrl={store?.logo_url ?? null}
+              label="ロゴ画像"
+              hint="正方形推奨。JPEG / PNG / WebP（最大 5MB）"
+              aspectClass="aspect-square"
+            />
+            <StoreImageUpload
+              type="cover"
+              currentUrl={store?.cover_url ?? null}
+              label="カバー画像"
+              hint="横長（1200×630px 推奨）。SNS シェア時に表示されます。JPEG / PNG / WebP（最大 5MB）"
+              aspectClass="aspect-video"
+            />
+          </div>
+        )}
 
         {/* QR コード（全スタッフ閲覧可） */}
         {storeUrl ? (

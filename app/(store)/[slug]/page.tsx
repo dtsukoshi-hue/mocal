@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = await createSupabaseServerClient()
   const { data: store } = await supabase
     .from('stores')
-    .select('name, description')
+    .select('name, description, cover_url')
     .eq('slug', slug)
     .single()
 
@@ -21,6 +21,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = `${store.name} | mocal`
   const description = store.description
     ?? `${store.name}のテイクアウトをオンラインで事前注文。待ち時間なしでスムーズに受け取れます。`
+
+  const ogImages = store.cover_url
+    ? [{ url: store.cover_url, width: 1200, height: 630, alt: store.name }]
+    : undefined
+
   return {
     title,
     description,
@@ -30,11 +35,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: `${appUrl}/${slug}`,
       siteName: 'mocal',
       type: 'website',
+      ...(ogImages ? { images: ogImages } : {}),
     },
     twitter: {
-      card: 'summary',
+      card: store.cover_url ? 'summary_large_image' : 'summary',
       title,
       description,
+      ...(store.cover_url ? { images: [store.cover_url] } : {}),
     },
   }
 }
