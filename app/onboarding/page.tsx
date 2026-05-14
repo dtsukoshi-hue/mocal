@@ -86,7 +86,7 @@ export default function OnboardingPage() {
             {slugError ? (
               <p className="text-xs text-red-500 mt-1">{slugError}</p>
             ) : (
-              <p className="text-xs text-gray-400 mt-1">QR コードに使われる URL です（後から変更不可）</p>
+              <p className="text-xs text-gray-400 mt-1">QR コードに使われる URL です（変更するとQRコードが無効になります）</p>
             )}
           </div>
 
