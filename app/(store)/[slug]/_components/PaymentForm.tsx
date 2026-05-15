@@ -60,7 +60,7 @@ export default function PaymentForm({ orderId, orderNumber, totalAmount }: Props
       </div>
 
       {errorMessage && (
-        <div className="bg-red-50 rounded-xl px-4 py-3 text-sm text-red-600">
+        <div role="alert" className="bg-red-50 rounded-xl px-4 py-3 text-sm text-red-600">
           {errorMessage}
         </div>
       )}
