@@ -77,7 +77,8 @@ export default function OnboardingPage() {
                 pattern="[a-z0-9][a-z0-9\-]{1,48}[a-z0-9]"
                 title="英小文字・数字・ハイフンのみ、先頭と末尾は英数字、3文字以上"
                 placeholder="3000days-burger"
-                aria-describedby="slug-hint"
+                aria-describedby={slugError ? 'slug-error' : 'slug-hint'}
+                aria-invalid={slugError ? true : undefined}
                 className="flex-1 px-3 py-2.5 text-sm focus:outline-none bg-white"
               />
               {slugTouched && (
@@ -87,7 +88,7 @@ export default function OnboardingPage() {
               )}
             </div>
             {slugError ? (
-              <p role="alert" className="text-xs text-red-500 mt-1">{slugError}</p>
+              <p id="slug-error" role="alert" className="text-xs text-red-500 mt-1">{slugError}</p>
             ) : (
               <p id="slug-hint" className="text-xs text-gray-400 mt-1">QR コードに使われる URL です（変更するとQRコードが無効になります）</p>
             )}

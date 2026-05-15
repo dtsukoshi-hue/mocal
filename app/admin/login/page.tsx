@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState, useState, useEffect, useRef } from 'react'
 import { loginAction, resetPasswordAction, type AuthState } from '@/app/actions/auth'
 import Link from 'next/link'
 
@@ -8,6 +8,17 @@ export default function AdminLoginPage() {
   const [state, action, pending] = useActionState<AuthState, FormData>(loginAction, undefined)
   const [resetState, resetAction, resetPending] = useActionState<AuthState, FormData>(resetPasswordAction, undefined)
   const [showReset, setShowReset] = useState(false)
+  const resetHeadingRef = useRef<HTMLHeadingElement>(null)
+  const loginHeadingRef = useRef<HTMLHeadingElement>(null)
+
+  // パスワードリセット画面に切り替えたとき見出しにフォーカス
+  useEffect(() => {
+    if (showReset) {
+      resetHeadingRef.current?.focus()
+    } else {
+      loginHeadingRef.current?.focus()
+    }
+  }, [showReset])
 
   if (showReset) {
     return (
@@ -15,7 +26,13 @@ export default function AdminLoginPage() {
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-gray-900">mocal</h1>
-            <p className="text-sm text-gray-500 mt-1">パスワードをリセット</p>
+            <p
+              ref={resetHeadingRef}
+              tabIndex={-1}
+              className="text-sm text-gray-500 mt-1 focus:outline-none"
+            >
+              パスワードをリセット
+            </p>
           </div>
 
           {resetState && 'success' in resetState ? (
@@ -81,7 +98,13 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900">mocal</h1>
-          <p className="text-sm text-gray-500 mt-1">店舗管理画面</p>
+          <p
+            ref={loginHeadingRef}
+            tabIndex={-1}
+            className="text-sm text-gray-500 mt-1 focus:outline-none"
+          >
+            店舗管理画面
+          </p>
         </div>
 
         <form action={action} className="bg-white rounded-2xl shadow p-8 space-y-5">
