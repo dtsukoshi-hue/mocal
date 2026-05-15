@@ -175,10 +175,11 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
         {/* 受取方法 */}
         <div className="bg-white rounded-xl shadow-sm p-4 space-y-3">
           <p className="text-sm font-medium text-gray-700">受取方法</p>
-          <div className="flex gap-2">
+          <div className="flex gap-2" role="group" aria-label="受取方法を選択">
             <button
               type="button"
               onClick={() => setPickupType('standard')}
+              aria-pressed={pickupType === 'standard'}
               className={`flex-1 text-sm rounded-lg py-2 border transition-colors ${
                 pickupType === 'standard'
                   ? 'border-orange-500 bg-orange-50 text-orange-700 font-medium'
@@ -190,6 +191,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
             <button
               type="button"
               onClick={() => { setPickupType('scheduled'); if (!scheduledAt) setScheduledAt(timeSlots[0]?.iso ?? '') }}
+              aria-pressed={pickupType === 'scheduled'}
               className={`flex-1 text-sm rounded-lg py-2 border transition-colors ${
                 pickupType === 'scheduled'
                   ? 'border-orange-500 bg-orange-50 text-orange-700 font-medium'
@@ -203,12 +205,13 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
           {pickupType === 'scheduled' && (
             <div className="space-y-2">
               <p className="text-xs text-gray-500">受取時刻を選んでください</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2" role="group" aria-label="受取時刻を選択">
                 {timeSlots.map(slot => (
                   <button
                     key={slot.iso}
                     type="button"
                     onClick={() => setScheduledAt(slot.iso)}
+                    aria-pressed={scheduledAt === slot.iso}
                     className={`px-4 py-1.5 rounded-full text-sm border transition-colors ${
                       scheduledAt === slot.iso
                         ? 'bg-orange-500 text-white border-orange-500'
@@ -237,9 +240,9 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
             maxLength={200}
             className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-orange-400"
           />
-          {customerNote.length > 0 && (
-            <p className="text-xs text-gray-400 text-right">{customerNote.length}/200</p>
-          )}
+          <p className="text-xs text-gray-400 text-right" aria-live="polite">
+            {customerNote.length > 0 ? `${customerNote.length}/200` : ''}
+          </p>
         </div>
 
         {state && 'error' in state && (
