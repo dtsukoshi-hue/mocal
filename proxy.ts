@@ -178,6 +178,15 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|api/webhook).*)',
+    {
+      // _next/static・_next/image・favicon・Stripe webhook は除外
+      // next-router-prefetch / purpose:prefetch ヘッダーを持つリクエストも除外
+      // （プリフェッチには nonce 注入が不要なため）
+      source: '/((?!_next/static|_next/image|favicon.ico|api/webhook).*)',
+      missing: [
+        { type: 'header', key: 'next-router-prefetch' },
+        { type: 'header', key: 'purpose', value: 'prefetch' },
+      ],
+    },
   ],
 }
