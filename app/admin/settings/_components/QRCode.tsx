@@ -45,11 +45,17 @@ export default function QRCode({ url, storeName }: Props) {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <canvas ref={canvasRef} className="rounded-xl border border-gray-100" />
+      <canvas
+        ref={canvasRef}
+        role="img"
+        aria-label={`${storeName} の注文ページ QR コード`}
+        className="rounded-xl border border-gray-100"
+      />
       <div className="flex items-center gap-2 text-xs text-gray-500 text-center break-all max-w-full">
         <span className="truncate">{url}</span>
         <button
           onClick={handleCopyLink}
+          aria-live="polite"
           className="shrink-0 text-orange-500 hover:text-orange-600 font-medium"
         >
           {copied ? 'コピー済!' : 'コピー'}

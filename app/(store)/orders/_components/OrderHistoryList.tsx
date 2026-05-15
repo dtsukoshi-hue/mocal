@@ -30,7 +30,7 @@ export default function OrderHistoryList() {
   if (entries.length === 0) {
     return (
       <div className="text-center py-16">
-        <div className="text-4xl mb-4">🧾</div>
+        <div className="text-4xl mb-4" aria-hidden="true">🧾</div>
         <p className="text-gray-500 text-sm">注文履歴はまだありません</p>
         <p className="text-gray-400 text-xs mt-1">
           注文後にこのページで履歴を確認できます
@@ -71,7 +71,7 @@ export default function OrderHistoryList() {
                 <p className="font-bold text-gray-900 text-sm">
                   ¥{entry.totalAmount.toLocaleString()}
                 </p>
-                <span className="text-xs text-gray-400 mt-0.5 block">→</span>
+                <span className="text-xs text-gray-400 mt-0.5 block" aria-hidden="true">→</span>
               </div>
             </Link>
           </li>

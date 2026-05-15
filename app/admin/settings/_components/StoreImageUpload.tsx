@@ -76,6 +76,7 @@ export default function StoreImageUpload({
         ref={inputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif"
+        aria-label={`${label}の画像を選択`}
         className="sr-only"
         onChange={handleChange}
         disabled={isPending}
