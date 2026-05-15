@@ -185,9 +185,9 @@ export default async function DashboardPage() {
             )}
 
             <div className="flex items-center gap-4 text-xs">
-              <span className="text-gray-400">{new Date(order.created_at).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })} 注文</span>
+              <time className="text-gray-400" dateTime={order.created_at}>{new Date(order.created_at).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })} 注文</time>
               {order.estimated_ready_at && (
-                <span className="text-gray-400">受取予定 {new Date(order.estimated_ready_at).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })}</span>
+                <time className="text-gray-400" dateTime={order.estimated_ready_at}>受取予定 {new Date(order.estimated_ready_at).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })}</time>
               )}
               {/* paid 注文は5分以上経過で赤表示して緊急度を示す */}
               <ElapsedTime

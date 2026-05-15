@@ -222,13 +222,13 @@ export default async function HistoryPage({ searchParams }: Props) {
               </p>
             )}
 
-            <p className="text-xs text-gray-400">
+            <time className="text-xs text-gray-400" dateTime={order.created_at}>
               {new Date(order.created_at).toLocaleString('ja-JP', {
                 month: 'numeric', day: 'numeric',
                 hour: '2-digit', minute: '2-digit',
                 timeZone: 'Asia/Tokyo',
               })}
-            </p>
+            </time>
           </div>
         ))}
 
