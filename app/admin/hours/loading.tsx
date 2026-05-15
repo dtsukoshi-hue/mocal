@@ -6,7 +6,7 @@ export default function HoursLoading() {
           <div className="h-6 bg-gray-200 rounded w-32 animate-pulse" />
         </div>
       </header>
-      <main className="max-w-2xl mx-auto px-4 py-6">
+      <main id="main-content" className="max-w-2xl mx-auto px-4 py-6">
         <div className="bg-white rounded-xl shadow-sm p-5 space-y-4">
           <div className="h-4 bg-gray-200 rounded w-40 animate-pulse" />
           <div className="space-y-3">

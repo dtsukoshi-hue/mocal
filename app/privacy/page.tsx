@@ -14,7 +14,7 @@ export default function PrivacyPage() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-8 prose prose-sm prose-gray">
+      <main id="main-content" className="max-w-2xl mx-auto px-4 py-8 prose prose-sm prose-gray">
         <p className="text-xs text-gray-400">最終更新日：2026年5月9日</p>
 
         <section className="mt-6 space-y-4 text-sm text-gray-700 leading-relaxed">

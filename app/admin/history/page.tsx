@@ -112,7 +112,7 @@ export default async function HistoryPage({ searchParams }: Props) {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-3">
+      <main id="main-content" className="max-w-2xl mx-auto px-4 py-6 space-y-3">
         {/* 注文番号検索 */}
         <form method="GET" action="/admin/history" className="flex gap-2">
           <input

@@ -37,7 +37,7 @@ export default async function MenuPage() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+      <main id="main-content" className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         <AddMenuItemButton />
 
         {Object.entries(grouped).map(([category, categoryItems]) => (

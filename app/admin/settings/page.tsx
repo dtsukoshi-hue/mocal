@@ -40,7 +40,7 @@ export default async function SettingsPage({ searchParams }: Props) {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+      <main id="main-content" className="max-w-2xl mx-auto px-4 py-6 space-y-4">
         {welcome && !store?.stripe_account_id && (
           <div className="bg-orange-50 border border-orange-200 rounded-xl p-5 space-y-3">
             <div>

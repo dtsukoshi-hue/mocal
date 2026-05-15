@@ -35,7 +35,7 @@ export default function Loading() {
         </div>
       </div>
 
-      <main className="max-w-4xl mx-auto px-4 py-4 space-y-4">
+      <main id="main-content" className="max-w-4xl mx-auto px-4 py-4 space-y-4">
         {[1, 2, 3].map(i => (
           <div key={i} className="bg-white rounded-xl shadow-sm p-5 space-y-3 animate-pulse">
             <div className="flex justify-between">

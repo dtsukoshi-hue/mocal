@@ -138,7 +138,7 @@ export default async function DashboardPage() {
         <StoreOpenToggle isOpen={storeStatus?.is_open ?? false} />
       </div>
 
-      <main className="max-w-4xl mx-auto px-4 py-4 space-y-4">
+      <main id="main-content" className="max-w-4xl mx-auto px-4 py-4 space-y-4">
         {sortedOrders.length === 0 && (
           <div className="text-center text-gray-400 py-16 text-sm">
             現在、対応中の注文はありません

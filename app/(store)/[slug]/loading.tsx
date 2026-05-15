@@ -11,7 +11,7 @@ export default function Loading() {
           </div>
         </div>
       </header>
-      <main className="max-w-lg mx-auto px-4 py-4 space-y-6">
+      <main id="main-content" className="max-w-lg mx-auto px-4 py-4 space-y-6">
         {['カテゴリA', 'カテゴリB'].map(cat => (
           <section key={cat} className="animate-pulse">
             <div className="h-4 w-16 bg-gray-200 rounded mb-3" />

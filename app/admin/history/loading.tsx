@@ -7,7 +7,7 @@ export default function Loading() {
           <div className="h-5 w-20 bg-gray-200 rounded" />
         </div>
       </header>
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-3">
+      <main id="main-content" className="max-w-2xl mx-auto px-4 py-6 space-y-3">
         {/* 検索バー スケルトン */}
         <div className="flex gap-2 animate-pulse">
           <div className="flex-1 h-10 bg-gray-100 rounded-lg" />

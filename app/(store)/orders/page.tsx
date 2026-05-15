@@ -16,7 +16,7 @@ export default function OrdersPage() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-6">
+      <main id="main-content" className="max-w-lg mx-auto px-4 py-6">
         <OrderHistorySection />
       </main>
     </div>

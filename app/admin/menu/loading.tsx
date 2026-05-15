@@ -7,7 +7,7 @@ export default function Loading() {
           <div className="h-5 w-24 bg-gray-200 rounded" />
         </div>
       </header>
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+      <main id="main-content" className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         {/* AddMenuItemButton skeleton */}
         <div className="h-12 rounded-xl border-2 border-dashed border-gray-200 animate-pulse" />
 

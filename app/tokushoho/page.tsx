@@ -27,7 +27,7 @@ export default function TokushohoPage() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-8">
+      <main id="main-content" className="max-w-2xl mx-auto px-4 py-8">
         <p className="text-xs text-gray-400 mb-6">最終更新日：2026年5月9日</p>
 
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">

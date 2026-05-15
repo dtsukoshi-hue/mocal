@@ -7,7 +7,7 @@ export default function Loading() {
           <div className="h-6 w-32 bg-gray-200 rounded" />
         </div>
       </header>
-      <main className="max-w-lg mx-auto px-4 py-8 flex-1 space-y-6 w-full">
+      <main id="main-content" className="max-w-lg mx-auto px-4 py-8 flex-1 space-y-6 w-full">
         <div className="bg-white rounded-2xl shadow-sm p-8 text-center animate-pulse">
           <div className="w-12 h-12 bg-gray-200 rounded-full mx-auto mb-4" />
           <div className="h-6 w-24 bg-gray-200 rounded mx-auto mb-2" />

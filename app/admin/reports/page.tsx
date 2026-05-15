@@ -147,7 +147,7 @@ export default async function ReportsPage({ searchParams }: Props) {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+      <main id="main-content" className="max-w-2xl mx-auto px-4 py-6 space-y-5">
         {/* タブ */}
         <div className="flex bg-white rounded-xl shadow-sm overflow-hidden">
           {tabs.map(tab => (
