@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useTransition } from 'react'
+import { useRef, useState, useTransition, useEffect } from 'react'
 import { toggleMenuItemAction, deleteMenuItemAction, moveMenuItemAction } from '@/app/actions/menu'
 import MenuItemForm from './MenuItemForm'
 import type { MenuItem } from '@/lib/database.types'
@@ -18,6 +18,16 @@ export default function MenuItemCard({ item, isFirst, isLast }: Props) {
   const [imageUrl, setImageUrl] = useState<string | null>(item.image_url)
   const [imageUploading, setImageUploading] = useState(false)
   const imageInputRef = useRef<HTMLInputElement>(null)
+  const editButtonRef = useRef<HTMLButtonElement>(null)
+  const wasEditing = useRef(false)
+
+  // 編集フォームを閉じたとき編集ボタンにフォーカスを戻す
+  useEffect(() => {
+    if (wasEditing.current && !editing) {
+      editButtonRef.current?.focus()
+    }
+    wasEditing.current = editing
+  }, [editing])
 
   async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -156,6 +166,7 @@ export default function MenuItemCard({ item, isFirst, isLast }: Props) {
           </button>
 
           <button
+            ref={editButtonRef}
             onClick={() => setEditing(true)}
             aria-label={`${item.name}を編集`}
             className="text-sm text-blue-600 hover:text-blue-700 px-2"
