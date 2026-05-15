@@ -153,7 +153,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
         </div>
 
         {totalQty >= MAX_QTY_TOTAL && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 text-xs text-amber-700">
+          <div role="status" className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 text-xs text-amber-700">
             1回の注文は最大{MAX_QTY_TOTAL}点までです
           </div>
         )}

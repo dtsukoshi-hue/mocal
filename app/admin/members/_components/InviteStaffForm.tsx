@@ -22,7 +22,7 @@ export default function InviteStaffForm() {
         <p role="alert" className="text-sm text-red-600">{state.error}</p>
       )}
       {state && 'success' in state && (
-        <p className="text-sm text-green-600">{state.success}</p>
+        <p role="status" className="text-sm text-green-600">{state.success}</p>
       )}
 
       <div className="flex gap-2">

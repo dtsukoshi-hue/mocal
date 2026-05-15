@@ -291,7 +291,7 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
         <div className="fixed bottom-6 left-0 right-0 px-4">
           <div className="max-w-lg mx-auto space-y-2">
             {atCartMax && (
-              <p className="text-xs text-center text-amber-700 bg-amber-50 rounded-xl py-1.5 px-3 border border-amber-200">
+              <p role="status" className="text-xs text-center text-amber-700 bg-amber-50 rounded-xl py-1.5 px-3 border border-amber-200">
                 カートの上限（{MAX_QTY_TOTAL}点）に達しました
               </p>
             )}

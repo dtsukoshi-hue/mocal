@@ -46,7 +46,7 @@ export default function StoreProfileForm({ name, slug, description, area, cuisin
         <p role="alert" className="text-sm text-red-600">{state.error}</p>
       )}
       {state?.success && (
-        <p className="text-sm text-green-600">保存しました</p>
+        <p role="status" className="text-sm text-green-600">保存しました</p>
       )}
 
       <div>
