@@ -85,7 +85,7 @@ export default function MenuItemCard({ item, isFirst, isLast }: Props) {
           type="button"
           onClick={() => imageInputRef.current?.click()}
           disabled={imageUploading}
-          title="画像をアップロード"
+          aria-label={`${item.name}の画像をアップロード`}
           className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-gray-100 bg-gray-50 flex items-center justify-center text-2xl hover:ring-2 hover:ring-orange-400 transition-all disabled:opacity-50"
         >
           {imageUploading ? (
@@ -101,6 +101,7 @@ export default function MenuItemCard({ item, isFirst, isLast }: Props) {
           ref={imageInputRef}
           type="file"
           accept="image/jpeg,image/png,image/webp"
+          aria-label={`${item.name}の画像ファイルを選択`}
           className="sr-only"
           onChange={handleImageChange}
         />
@@ -140,6 +141,7 @@ export default function MenuItemCard({ item, isFirst, isLast }: Props) {
 
           <button
             onClick={() => setEditing(true)}
+            aria-label={`${item.name}を編集`}
             className="text-sm text-blue-600 hover:text-blue-700 px-2"
           >
             編集
@@ -155,6 +157,7 @@ export default function MenuItemCard({ item, isFirst, isLast }: Props) {
                 if (result?.error) setError(result.error)
               })
             }}
+            aria-label={`${item.name}を削除`}
             className="text-sm text-red-500 hover:text-red-600 px-2 disabled:opacity-50"
           >
             削除
