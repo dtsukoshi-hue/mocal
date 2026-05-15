@@ -23,23 +23,26 @@ export default function WaitMinutesForm({ defaultWaitMinutes }: Props) {
         <p role="alert" className="text-sm text-red-600">{state.error}</p>
       )}
       {state?.success && (
-        <p className="text-sm text-green-600">保存しました</p>
+        <p role="status" className="text-sm text-green-600">保存しました</p>
       )}
 
-      <div className="flex flex-wrap gap-2">
-        {WAIT_OPTIONS.map(m => (
-          <label key={m} className="flex items-center gap-1.5 cursor-pointer">
-            <input
-              type="radio"
-              name="wait_minutes"
-              value={m}
-              defaultChecked={m === defaultWaitMinutes}
-              className="accent-orange-500"
-            />
-            <span className="text-sm text-gray-700">{m}分</span>
-          </label>
-        ))}
-      </div>
+      <fieldset className="border-0 p-0 m-0">
+        <legend className="sr-only">待ち時間を選択</legend>
+        <div className="flex flex-wrap gap-2">
+          {WAIT_OPTIONS.map(m => (
+            <label key={m} className="flex items-center gap-1.5 cursor-pointer">
+              <input
+                type="radio"
+                name="wait_minutes"
+                value={m}
+                defaultChecked={m === defaultWaitMinutes}
+                className="accent-orange-500"
+              />
+              <span className="text-sm text-gray-700">{m}分</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       <button
         type="submit"

@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import { saveStoreHoursAction } from '@/app/actions/store'
 
 interface HourRow {
@@ -66,6 +66,8 @@ function HourRow({
   defaultCloseTime: string
   defaultIsClosed: boolean
 }) {
+  const [isClosed, setIsClosed] = useState(defaultIsClosed)
+
   return (
     <div className="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
       {/* 曜日ラベル */}
@@ -79,28 +81,31 @@ function HourRow({
           type="checkbox"
           name={`is_closed_${dow}`}
           value="1"
-          defaultChecked={defaultIsClosed}
+          checked={isClosed}
+          onChange={e => setIsClosed(e.target.checked)}
           className="rounded border-gray-300 text-orange-500 focus:ring-orange-400"
         />
         <span className="text-xs text-gray-600">定休日</span>
       </label>
 
-      {/* 時間入力 */}
+      {/* 時間入力 — 定休日のときは無効化 */}
       <div className="flex items-center gap-1.5 flex-1 min-w-0">
         <input
           type="time"
           name={`open_${dow}`}
           defaultValue={defaultOpenTime}
+          disabled={isClosed}
           aria-label={`${label}曜日 開始時間`}
-          className="flex-1 min-w-0 text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-400"
+          className="flex-1 min-w-0 text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:opacity-40 disabled:bg-gray-50"
         />
         <span className="text-xs text-gray-400 shrink-0" aria-hidden="true">〜</span>
         <input
           type="time"
           name={`close_${dow}`}
           defaultValue={defaultCloseTime}
+          disabled={isClosed}
           aria-label={`${label}曜日 終了時間`}
-          className="flex-1 min-w-0 text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-400"
+          className="flex-1 min-w-0 text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:opacity-40 disabled:bg-gray-50"
         />
       </div>
     </div>
