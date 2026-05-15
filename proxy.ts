@@ -32,13 +32,14 @@ function buildCsp(nonce: string): string {
     // Stripe のカードロゴ等の画像 + Supabase Storage（店舗・メニュー画像）
     `img-src 'self' blob: data: https://*.stripe.com${supabaseHost ? ` https://${supabaseHost}` : ''}`,
     `font-src 'self'`,
+    `media-src 'none'`,
     `object-src 'none'`,
     `base-uri 'self'`,
     `form-action 'self'`,
-    // Stripe Payment Element は iframe で描画される
-    `frame-src https://js.stripe.com`,
-    // Supabase REST/Realtime（HTTP + WebSocket）+ Stripe API
-    `connect-src 'self'${supabaseHost ? ` https://${supabaseHost} ${supabaseWss}` : ''} https://api.stripe.com`,
+    // Stripe Payment Element は iframe で描画される（hooks.stripe.com: 3DS 認証フレーム）
+    `frame-src https://js.stripe.com https://hooks.stripe.com`,
+    // Supabase REST/Realtime（HTTP + WebSocket）+ Stripe API（r/m はテレメトリ）
+    `connect-src 'self'${supabaseHost ? ` https://${supabaseHost} ${supabaseWss}` : ''} https://api.stripe.com https://r.stripe.com https://m.stripe.com`,
     // Service Worker（WebPush 通知）
     `worker-src 'self'`,
     `frame-ancestors 'none'`,
