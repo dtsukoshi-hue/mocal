@@ -20,7 +20,7 @@ export default function AdminLoginPage() {
 
           {resetState && 'success' in resetState ? (
             <div className="bg-white rounded-2xl shadow p-8 text-center space-y-4">
-              <p className="text-4xl">📨</p>
+              <p className="text-4xl" aria-hidden="true">📨</p>
               <p className="text-sm text-gray-700">
                 メールを送信しました。<br />
                 受信したリンクからパスワードを再設定してください。
@@ -38,10 +38,11 @@ export default function AdminLoginPage() {
                 登録済みのメールアドレスを入力してください。パスワード再設定用のリンクを送信します。
               </p>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="reset-email" className="block text-sm font-medium text-gray-700 mb-1">
                   メールアドレス
                 </label>
                 <input
+                  id="reset-email"
                   name="email"
                   type="email"
                   required
