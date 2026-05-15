@@ -1,5 +1,8 @@
 import Link from 'next/link'
 
+// nonce-based CSP（proxy.ts）が機能するよう動的レンダリングを強制
+export const dynamic = 'force-dynamic'
+
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-white flex flex-col">

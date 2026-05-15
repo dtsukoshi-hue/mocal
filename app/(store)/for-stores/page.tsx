@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+// nonce-based CSP（proxy.ts）が機能するよう動的レンダリングを強制
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: '飲食店オーナー様へ — mocal',
   description:

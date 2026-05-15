@@ -1,5 +1,8 @@
 'use client'
 
+// nonce-based CSP（proxy.ts）が機能するよう動的レンダリングを強制
+export const dynamic = 'force-dynamic'
+
 import { useActionState, useState } from 'react'
 import { registerStoreAction } from '@/app/actions/onboarding'
 import Link from 'next/link'

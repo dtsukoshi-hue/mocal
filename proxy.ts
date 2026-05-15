@@ -65,6 +65,8 @@ const RATE_LIMITS: { path: string; max: number; windowMs: number }[] = [
   // 画像アップロード: 10回/分/IP（5MB×10=50MB/分上限）
   { path: '/api/admin/store/image', max: 10, windowMs: 60_000 },
   { path: '/api/admin/menu/image', max: 10, windowMs: 60_000 },
+  // CSV エクスポート: 10回/時/IP（重い DB クエリのため）
+  { path: '/api/admin/reports/export', max: 10, windowMs: 3_600_000 },
 ]
 
 function checkRateLimit(ip: string, pathname: string): boolean {

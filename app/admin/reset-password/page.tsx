@@ -1,5 +1,8 @@
 'use client'
 
+// nonce-based CSP（proxy.ts）が機能するよう動的レンダリングを強制
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import type { Database } from '@/lib/database.types'

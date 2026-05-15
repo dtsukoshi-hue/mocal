@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
 import OrderHistorySection from './_components/OrderHistorySection'
 
+// nonce-based CSP（proxy.ts）が機能するよう動的レンダリングを強制
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: '注文履歴 | mocal',
   robots: { index: false },
