@@ -185,10 +185,19 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
 
         {/* 営業時間（設定がある場合のみ表示） */}
         {storeHours.length > 0 && (
-          <details className="bg-white rounded-xl shadow-sm">
+          <details className="bg-white rounded-xl shadow-sm group">
             <summary className="px-4 py-3 text-sm font-medium text-gray-700 cursor-pointer select-none list-none flex items-center justify-between">
               <span>営業時間</span>
-              <span className="text-gray-400 text-xs">▼</span>
+              <svg
+                className="w-4 h-4 text-gray-400 transition-transform duration-200 group-open:rotate-180"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
             </summary>
             <div className="border-t border-gray-100 px-4 py-3 space-y-1">
               {storeHours.map(h => (
