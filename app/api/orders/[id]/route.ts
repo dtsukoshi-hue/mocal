@@ -3,9 +3,8 @@ import { createServiceClient } from '@/lib/supabase-server'
 import { createSupabaseServerClient } from '@/lib/supabase-ssr'
 import { refundPayment } from '@/lib/payment'
 import { notifyOrder } from '@/lib/webpush'
+import { isValidOrderStatusTransition, isValidWaitMinutes, VALID_WAIT_MINUTES } from '@/lib/validation'
 import type { Order, OrderStatus, WaitMinutes } from '@/lib/database.types'
-
-const VALID_WAIT_MINUTES: WaitMinutes[] = [10, 15, 20, 30, 40, 60]
 
 // 店舗が注文ステータスを更新するエンドポイント
 // PATCH /api/orders/:id  { status: OrderStatus, waitMinutes?: WaitMinutes }
@@ -33,7 +32,7 @@ export async function PATCH(
   const { status, waitMinutes } = body
 
   // waitMinutes は店舗設定の許可値のみ受け付ける（仕様書 8.1）
-  if (waitMinutes !== undefined && !VALID_WAIT_MINUTES.includes(waitMinutes as WaitMinutes)) {
+  if (waitMinutes !== undefined && !isValidWaitMinutes(waitMinutes)) {
     return NextResponse.json(
       { error: `waitMinutes は ${VALID_WAIT_MINUTES.join('/')} のいずれかを指定してください。` },
       { status: 400 }
@@ -73,16 +72,8 @@ export async function PATCH(
     return NextResponse.json({ error: '権限がありません。' }, { status: 403 })
   }
 
-  // ステータス遷移検証（仕様書 6.4 に基づく）
-  const validTransitions: Partial<Record<OrderStatus, OrderStatus[]>> = {
-    paid:      ['accepted', 'cancelled'],
-    accepted:  ['preparing', 'ready', 'cancelled'],
-    preparing: ['ready', 'cancelled'],
-    ready:     ['completed', 'no_show'],
-  }
-
-  const allowed = validTransitions[order.status as OrderStatus] ?? []
-  if (!allowed.includes(status)) {
+  // ステータス遷移検証（lib/validation.ts の VALID_ORDER_TRANSITIONS に基づく）
+  if (!isValidOrderStatusTransition(order.status as OrderStatus, status)) {
     return NextResponse.json(
       { error: `${order.status} → ${status} への遷移は許可されていません。` },
       { status: 422 }
