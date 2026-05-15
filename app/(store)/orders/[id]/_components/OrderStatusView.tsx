@@ -187,21 +187,21 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
 
           {order.pickup_type === 'scheduled' && order.scheduled_at && (
             <div className="mt-4 inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-sm font-semibold px-3 py-1.5 rounded-full">
-              <span aria-hidden="true">🕐</span> 受取指定：{new Date(order.scheduled_at).toLocaleTimeString('ja-JP', {
+              <span aria-hidden="true">🕐</span> 受取指定：<time dateTime={order.scheduled_at}>{new Date(order.scheduled_at).toLocaleTimeString('ja-JP', {
                 hour: '2-digit',
                 minute: '2-digit',
                 timeZone: 'Asia/Tokyo',
-              })}
+              })}</time>
             </div>
           )}
 
           {order.estimated_ready_at && ['accepted', 'preparing'].includes(order.status) && (
             <div className="mt-4 inline-flex items-center gap-1.5 bg-orange-50 text-orange-700 text-sm font-semibold px-3 py-1.5 rounded-full">
-              <span aria-hidden="true">⏱</span> 受取予定：{new Date(order.estimated_ready_at).toLocaleTimeString('ja-JP', {
+              <span aria-hidden="true">⏱</span> 受取予定：<time dateTime={order.estimated_ready_at}>{new Date(order.estimated_ready_at).toLocaleTimeString('ja-JP', {
                 hour: '2-digit',
                 minute: '2-digit',
                 timeZone: 'Asia/Tokyo',
-              })}
+              })}</time>
             </div>
           )}
 

@@ -163,7 +163,7 @@ export default async function DashboardPage() {
                 </span>
                 {order.pickup_type === 'scheduled' && order.scheduled_at && (
                   <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-700">
-                    <span aria-hidden="true">🕐</span> {new Date(order.scheduled_at).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })} 指定
+                    <span aria-hidden="true">🕐</span> <time dateTime={order.scheduled_at}>{new Date(order.scheduled_at).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })}</time> 指定
                   </span>
                 )}
               </div>
