@@ -14,9 +14,9 @@ export default function AdminError({ error, reset }: Props) {
   }, [error])
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <main id="main-content" className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="text-center space-y-4">
-        <p className="text-5xl font-bold text-gray-200">エラー</p>
+        <p className="text-5xl font-bold text-gray-200" aria-hidden="true">エラー</p>
         <h1 className="text-xl font-semibold text-gray-700">問題が発生しました</h1>
         <p className="text-sm text-gray-500">
           しばらく経ってから再試行してください。
@@ -33,6 +33,6 @@ export default function AdminError({ error, reset }: Props) {
           </Link>
         </div>
       </div>
-    </div>
+    </main>
   )
 }

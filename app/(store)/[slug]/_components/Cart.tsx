@@ -211,8 +211,11 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
 
         {/* 注文メモ（アレルギー・要望） */}
         <div className="bg-white rounded-xl shadow-sm p-4 space-y-2">
-          <p className="text-sm font-medium text-gray-700">要望・メモ（任意）</p>
+          <label htmlFor="customer-note" className="text-sm font-medium text-gray-700">
+            要望・メモ（任意）
+          </label>
           <textarea
+            id="customer-note"
             value={customerNote}
             onChange={e => setCustomerNote(e.target.value)}
             placeholder="例：ソースは少なめで、アレルギーはナッツ"
@@ -226,7 +229,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
         </div>
 
         {state && 'error' in state && (
-          <div className="bg-red-50 rounded-xl px-4 py-3 text-sm text-red-600">
+          <div role="alert" className="bg-red-50 rounded-xl px-4 py-3 text-sm text-red-600">
             {state.error}
           </div>
         )}

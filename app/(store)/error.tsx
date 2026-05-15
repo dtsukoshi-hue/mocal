@@ -13,9 +13,9 @@ export default function StoreError({ error, reset }: Props) {
   }, [error])
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <main id="main-content" className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="text-center space-y-4">
-        <p className="text-4xl">😔</p>
+        <p className="text-4xl" aria-hidden="true">😔</p>
         <h1 className="text-xl font-semibold text-gray-700">エラーが発生しました</h1>
         <p className="text-sm text-gray-500">
           しばらく経ってから再試行してください。
@@ -27,6 +27,6 @@ export default function StoreError({ error, reset }: Props) {
           再試行
         </button>
       </div>
-    </div>
+    </main>
   )
 }

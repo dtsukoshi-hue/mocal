@@ -51,9 +51,9 @@ export default async function ReceiptPage({ params }: Props) {
   // 領収書は completed または refunded のみ表示
   if (!['completed', 'refunded'].includes(order.status)) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <main id="main-content" className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-sm p-8 text-center max-w-sm w-full">
-          <div className="text-4xl mb-4">⏳</div>
+          <div className="text-4xl mb-4" aria-hidden="true">⏳</div>
           <p className="text-gray-600 text-sm">領収書は注文の受取完了後に発行されます。</p>
           <Link
             href={`/orders/${id}`}
@@ -62,7 +62,7 @@ export default async function ReceiptPage({ params }: Props) {
             注文状況を確認する
           </Link>
         </div>
-      </div>
+      </main>
     )
   }
 
