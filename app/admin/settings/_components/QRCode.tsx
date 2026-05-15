@@ -55,11 +55,12 @@ export default function QRCode({ url, storeName }: Props) {
         <span className="truncate">{url}</span>
         <button
           onClick={handleCopyLink}
-          aria-live="polite"
+          aria-label={copied ? 'URLをコピーしました' : 'URLをコピー'}
           className="shrink-0 text-orange-500 hover:text-orange-600 font-medium"
         >
           {copied ? 'コピー済!' : 'コピー'}
         </button>
+        <span role="status" className="sr-only">{copied ? 'URLをコピーしました' : ''}</span>
       </div>
       <button
         onClick={handleDownload}

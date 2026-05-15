@@ -281,8 +281,11 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
                     </div>
                     <div className="flex items-center gap-2 shrink-0 ml-2">
                       {cart.find(c => c.menuItemId === item.id) && (
-                        <span className="bg-orange-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                          {cart.find(c => c.menuItemId === item.id)?.qty}
+                        <span
+                          className="bg-orange-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center"
+                          aria-label={`カート内${cart.find(c => c.menuItemId === item.id)?.qty}点`}
+                        >
+                          <span aria-hidden="true">{cart.find(c => c.menuItemId === item.id)?.qty}</span>
                         </span>
                       )}
                       <span className="text-sm font-semibold text-gray-900">
