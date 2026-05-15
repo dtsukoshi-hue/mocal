@@ -224,7 +224,7 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
             href={`/orders/${order.id}/receipt`}
             className="flex items-center justify-center gap-2 w-full rounded-xl border border-gray-200 text-gray-600 text-sm font-medium py-3 hover:bg-gray-50 transition-colors"
           >
-            🧾 領収書を表示する
+            <span aria-hidden="true">🧾</span> 領収書を表示する
           </Link>
         )}
 

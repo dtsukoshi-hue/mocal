@@ -149,7 +149,7 @@ export default function ForStoresPage() {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {FEATURES.map((f) => (
                 <div key={f.title} className="bg-stone-50 rounded-2xl p-5 space-y-2">
-                  <div className="w-1 h-5 bg-orange-400 rounded-full" />
+                  <div className="w-1 h-5 bg-orange-400 rounded-full" aria-hidden="true" />
                   <h3 className="text-sm font-bold text-gray-900">{f.title}</h3>
                   <p className="text-xs text-gray-600 leading-relaxed">{f.body}</p>
                 </div>
@@ -200,7 +200,7 @@ export default function ForStoresPage() {
         <footer className="border-t border-gray-100 bg-white">
           <div className="max-w-5xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-400">
             <p>© 2026 Entrust 合同会社（設立準備中）</p>
-            <nav className="flex gap-4">
+            <nav aria-label="関連ページ" className="flex gap-4">
               <Link href="/privacy" className="hover:text-gray-600">
                 プライバシーポリシー
               </Link>
