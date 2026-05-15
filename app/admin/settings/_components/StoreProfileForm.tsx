@@ -65,7 +65,7 @@ export default function StoreProfileForm({ name, slug, description, area, cuisin
         <div className={`flex items-center border rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-orange-500 ${
           slugError ? 'border-red-400' : slugValue && !slugError ? 'border-green-400' : 'border-gray-300'
         }`}>
-          <span className="px-3 py-2 bg-gray-50 text-gray-400 text-sm border-r border-gray-300 shrink-0">
+          <span className="px-3 py-2 bg-gray-50 text-gray-400 text-sm border-r border-gray-300 shrink-0" aria-hidden="true">
             mocal.jp/
           </span>
           <input
@@ -74,16 +74,17 @@ export default function StoreProfileForm({ name, slug, description, area, cuisin
             value={slugValue}
             onChange={e => setSlugValue(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
             required
+            aria-describedby="store-slug-hint"
             className="flex-1 px-3 py-2 text-sm focus:outline-none"
           />
           {slugValue && !slugError && (
-            <span className="pr-3 text-green-500 text-sm">✓</span>
+            <span className="pr-3 text-green-500 text-sm" aria-hidden="true">✓</span>
           )}
         </div>
         {slugError ? (
-          <p className="text-xs text-red-500 mt-1">{slugError}</p>
+          <p role="alert" id="store-slug-hint" className="text-xs text-red-500 mt-1">{slugError}</p>
         ) : (
-          <p className="text-xs text-gray-400 mt-1">変更するとこれまでの QR コードが使えなくなります</p>
+          <p id="store-slug-hint" className="text-xs text-gray-400 mt-1">変更するとこれまでの QR コードが使えなくなります</p>
         )}
       </div>
 
