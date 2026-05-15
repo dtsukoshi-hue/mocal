@@ -30,6 +30,16 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
   const [showCart, setShowCart] = useState(false)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const sectionRefs = useRef<Map<string, HTMLElement>>(new Map())
+  const cartButtonRef = useRef<HTMLButtonElement>(null)
+
+  // カートから戻ったときにカートボタンへフォーカスを戻す
+  useEffect(() => {
+    if (!showCart) {
+      cartButtonRef.current?.focus()
+    }
+  // showCart が false に変わったときのみ実行（初期レンダリング時は cart.length で制御）
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showCart])
 
   // リアルタイムで店舗の受付状態・待ち時間を同期（StoreStatusBanner と共有）
   const [isOpen, setIsOpen] = useState(store.is_open)
@@ -296,6 +306,7 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
               </p>
             )}
             <button
+              ref={cartButtonRef}
               onClick={() => setShowCart(true)}
               aria-label={`カートを確認する - ${totalItems}点, ¥${totalAmount.toLocaleString()}`}
               className="w-full flex items-center justify-between bg-orange-500 text-white rounded-2xl px-5 py-4 shadow-lg font-semibold"
