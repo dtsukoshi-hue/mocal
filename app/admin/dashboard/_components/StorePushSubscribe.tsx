@@ -102,8 +102,8 @@ export default function StorePushSubscribe({ storeId }: Props) {
   if (subscribed) {
     return (
       <span className="text-xs text-green-600 flex items-center gap-1">
-        🔔 注文通知 ON
-        <button onClick={sendTest} disabled={testLoading} className="text-gray-400 underline ml-1 disabled:opacity-50" title="テスト通知を送る">
+        <span aria-hidden="true">🔔</span> 注文通知 ON
+        <button onClick={sendTest} disabled={testLoading} className="text-gray-400 underline ml-1 disabled:opacity-50" aria-label="テスト通知を送る">
           {testLoading ? '送信中…' : 'テスト'}
         </button>
         <button onClick={unsubscribe} disabled={loading} className="text-gray-400 underline ml-1">
@@ -119,7 +119,7 @@ export default function StorePushSubscribe({ storeId }: Props) {
       disabled={loading}
       className="text-sm text-gray-500 border border-gray-300 rounded-lg px-3 py-1.5 hover:bg-gray-50 disabled:opacity-60"
     >
-      {loading ? '設定中...' : '🔔 注文通知を受け取る'}
+      {loading ? '設定中...' : <><span aria-hidden="true">🔔</span>{' '}注文通知を受け取る</>}
     </button>
   )
 }

@@ -47,7 +47,7 @@ function OrderProgressBar({ status }: { status: string }) {
   const stepLabels = ['決済中', '受付済', '受理', '調理中', '準備完了', '受取完了']
 
   return (
-    <div className="px-4 pb-2" aria-label="注文進捗">
+    <div className="px-4 pb-2" role="img" aria-label={`注文進捗: ${stepLabels[currentIdx] ?? '完了'}`}>
       <div className="flex items-center">
         {PROGRESS_STEPS.map((step, i) => {
           const isDone = i < currentIdx
@@ -57,6 +57,7 @@ function OrderProgressBar({ status }: { status: string }) {
             <div key={step} className="flex items-center flex-1 last:flex-none">
               <div className="flex flex-col items-center">
                 <div
+                  aria-hidden="true"
                   className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
                     isDone
                       ? 'bg-orange-500 text-white'
@@ -68,6 +69,7 @@ function OrderProgressBar({ status }: { status: string }) {
                   {isDone ? '✓' : i + 1}
                 </div>
                 <span
+                  aria-hidden="true"
                   className={`mt-1 text-center leading-tight whitespace-nowrap text-gray-500 transition-colors ${
                     isCurrent ? 'text-orange-600 font-semibold' : isDone ? 'text-gray-400' : 'text-gray-300'
                   }`}

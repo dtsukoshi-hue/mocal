@@ -145,6 +145,7 @@ export default async function HistoryPage({ searchParams }: Props) {
           <div className="flex flex-wrap gap-2">
             <Link
               href={statusLink(null)}
+              aria-current={!activeStatus ? 'page' : undefined}
               className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
                 !activeStatus
                   ? 'bg-gray-800 text-white border-gray-800'
@@ -157,6 +158,7 @@ export default async function HistoryPage({ searchParams }: Props) {
               <Link
                 key={s}
                 href={statusLink(s)}
+                aria-current={activeStatus === s ? 'page' : undefined}
                 className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
                   activeStatus === s
                     ? 'bg-gray-800 text-white border-gray-800'
@@ -231,27 +233,29 @@ export default async function HistoryPage({ searchParams }: Props) {
         ))}
 
         {totalPages > 1 && (
-          <div className="flex justify-center gap-2 pt-4">
+          <nav aria-label="ページ切り替え" className="flex justify-center gap-2 pt-4">
             {page > 1 && (
               <Link
                 href={pageLink(page - 1)}
+                aria-label="前のページへ"
                 className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 前へ
               </Link>
             )}
-            <span className="px-4 py-2 text-sm text-gray-500">
+            <span className="px-4 py-2 text-sm text-gray-500" aria-current="page">
               {page} / {totalPages}
             </span>
             {page < totalPages && (
               <Link
                 href={pageLink(page + 1)}
+                aria-label="次のページへ"
                 className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 次へ
               </Link>
             )}
-          </div>
+          </nav>
         )}
       </main>
     </div>

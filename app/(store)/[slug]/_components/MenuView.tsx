@@ -167,6 +167,7 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
                 <button
                   key={category}
                   onClick={() => scrollToCategory(category)}
+                  aria-pressed={activeCategory === category}
                   className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                     activeCategory === category
                       ? 'bg-orange-500 text-white'

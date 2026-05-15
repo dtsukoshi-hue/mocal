@@ -103,7 +103,7 @@ export default function PushSubscribeButton({ orderId }: Props) {
       disabled={loading}
       className="w-full rounded-xl border border-orange-300 text-orange-600 text-sm font-medium py-3 hover:bg-orange-50 transition-colors disabled:opacity-60"
     >
-      {loading ? '設定中...' : '🔔 準備完了の通知を受け取る'}
+      {loading ? '設定中...' : <><span aria-hidden="true">🔔</span>{' '}準備完了の通知を受け取る</>}
     </button>
   )
 }
