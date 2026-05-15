@@ -1,10 +1,83 @@
 import Link from 'next/link'
+import { headers } from 'next/headers'
+import type { Metadata } from 'next'
 
 // nonce-based CSP（proxy.ts）が機能するよう動的レンダリングを強制
 export const dynamic = 'force-dynamic'
 
-export default function HomePage() {
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mocal.jp'
+
+export const metadata: Metadata = {
+  title: 'mocal — テイクアウト事前注文プラットフォーム',
+  description:
+    '公園・お出かけ先での食事をもっと気軽に。QRコードで即注文、アプリ不要、待ち時間ゼロ。' +
+    '飲食店向けテイクアウト事前注文プラットフォーム。',
+  openGraph: {
+    title: 'mocal — テイクアウト事前注文プラットフォーム',
+    description:
+      '公園・お出かけ先での食事をもっと気軽に。QRコードで即注文、アプリ不要、待ち時間ゼロ。',
+    url: APP_URL,
+    type: 'website',
+    locale: 'ja_JP',
+    siteName: 'mocal',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'mocal — テイクアウト事前注文プラットフォーム',
+    description:
+      '公園・お出かけ先での食事をもっと気軽に。QRコードで即注文、アプリ不要、待ち時間ゼロ。',
+  },
+  alternates: {
+    canonical: APP_URL,
+  },
+}
+
+export default async function HomePage() {
+  const nonce = (await headers()).get('x-nonce') ?? undefined
+
+  // JSON-LD 構造化データ（WebSite + Organization）
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        '@id': `${APP_URL}/#website`,
+        name: 'mocal',
+        url: APP_URL,
+        description: 'テイクアウト事前注文プラットフォーム',
+        inLanguage: 'ja',
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: {
+            '@type': 'EntryPoint',
+            urlTemplate: `${APP_URL}/{slug}`,
+          },
+          'query-input': 'required name=slug',
+        },
+      },
+      {
+        '@type': 'Organization',
+        '@id': `${APP_URL}/#organization`,
+        name: 'mocal',
+        url: APP_URL,
+        email: 'support@mocal.jp',
+        sameAs: [`${APP_URL}/for-stores`],
+      },
+    ],
+  }
+
   return (
+    <>
+      <script
+        type="application/ld+json"
+        nonce={nonce}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd)
+            .replace(/</g, '\\u003c')
+            .replace(/>/g, '\\u003e')
+            .replace(/&/g, '\\u0026'),
+        }}
+      />
     <div className="min-h-screen bg-white flex flex-col">
       <main id="main-content" className="flex-1 flex flex-col items-center justify-center px-6 text-center">
         {/* ロゴ */}
@@ -63,5 +136,6 @@ export default function HomePage() {
         <Link href="/tokushoho" className="hover:text-gray-600">特定商取引法に基づく表示</Link>
       </footer>
     </div>
+    </>
   )
 }

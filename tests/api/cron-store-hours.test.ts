@@ -94,7 +94,8 @@ function setupSupabaseMock({
         routingChain.update = vi.fn().mockImplementation((payload: { is_open: boolean }) => {
           const target = payload.is_open ? openChain : closeChain
           // Proxy update call to the real chain so `toHaveBeenCalledWith` works
-          ;(target.update as ReturnType<typeof vi.fn>)(payload)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ;(target.update as any)(payload)
           return target
         })
         return routingChain

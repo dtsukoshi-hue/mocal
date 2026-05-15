@@ -1,8 +1,11 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { headers } from 'next/headers'
 
 // nonce-based CSP（proxy.ts）が機能するよう動的レンダリングを強制
 export const dynamic = 'force-dynamic'
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mocal.jp'
 
 export const metadata: Metadata = {
   title: '飲食店オーナー様へ — mocal',
@@ -13,14 +16,19 @@ export const metadata: Metadata = {
     title: '飲食店オーナー様へ — mocal',
     description:
       'ポスレジ不要・即日導入。顧客手数料ゼロのテイクアウト事前注文プラットフォーム。',
+    url: `${APP_URL}/for-stores`,
     type: 'website',
     siteName: 'mocal',
+    locale: 'ja_JP',
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: '飲食店オーナー様へ — mocal',
     description:
       'ポスレジ不要・即日導入。顧客手数料ゼロのテイクアウト事前注文プラットフォーム。',
+  },
+  alternates: {
+    canonical: `${APP_URL}/for-stores`,
   },
 }
 
@@ -74,8 +82,53 @@ const STEPS = [
   },
 ]
 
-export default function ForStoresPage() {
+export default async function ForStoresPage() {
+  const nonce = (await headers()).get('x-nonce') ?? undefined
+
+  // JSON-LD 構造化データ（SoftwareApplication + Offer）
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    '@id': `${APP_URL}/for-stores`,
+    name: '飲食店オーナー様へ — mocal',
+    url: `${APP_URL}/for-stores`,
+    description:
+      'ポスレジ不要・即日導入できるテイクアウト事前注文プラットフォーム。顧客手数料ゼロ。',
+    inLanguage: 'ja',
+    mainEntity: {
+      '@type': 'SoftwareApplication',
+      name: 'mocal',
+      applicationCategory: 'BusinessApplication',
+      operatingSystem: 'Web',
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'JPY',
+        description: '初期費用・月額固定費ゼロ。決済手数料は売上の10%のみ（mocal 6.4% + Stripe 3.6%）。',
+      },
+      featureList: [
+        '即日導入・QRコード設置のみ',
+        '顧客手数料ゼロ',
+        'リアルタイムプッシュ通知',
+        '売上レポート',
+        'Stripe Connect 決済',
+        '待ち時間自動管理',
+      ],
+    },
+  }
+
   return (
+    <>
+      <script
+        type="application/ld+json"
+        nonce={nonce}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd)
+            .replace(/</g, '\\u003c')
+            .replace(/>/g, '\\u003e')
+            .replace(/&/g, '\\u0026'),
+        }}
+      />
     <div className="min-h-screen bg-stone-50">
       {/* ヘッダー */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
@@ -215,5 +268,6 @@ export default function ForStoresPage() {
         </footer>
       </main>
     </div>
+    </>
   )
 }
