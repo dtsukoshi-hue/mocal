@@ -193,26 +193,26 @@ export default async function ReportsPage({ searchParams }: Props) {
         {/* KPI カード */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white rounded-xl shadow-sm p-4">
-            <p className="text-xs text-gray-500">売上</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">
+            <p className="text-xs text-gray-500" aria-hidden="true">売上</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1" aria-label={`売上 ${totalSales.toLocaleString()}円`}>
               ¥{totalSales.toLocaleString()}
             </p>
           </div>
           <div className="bg-white rounded-xl shadow-sm p-4">
-            <p className="text-xs text-gray-500">注文数（完了）</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">{orderCount}</p>
+            <p className="text-xs text-gray-500" aria-hidden="true">注文数（完了）</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1" aria-label={`注文数（完了） ${orderCount}件`}>{orderCount}</p>
           </div>
           <div className="bg-white rounded-xl shadow-sm p-4">
-            <p className="text-xs text-gray-500">キャンセル・返金</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">{cancelCount ?? 0}</p>
+            <p className="text-xs text-gray-500" aria-hidden="true">キャンセル・返金</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1" aria-label={`キャンセル・返金 ${cancelCount ?? 0}件`}>{cancelCount ?? 0}</p>
           </div>
           <div className="bg-white rounded-xl shadow-sm p-4">
-            <p className="text-xs text-gray-500">ノーショウ</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">{noShowCount}</p>
+            <p className="text-xs text-gray-500" aria-hidden="true">ノーショウ</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1" aria-label={`ノーショウ ${noShowCount}件`}>{noShowCount}</p>
           </div>
           <div className="bg-white rounded-xl shadow-sm p-4 col-span-2">
-            <p className="text-xs text-gray-500">平均注文単価</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">
+            <p className="text-xs text-gray-500" aria-hidden="true">平均注文単価</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1" aria-label={`平均注文単価 ${orderCount > 0 ? `${avgOrder.toLocaleString()}円` : 'データなし'}`}>
               {orderCount > 0 ? `¥${avgOrder.toLocaleString()}` : '—'}
             </p>
           </div>

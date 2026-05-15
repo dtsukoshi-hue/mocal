@@ -216,9 +216,9 @@ export default async function HistoryPage({ searchParams }: Props) {
 
             {order.pickup_type === 'scheduled' && order.scheduled_at && (
               <p className="text-xs text-indigo-600">
-                <span aria-hidden="true">🕐</span> 指定受取：{new Date(order.scheduled_at).toLocaleTimeString('ja-JP', {
+                <span aria-hidden="true">🕐</span> 指定受取：<time dateTime={order.scheduled_at}>{new Date(order.scheduled_at).toLocaleTimeString('ja-JP', {
                   hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo',
-                })}
+                })}</time>
               </p>
             )}
 
