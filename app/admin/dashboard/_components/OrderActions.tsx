@@ -18,10 +18,7 @@ export default function OrderActions({ orderId, status, defaultWaitMinutes = 20 
   const [isFetching, setIsFetching] = useState(false)
   const [waitMinutes, setWaitMinutes] = useState<number>(defaultWaitMinutes)
   const [error, setError] = useState<string | null>(null)
-
-  function confirmCancel(): boolean {
-    return confirm('この注文をキャンセルしますか？\n決済済みの場合は自動返金されます。')
-  }
+  const [confirmingCancel, setConfirmingCancel] = useState(false)
 
   async function patch(body: { status: string; waitMinutes?: number }) {
     setError(null)
@@ -72,7 +69,7 @@ export default function OrderActions({ orderId, status, defaultWaitMinutes = 20 
           </button>
           <button
             disabled={disabled}
-            onClick={() => confirmCancel() && patch({ status: 'cancelled' })}
+            onClick={() => setConfirmingCancel(true)}
             className="text-sm font-medium bg-white hover:bg-gray-50 text-red-600 border border-red-200 rounded-lg px-4 py-1.5 disabled:opacity-50"
           >
             キャンセル
@@ -98,7 +95,7 @@ export default function OrderActions({ orderId, status, defaultWaitMinutes = 20 
           </button>
           <button
             disabled={disabled}
-            onClick={() => confirmCancel() && patch({ status: 'cancelled' })}
+            onClick={() => setConfirmingCancel(true)}
             className="text-sm font-medium bg-white hover:bg-gray-50 text-red-600 border border-red-200 rounded-lg px-4 py-1.5 disabled:opacity-50"
           >
             キャンセル
@@ -117,11 +114,33 @@ export default function OrderActions({ orderId, status, defaultWaitMinutes = 20 
           </button>
           <button
             disabled={disabled}
-            onClick={() => confirmCancel() && patch({ status: 'cancelled' })}
+            onClick={() => setConfirmingCancel(true)}
             className="text-sm font-medium bg-white hover:bg-gray-50 text-red-600 border border-red-200 rounded-lg px-4 py-1.5 disabled:opacity-50"
           >
             キャンセル
           </button>
+        </div>
+      )}
+
+      {/* インラインキャンセル確認 */}
+      {confirmingCancel && (
+        <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2.5 space-y-2">
+          <p className="text-xs text-red-700">決済済みの場合は自動返金されます。本当にキャンセルしますか？</p>
+          <div className="flex gap-3">
+            <button
+              disabled={disabled}
+              onClick={() => { setConfirmingCancel(false); void patch({ status: 'cancelled' }) }}
+              className="text-sm font-medium text-red-600 hover:text-red-700 disabled:opacity-50"
+            >
+              キャンセルする
+            </button>
+            <button
+              onClick={() => setConfirmingCancel(false)}
+              className="text-sm text-gray-400 hover:text-gray-600"
+            >
+              戻る
+            </button>
+          </div>
         </div>
       )}
 

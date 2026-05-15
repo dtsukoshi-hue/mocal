@@ -21,6 +21,7 @@ export default function StoreImageUpload({
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [isDeleting, setIsDeleting] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -62,8 +63,8 @@ export default function StoreImageUpload({
   }
 
   const handleDelete = useCallback(async () => {
-    if (!confirm(`${label}の画像を削除しますか？`)) return
     setError(null)
+    setConfirmingDelete(false)
     setIsDeleting(true)
     try {
       const res = await fetch('/api/admin/store/image', {
@@ -131,15 +132,34 @@ export default function StoreImageUpload({
         >
           {isPending ? 'アップロード中…' : url ? '画像を変更' : '画像をアップロード'}
         </button>
-        {url && (
+        {url && !confirmingDelete && (
           <button
             type="button"
-            onClick={handleDelete}
+            onClick={() => setConfirmingDelete(true)}
             disabled={isPending || isDeleting}
             className="text-sm text-red-500 hover:text-red-600 disabled:opacity-50"
           >
             {isDeleting ? '削除中…' : '削除'}
           </button>
+        )}
+        {url && confirmingDelete && (
+          <span className="flex items-center gap-2 text-sm">
+            <span className="text-gray-600">削除しますか？</span>
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="text-red-600 font-medium hover:text-red-700"
+            >
+              削除する
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              キャンセル
+            </button>
+          </span>
         )}
       </div>
     </div>

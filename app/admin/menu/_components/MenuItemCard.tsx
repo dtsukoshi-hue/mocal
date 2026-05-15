@@ -13,6 +13,7 @@ interface Props {
 
 export default function MenuItemCard({ item, isFirst, isLast }: Props) {
   const [editing, setEditing] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [imageUrl, setImageUrl] = useState<string | null>(item.image_url)
@@ -174,21 +175,39 @@ export default function MenuItemCard({ item, isFirst, isLast }: Props) {
             編集
           </button>
 
-          <button
-            disabled={isPending}
-            onClick={() => {
-              if (!confirm(`「${item.name}」を削除しますか？`)) return
-              setError(null)
-              startTransition(async () => {
-                const result = await deleteMenuItemAction(item.id)
-                if (result?.error) setError(result.error)
-              })
-            }}
-            aria-label={`${item.name}を削除`}
-            className="text-sm text-red-500 hover:text-red-600 px-2 disabled:opacity-50"
-          >
-            削除
-          </button>
+          {!confirmingDelete ? (
+            <button
+              disabled={isPending}
+              onClick={() => setConfirmingDelete(true)}
+              aria-label={`${item.name}を削除`}
+              className="text-sm text-red-500 hover:text-red-600 px-2 disabled:opacity-50"
+            >
+              削除
+            </button>
+          ) : (
+            <span className="flex items-center gap-1 text-sm">
+              <button
+                disabled={isPending}
+                onClick={() => {
+                  setConfirmingDelete(false)
+                  setError(null)
+                  startTransition(async () => {
+                    const result = await deleteMenuItemAction(item.id)
+                    if (result?.error) setError(result.error)
+                  })
+                }}
+                className="text-red-600 font-medium hover:text-red-700 disabled:opacity-50"
+              >
+                削除する
+              </button>
+              <button
+                onClick={() => setConfirmingDelete(false)}
+                className="text-gray-400 hover:text-gray-600 px-1"
+              >
+                戻る
+              </button>
+            </span>
+          )}
         </div>
       </div>
     </div>
