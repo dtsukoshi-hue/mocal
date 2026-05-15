@@ -44,7 +44,7 @@ export default async function SettingsPage({ searchParams }: Props) {
         {welcome && !store?.stripe_account_id && (
           <div className="bg-orange-50 border border-orange-200 rounded-xl p-5 space-y-3">
             <div>
-              <p className="font-bold text-orange-900">🎉 店舗登録が完了しました！</p>
+              <p className="font-bold text-orange-900"><span aria-hidden="true">🎉</span> 店舗登録が完了しました！</p>
               <p className="text-sm text-orange-800 mt-1">
                 次のステップ：Stripe に接続してカード決済を有効にしましょう。接続しないと注文を受け付けられません。
               </p>
@@ -60,12 +60,12 @@ export default async function SettingsPage({ searchParams }: Props) {
         )}
 
         {stripe_connected && (
-          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
+          <div role="status" className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
             Stripe との連携が完了しました。これでカード決済が有効になりました。
           </div>
         )}
         {stripe_error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+          <div role="alert" className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
             Stripe 連携に失敗しました（{stripe_error}）。再試行してください。
           </div>
         )}
@@ -133,7 +133,7 @@ export default async function SettingsPage({ searchParams }: Props) {
             </div>
             {!store?.stripe_account_id && (
               <div className="bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 text-xs text-orange-700">
-                ⚠️ Stripe 未接続のため、現在は決済を受け付けられません
+                <span aria-hidden="true">⚠️</span> Stripe 未接続のため、現在は決済を受け付けられません
               </div>
             )}
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- API routeへの遷移のため<a>が正しい */}
