@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import Image from 'next/image'
 import { createBrowserClient } from '@supabase/ssr'
 import type { Database, MenuItem, Store, StoreHour } from '@/lib/database.types'
 import Cart from './Cart'
@@ -125,23 +126,28 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
     <div className="min-h-screen bg-gray-50 pb-32">
       {/* カバー画像（あれば） */}
       {store.cover_url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={store.cover_url}
-          alt=""
-          className="w-full h-36 sm:h-48 object-cover"
-        />
+        <div className="relative w-full h-36 sm:h-48">
+          <Image
+            src={store.cover_url}
+            alt=""
+            fill
+            className="object-cover"
+            priority
+            sizes="100vw"
+          />
+        </div>
       )}
 
       {/* ヘッダー */}
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           {store.logo_url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={store.logo_url}
               alt=""
-              className="w-10 h-10 rounded-lg object-cover shrink-0 border border-gray-100"
+              width={40}
+              height={40}
+              className="rounded-lg object-cover shrink-0 border border-gray-100"
             />
           )}
           <div className="min-w-0 flex-1">
@@ -241,11 +247,12 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
                   >
                     <div className="flex items-center gap-3">
                       {item.image_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <Image
                           src={item.image_url}
                           alt=""
-                          className="w-12 h-12 rounded-lg object-cover shrink-0 bg-gray-100"
+                          width={48}
+                          height={48}
+                          className="rounded-lg object-cover shrink-0 bg-gray-100"
                         />
                       ) : item.emoji ? (
                         <span className="text-2xl w-10 text-center shrink-0">{item.emoji}</span>

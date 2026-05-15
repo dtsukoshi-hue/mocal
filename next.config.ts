@@ -11,9 +11,19 @@ const securityHeaders = [
   { key: 'X-Permitted-Cross-Domain-Policies', value: 'none' },
 ]
 
+// Supabase Storage の画像を next/image で最適化するためにドメインを許可
+const supabaseHostname = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
+  : undefined
+
 const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
+  },
+  images: {
+    remotePatterns: supabaseHostname
+      ? [{ protocol: 'https', hostname: supabaseHostname }]
+      : [],
   },
   async headers() {
     return [
