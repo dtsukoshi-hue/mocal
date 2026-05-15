@@ -12,15 +12,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = await createSupabaseServerClient()
   const { data: store } = await supabase
     .from('stores')
-    .select('name, description, cover_url')
+    .select('name, description, area, cuisine_type, cover_url')
     .eq('slug', slug)
     .single()
 
   if (!store) return { title: '店舗が見つかりません | mocal' }
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mocal.jp'
   const title = `${store.name} | mocal`
+  const parts = [
+    store.cuisine_type,
+    store.area ? `${store.area}エリア` : null,
+    'テイクアウト事前注文',
+  ].filter(Boolean)
   const description = store.description
-    ?? `${store.name}のテイクアウトをオンラインで事前注文。待ち時間なしでスムーズに受け取れます。`
+    ?? `${store.name}（${parts.join(' · ')}）。行列なし・待ち時間なしでスムーズに受け取れます。`
 
   const ogImages = store.cover_url
     ? [{ url: store.cover_url, width: 1200, height: 630, alt: store.name }]
