@@ -25,6 +25,20 @@ export default function StoreImageUpload({
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+
+    // クライアントサイドバリデーション（ラウンドトリップを防止）
+    if (file.size > 5 * 1024 * 1024) {
+      setError('ファイルサイズは 5MB 以下にしてください。')
+      e.target.value = ''
+      return
+    }
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (!allowed.includes(file.type)) {
+      setError('JPEG・PNG・WebP・GIF 形式のみアップロードできます。')
+      e.target.value = ''
+      return
+    }
+
     setError(null)
 
     startTransition(async () => {
@@ -34,6 +48,9 @@ export default function StoreImageUpload({
 
       const res = await fetch('/api/admin/store/image', { method: 'POST', body: formData })
       const json = await res.json() as { url?: string; error?: string }
+
+      // 同じファイルを再選択できるよう input をリセット
+      if (inputRef.current) inputRef.current.value = ''
 
       if (!res.ok || json.error) {
         setError(json.error ?? 'アップロードに失敗しました。')

@@ -22,6 +22,20 @@ export default function MenuItemCard({ item, isFirst, isLast }: Props) {
   async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+
+    // クライアントサイドバリデーション
+    if (file.size > 5 * 1024 * 1024) {
+      setError('ファイルサイズは 5MB 以下にしてください。')
+      e.target.value = ''
+      return
+    }
+    const allowed = ['image/jpeg', 'image/png', 'image/webp']
+    if (!allowed.includes(file.type)) {
+      setError('JPEG・PNG・WebP 形式のみアップロードできます。')
+      e.target.value = ''
+      return
+    }
+
     setError(null)
     setImageUploading(true)
     const fd = new FormData()
@@ -39,6 +53,8 @@ export default function MenuItemCard({ item, isFirst, isLast }: Props) {
       setError('画像のアップロードに失敗しました。')
     } finally {
       setImageUploading(false)
+      // 同じファイルを再選択できるよう input をリセット
+      if (imageInputRef.current) imageInputRef.current.value = ''
     }
   }
 
