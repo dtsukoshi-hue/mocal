@@ -83,7 +83,7 @@ export default function StoreImageUpload({
     } finally {
       setIsDeleting(false)
     }
-  }, [label, type])
+  }, [type])
 
   return (
     <div className="space-y-2">

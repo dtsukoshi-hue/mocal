@@ -37,8 +37,7 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
     if (!showCart) {
       cartButtonRef.current?.focus()
     }
-  // showCart が false に変わったときのみ実行（初期レンダリング時は cart.length で制御）
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // showCart が false に変わったときのみ実行（ref は deps 不要）
   }, [showCart])
 
   // リアルタイムで店舗の受付状態・待ち時間を同期（StoreStatusBanner と共有）

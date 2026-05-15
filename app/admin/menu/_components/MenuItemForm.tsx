@@ -32,7 +32,6 @@ export default function MenuItemForm({ item, onClose }: Props) {
           name="name"
           defaultValue={item?.name}
           required
-          // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
           placeholder="例：チーズバーガー"
