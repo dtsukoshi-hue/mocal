@@ -18,7 +18,6 @@ export default function PaymentForm({ orderId, orderNumber, totalAmount }: Props
   const elements = useElements()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!stripe || !elements) return

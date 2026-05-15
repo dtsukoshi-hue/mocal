@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState, useState, useEffect, useRef } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements } from '@stripe/react-stripe-js'
 import { createOrderAction, type OrderState } from '@/app/actions/orders'
@@ -45,6 +45,20 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
   const [scheduledAt, setScheduledAt] = useState<string>('')
   const [customerNote, setCustomerNote] = useState<string>('')
   const timeSlots = generateTimeSlots(store.wait_minutes)
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  const paymentHeadingRef = useRef<HTMLHeadingElement>(null)
+
+  // カート表示時にフォーカスを見出しへ移動（スクリーンリーダー・キーボードユーザー向け）
+  useEffect(() => {
+    headingRef.current?.focus()
+  }, [])
+
+  // お支払い画面への遷移時にフォーカスを移動
+  useEffect(() => {
+    if (state && 'clientSecret' in state) {
+      paymentHeadingRef.current?.focus()
+    }
+  }, [state])
 
   const totalAmount = cart.reduce((sum, c) => sum + c.price * c.qty, 0)
   const totalQty = cart.reduce((sum, c) => sum + c.qty, 0)
@@ -72,7 +86,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
       <div className="min-h-screen bg-gray-50 pb-10">
         <header className="bg-white border-b sticky top-0 z-10">
           <div className="max-w-lg mx-auto px-4 py-4">
-            <h1 className="text-lg font-bold text-gray-900">お支払い</h1>
+            <h1 ref={paymentHeadingRef} tabIndex={-1} className="text-lg font-bold text-gray-900 focus:outline-none">お支払い</h1>
           </div>
         </header>
         <main id="main-content" className="max-w-lg mx-auto px-4 py-4">
@@ -100,7 +114,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
           <button onClick={onBack} className="text-orange-500 text-sm font-medium">
             ← メニューに戻る
           </button>
-          <h1 className="text-lg font-bold text-gray-900">カート</h1>
+          <h1 ref={headingRef} tabIndex={-1} className="text-lg font-bold text-gray-900 focus:outline-none">カート</h1>
         </div>
       </header>
 
