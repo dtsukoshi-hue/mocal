@@ -111,7 +111,14 @@ export default async function StorePage({ params }: Props) {
       <script
         type="application/ld+json"
         nonce={nonce}
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{
+          // JSON.stringify は '<' '>' '&' を素通しにするため HTML パーサーが
+          // </script> タグと誤認しないよう Unicode エスケープする
+          __html: JSON.stringify(jsonLd)
+            .replace(/</g, '\\u003c')
+            .replace(/>/g, '\\u003e')
+            .replace(/&/g, '\\u0026'),
+        }}
       />
       <MenuView store={store} menuItems={menuItems ?? []} storeHours={storeHours ?? []} />
     </>
