@@ -1,6 +1,6 @@
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <main id="main-content" aria-busy="true" aria-label="登録フォームを読み込み中" className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md animate-pulse">
         {/* タイトル */}
         <div className="text-center mb-8 space-y-2">
@@ -19,6 +19,6 @@ export default function Loading() {
           <div className="h-10 bg-gray-200 rounded-lg mt-2" />
         </div>
       </div>
-    </div>
+    </main>
   )
 }
