@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { headers } from 'next/headers'
 import type { Metadata } from 'next'
 import { createSupabaseServerClient } from '@/lib/supabase-ssr'
 import MenuView from './_components/MenuView'
@@ -54,10 +55,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function StorePage({ params }: Props) {
   const { slug } = await params
   const supabase = await createSupabaseServerClient()
+  const nonce = (await headers()).get('x-nonce') ?? undefined
 
   const { data: store } = await supabase
     .from('stores')
-    .select('id, name, description, is_open, wait_minutes, logo_url, cover_url')
+    .select('id, name, description, is_open, wait_minutes, logo_url, cover_url, area, cuisine_type')
     .eq('slug', slug)
     .single()
 
@@ -78,7 +80,40 @@ export default async function StorePage({ params }: Props) {
       .order('day_of_week'),
   ])
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mocal.jp'
+
+  // JSON-LD 構造化データ（FoodEstablishment スキーマ）
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FoodEstablishment',
+    name: store.name,
+    ...(store.description ? { description: store.description } : {}),
+    ...(store.cuisine_type ? { servesCuisine: store.cuisine_type } : {}),
+    ...(store.area ? { areaServed: store.area } : {}),
+    url: `${appUrl}/${slug}`,
+    ...(store.cover_url ? { image: store.cover_url } : {}),
+    potentialAction: {
+      '@type': 'OrderAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${appUrl}/${slug}`,
+        inLanguage: 'ja',
+        actionPlatform: [
+          'http://schema.org/DesktopWebPlatform',
+          'http://schema.org/MobileWebPlatform',
+        ],
+      },
+    },
+  }
+
   return (
-    <MenuView store={store} menuItems={menuItems ?? []} storeHours={storeHours ?? []} />
+    <>
+      <script
+        type="application/ld+json"
+        nonce={nonce}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <MenuView store={store} menuItems={menuItems ?? []} storeHours={storeHours ?? []} />
+    </>
   )
 }
