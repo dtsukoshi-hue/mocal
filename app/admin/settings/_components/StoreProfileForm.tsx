@@ -24,22 +24,20 @@ function validateSlug(value: string): string | null {
 export default function StoreProfileForm({ name, slug, description, area, cuisineType }: Props) {
   const [state, formAction, isPending] = useActionState(updateStoreProfileAction, undefined)
   const [slugValue, setSlugValue] = useState(slug ?? '')
+  const [slugChangeAcknowledged, setSlugChangeAcknowledged] = useState(false)
   const slugChanged = slugValue !== (slug ?? '') && slug !== null
   const slugError = slugValue !== (slug ?? '') ? validateSlug(slugValue) : null
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    if (slugChanged && slugValue !== slug) {
-      const ok = confirm(
-        'URLを変更すると、配布済みの QR コードやリンクがすべて無効になります。\n本当に変更しますか？'
-      )
-      if (!ok) {
-        e.preventDefault()
-      }
-    }
+  // スラッグが変更されたとき確認チェックをリセット
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSlugValue(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
+    setSlugChangeAcknowledged(false)
   }
 
+  const submitDisabled = isPending || !!slugError || (slugChanged && !slugChangeAcknowledged)
+
   return (
-    <form action={formAction} onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-5 space-y-4">
+    <form action={formAction} className="bg-white rounded-xl shadow-sm p-5 space-y-4">
       <p className="font-semibold text-gray-900">店舗情報</p>
 
       {state?.error && (
@@ -72,7 +70,7 @@ export default function StoreProfileForm({ name, slug, description, area, cuisin
             id="store-slug"
             name="slug"
             value={slugValue}
-            onChange={e => setSlugValue(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+            onChange={handleSlugChange}
             required
             aria-describedby="store-slug-hint"
             className="flex-1 px-3 py-2 text-sm focus:outline-none"
@@ -127,9 +125,27 @@ export default function StoreProfileForm({ name, slug, description, area, cuisin
         </div>
       </div>
 
+      {slugChanged && !slugError && (
+        <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 space-y-2" role="alert">
+          <p className="text-sm text-amber-800 font-medium">⚠️ URL変更の確認</p>
+          <p className="text-xs text-amber-700">
+            URLを変更すると、配布済みのQRコードやリンクがすべて無効になります。
+          </p>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={slugChangeAcknowledged}
+              onChange={e => setSlugChangeAcknowledged(e.target.checked)}
+              className="rounded border-amber-400 text-orange-500 focus:ring-orange-400"
+            />
+            <span className="text-xs text-amber-800">QRコードが無効になることを理解しました</span>
+          </label>
+        </div>
+      )}
+
       <button
         type="submit"
-        disabled={isPending || !!slugError}
+        disabled={submitDisabled}
         className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg px-4 py-2 disabled:opacity-50"
       >
         {isPending ? '保存中…' : '保存する'}
