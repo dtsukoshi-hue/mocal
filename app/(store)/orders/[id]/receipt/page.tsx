@@ -147,7 +147,9 @@ export default async function ReceiptPage({ params }: Props) {
                 rel="noopener noreferrer"
                 className="text-xs text-orange-600 underline"
               >
-                Stripe 公式領収書を開く →
+                Stripe 公式領収書を開く
+                <span className="sr-only">（新しいタブで開きます）</span>
+                <span aria-hidden="true"> →</span>
               </a>
             </div>
           )}

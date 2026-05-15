@@ -110,7 +110,7 @@ export default function MenuItemCard({ item, isFirst, isLast }: Props) {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={imageUrl} alt="" className="w-full h-full object-cover" />
           ) : (
-            <span>{item.emoji ?? '🍽️'}</span>
+            <span aria-hidden="true">{item.emoji ?? '🍽️'}</span>
           )}
         </button>
         <input

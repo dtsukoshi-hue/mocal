@@ -221,7 +221,7 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
 
         {categories.length === 0 && (
           <div className="rounded-xl bg-white shadow-sm text-gray-400 text-sm text-center py-16 space-y-2">
-            <p className="text-3xl">🍽️</p>
+            <p className="text-3xl" aria-hidden="true">🍽️</p>
             <p>現在メニューが登録されていません</p>
           </div>
         )}
@@ -256,7 +256,7 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
                           className="rounded-lg object-cover shrink-0 bg-gray-100"
                         />
                       ) : item.emoji ? (
-                        <span className="text-2xl w-10 text-center shrink-0">{item.emoji}</span>
+                        <span className="text-2xl w-10 text-center shrink-0" aria-hidden="true">{item.emoji}</span>
                       ) : null}
                       <div>
                         <span className="text-sm font-medium text-gray-900">

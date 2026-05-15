@@ -187,7 +187,7 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
 
           {order.pickup_type === 'scheduled' && order.scheduled_at && (
             <div className="mt-4 inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-sm font-semibold px-3 py-1.5 rounded-full">
-              🕐 受取指定：{new Date(order.scheduled_at).toLocaleTimeString('ja-JP', {
+              <span aria-hidden="true">🕐</span> 受取指定：{new Date(order.scheduled_at).toLocaleTimeString('ja-JP', {
                 hour: '2-digit',
                 minute: '2-digit',
                 timeZone: 'Asia/Tokyo',
@@ -197,7 +197,7 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
 
           {order.estimated_ready_at && ['accepted', 'preparing'].includes(order.status) && (
             <div className="mt-4 inline-flex items-center gap-1.5 bg-orange-50 text-orange-700 text-sm font-semibold px-3 py-1.5 rounded-full">
-              ⏱ 受取予定：{new Date(order.estimated_ready_at).toLocaleTimeString('ja-JP', {
+              <span aria-hidden="true">⏱</span> 受取予定：{new Date(order.estimated_ready_at).toLocaleTimeString('ja-JP', {
                 hour: '2-digit',
                 minute: '2-digit',
                 timeZone: 'Asia/Tokyo',
@@ -246,7 +246,7 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
 
           {order.customer_note && (
             <div className="bg-amber-50 rounded-lg px-3 py-2 text-xs text-amber-800">
-              📝 {order.customer_note}
+              <span aria-hidden="true">📝</span> {order.customer_note}
             </div>
           )}
         </div>

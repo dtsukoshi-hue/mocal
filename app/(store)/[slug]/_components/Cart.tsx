@@ -113,7 +113,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
             return (
               <div key={item.menuItemId} className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-2">
-                  {item.emoji && <span>{item.emoji}</span>}
+                  {item.emoji && <span aria-hidden="true">{item.emoji}</span>}
                   <span className="text-sm text-gray-900">{item.name}</span>
                 </div>
                 <div className="flex items-center gap-3">
