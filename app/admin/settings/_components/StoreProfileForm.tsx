@@ -43,7 +43,7 @@ export default function StoreProfileForm({ name, slug, description, area, cuisin
       <p className="font-semibold text-gray-900">店舗情報</p>
 
       {state?.error && (
-        <p className="text-sm text-red-600">{state.error}</p>
+        <p role="alert" className="text-sm text-red-600">{state.error}</p>
       )}
       {state?.success && (
         <p className="text-sm text-green-600">保存しました</p>

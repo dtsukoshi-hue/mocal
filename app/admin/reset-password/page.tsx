@@ -60,18 +60,18 @@ export default function ResetPasswordPage() {
 
   if (done) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <main id="main-content" className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center space-y-3">
           <p className="text-4xl">✅</p>
           <p className="text-gray-700 font-medium">パスワードを更新しました</p>
           <p className="text-sm text-gray-400">ダッシュボードへ移動します...</p>
         </div>
-      </div>
+      </main>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <main id="main-content" className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900">mocal</h1>
@@ -108,7 +108,7 @@ export default function ResetPasswordPage() {
           </div>
 
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-2.5">{error}</p>
+            <p role="alert" className="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-2.5">{error}</p>
           )}
 
           <button
@@ -120,6 +120,6 @@ export default function ResetPasswordPage() {
           </button>
         </form>
       </div>
-    </div>
+    </main>
   )
 }

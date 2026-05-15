@@ -22,7 +22,7 @@ export default function RemoveMemberButton({ memberId }: Props) {
 
   return (
     <div className="text-right">
-      {error && <p className="text-xs text-red-600 mb-1">{error}</p>}
+      {error && <p role="alert" className="text-xs text-red-600 mb-1">{error}</p>}
       <button
         onClick={handleRemove}
         disabled={isPending}

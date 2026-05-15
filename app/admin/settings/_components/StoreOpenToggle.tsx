@@ -23,7 +23,7 @@ export default function StoreOpenToggle({ isOpen }: Props) {
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-5">
-      {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
+      {error && <p role="alert" className="text-sm text-red-600 mb-3">{error}</p>}
       <div className="flex items-center justify-between">
         <div>
           <p className="font-semibold text-gray-900">受付状態</p>

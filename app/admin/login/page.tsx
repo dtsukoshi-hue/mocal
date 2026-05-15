@@ -50,7 +50,7 @@ export default function AdminLoginPage() {
                 />
               </div>
               {resetState && 'error' in resetState && (
-                <p className="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-2.5">
+                <p role="alert" className="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-2.5">
                   {resetState.error}
                 </p>
               )}
@@ -119,7 +119,7 @@ export default function AdminLoginPage() {
           </div>
 
           {state && 'error' in state && (
-            <p className="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-2.5">
+            <p role="alert" className="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-2.5">
               {state.error}
             </p>
           )}

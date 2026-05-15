@@ -22,7 +22,7 @@ export default function MenuItemForm({ item, onClose }: Props) {
       {item && <input type="hidden" name="id" value={item.id} />}
 
       {state && 'error' in state && (
-        <p className="text-sm text-red-600">{state.error}</p>
+        <p role="alert" className="text-sm text-red-600">{state.error}</p>
       )}
 
       <div>

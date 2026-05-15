@@ -48,7 +48,7 @@ export default function OrderActions({ orderId, status, defaultWaitMinutes = 20 
 
   return (
     <div className="space-y-2 pt-1">
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p role="alert" className="text-xs text-red-600">{error}</p>}
 
       {status === 'paid' && (
         <div className="flex flex-wrap items-center gap-2">
