@@ -56,6 +56,7 @@ export default function OrderActions({ orderId, status, defaultWaitMinutes = 20 
             value={waitMinutes}
             onChange={e => setWaitMinutes(Number(e.target.value))}
             disabled={disabled}
+            aria-label="受取予定時間"
             className="text-sm border border-gray-300 rounded-lg px-2 py-1.5 bg-white"
           >
             {WAIT_OPTIONS.map(m => (

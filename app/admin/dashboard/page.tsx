@@ -98,7 +98,10 @@ export default async function DashboardPage() {
           <div className="flex items-center gap-2 shrink-0">
             <h1 className="text-lg font-bold text-gray-900">注文管理</h1>
             {paidCount > 0 && (
-              <span className="bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+              <span
+                className="bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse"
+                aria-label={`未対応の新規注文 ${paidCount}件`}
+              >
                 {paidCount}
               </span>
             )}
