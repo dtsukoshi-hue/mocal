@@ -11,7 +11,7 @@ export default function AdminLoginPage() {
 
   if (showReset) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <main id="main-content" className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-gray-900">mocal</h1>
@@ -71,12 +71,12 @@ export default function AdminLoginPage() {
             </form>
           )}
         </div>
-      </div>
+      </main>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <main id="main-content" className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900">mocal</h1>
@@ -148,6 +148,6 @@ export default function AdminLoginPage() {
           </p>
         </div>
       </div>
-    </div>
+    </main>
   )
 }

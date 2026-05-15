@@ -19,7 +19,7 @@ export default function OnboardingPage() {
     : null
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+    <main id="main-content" className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         {/* ヘッダー */}
         <div className="text-center mb-8">
@@ -142,6 +142,6 @@ export default function OnboardingPage() {
           </Link>
         </p>
       </div>
-    </div>
+    </main>
   )
 }

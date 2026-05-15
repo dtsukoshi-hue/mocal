@@ -75,7 +75,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
             <h1 className="text-lg font-bold text-gray-900">お支払い</h1>
           </div>
         </header>
-        <main className="max-w-lg mx-auto px-4 py-4">
+        <main id="main-content" className="max-w-lg mx-auto px-4 py-4">
           <Elements
             stripe={stripePromise}
             options={{ clientSecret: state.clientSecret, locale: 'ja' }}
@@ -104,7 +104,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-4 space-y-4">
+      <main id="main-content" className="max-w-lg mx-auto px-4 py-4 space-y-4">
         {/* 注文内容 */}
         <div className="bg-white rounded-xl shadow-sm divide-y">
           {cart.map(item => {
