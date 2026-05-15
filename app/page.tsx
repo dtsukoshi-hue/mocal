@@ -43,7 +43,7 @@ export default function HomePage() {
             href="/onboarding"
             className="w-full text-center bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl px-6 py-3.5 text-sm transition-colors"
           >
-            店舗として登録する →
+            店舗として登録する<span aria-hidden="true"> →</span>
           </Link>
           <Link
             href="/admin/login"

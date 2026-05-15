@@ -112,7 +112,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center gap-3">
           <button onClick={onBack} className="text-orange-500 text-sm font-medium">
-            ← メニューに戻る
+            <span aria-hidden="true">← </span>メニューに戻る
           </button>
           <h1 ref={headingRef} tabIndex={-1} className="text-lg font-bold text-gray-900 focus:outline-none">カート</h1>
         </div>

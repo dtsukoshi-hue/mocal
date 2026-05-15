@@ -109,7 +109,7 @@ export default function ForStoresPage() {
                 href="mailto:support@mocal.jp?subject=mocal 導入のお問い合わせ"
                 className="inline-flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm px-6 py-3 rounded-xl transition-colors"
               >
-                無料で相談する →
+                無料で相談する<span aria-hidden="true"> →</span>
               </Link>
               <Link
                 href="/onboarding"
@@ -191,7 +191,7 @@ export default function ForStoresPage() {
               href="mailto:support@mocal.jp?subject=mocal 導入のお問い合わせ"
               className="inline-flex items-center gap-2 bg-white text-orange-500 font-bold text-sm px-6 py-3 rounded-xl hover:bg-orange-50 transition-colors"
             >
-              support@mocal.jp へメールする →
+              support@mocal.jp へメールする<span aria-hidden="true"> →</span>
             </Link>
           </div>
         </section>

@@ -34,7 +34,7 @@ export default async function SettingsPage({ searchParams }: Props) {
       <header className="bg-white border-b">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
           <Link href="/admin/dashboard" className="text-gray-400 hover:text-gray-600 text-sm">
-            ← 注文管理
+            <span aria-hidden="true">← </span>注文管理
           </Link>
           <h1 className="text-lg font-bold text-gray-900">店舗設定</h1>
         </div>
@@ -54,7 +54,7 @@ export default async function SettingsPage({ searchParams }: Props) {
               href="/api/onboarding/stripe/connect"
               className="inline-flex items-center gap-2 bg-[#635bff] hover:bg-[#4f46e5] text-white text-sm font-bold rounded-lg px-5 py-2.5 transition-colors"
             >
-              今すぐ Stripe に接続する →
+              今すぐ Stripe に接続する<span aria-hidden="true"> →</span>
             </a>
           </div>
         )}
@@ -141,7 +141,7 @@ export default async function SettingsPage({ searchParams }: Props) {
               href="/api/onboarding/stripe/connect"
               className="inline-flex items-center gap-2 bg-[#635bff] hover:bg-[#4f46e5] text-white text-sm font-medium rounded-lg px-4 py-2 transition-colors"
             >
-              {store?.stripe_account_id ? 'Stripe を再接続' : 'Stripe に接続する →'}
+              {store?.stripe_account_id ? 'Stripe を再接続' : <>Stripe に接続する<span aria-hidden="true"> →</span></>}
             </a>
           </div>
         )}

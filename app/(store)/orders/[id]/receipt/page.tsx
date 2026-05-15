@@ -90,7 +90,7 @@ export default async function ReceiptPage({ params }: Props) {
           href={`/orders/${id}`}
           className="text-sm text-gray-500 hover:text-gray-700"
         >
-          ← 注文状況に戻る
+          <span aria-hidden="true">← </span>注文状況に戻る
         </Link>
         <PrintButton />
       </div>

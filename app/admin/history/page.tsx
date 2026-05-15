@@ -106,7 +106,7 @@ export default async function HistoryPage({ searchParams }: Props) {
       <header className="bg-white border-b">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
           <Link href="/admin/dashboard" className="text-gray-400 hover:text-gray-600 text-sm">
-            ← 注文管理
+            <span aria-hidden="true">← </span>注文管理
           </Link>
           <h1 className="text-lg font-bold text-gray-900">注文履歴</h1>
         </div>

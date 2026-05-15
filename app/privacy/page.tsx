@@ -9,7 +9,7 @@ export default function PrivacyPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
-          <Link href="/" className="text-gray-400 hover:text-gray-600 text-sm">← mocal</Link>
+          <Link href="/" className="text-gray-400 hover:text-gray-600 text-sm"><span aria-hidden="true">← </span>mocal</Link>
           <h1 className="text-lg font-bold text-gray-900">プライバシーポリシー</h1>
         </div>
       </header>

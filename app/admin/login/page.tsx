@@ -67,7 +67,7 @@ export default function AdminLoginPage() {
                 onClick={() => setShowReset(false)}
                 className="w-full text-sm text-gray-500 hover:text-gray-700"
               >
-                ← ログイン画面に戻る
+                <span aria-hidden="true">← </span>ログイン画面に戻る
               </button>
             </form>
           )}
