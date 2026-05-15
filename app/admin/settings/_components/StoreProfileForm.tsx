@@ -127,7 +127,7 @@ export default function StoreProfileForm({ name, slug, description, area, cuisin
 
       {slugChanged && !slugError && (
         <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 space-y-2" role="alert">
-          <p className="text-sm text-amber-800 font-medium">⚠️ URL変更の確認</p>
+          <p className="text-sm text-amber-800 font-medium"><span aria-hidden="true">⚠️ </span>URL変更の確認</p>
           <p className="text-xs text-amber-700">
             URLを変更すると、配布済みのQRコードやリンクがすべて無効になります。
           </p>

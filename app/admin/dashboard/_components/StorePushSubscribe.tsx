@@ -106,7 +106,7 @@ export default function StorePushSubscribe({ storeId }: Props) {
         <button onClick={sendTest} disabled={testLoading} className="text-gray-400 underline ml-1 disabled:opacity-50" aria-label="テスト通知を送る">
           {testLoading ? '送信中…' : 'テスト'}
         </button>
-        <button onClick={unsubscribe} disabled={loading} className="text-gray-400 underline ml-1">
+        <button onClick={unsubscribe} disabled={loading} aria-label="注文通知をオフにする" className="text-gray-400 underline ml-1">
           オフ
         </button>
       </span>
