@@ -149,11 +149,13 @@ export default async function ReportsPage({ searchParams }: Props) {
 
       <main id="main-content" className="max-w-2xl mx-auto px-4 py-6 space-y-5">
         {/* タブ */}
-        <div className="flex bg-white rounded-xl shadow-sm overflow-hidden">
+        <nav role="tablist" aria-label="集計期間の種別" className="flex bg-white rounded-xl shadow-sm overflow-hidden">
           {tabs.map(tab => (
             <Link
               key={tab.key}
               href={`/admin/reports?view=${tab.key}&date=${targetDate}`}
+              role="tab"
+              aria-selected={view === tab.key}
               className={`flex-1 text-center py-2.5 text-sm font-medium transition-colors ${
                 view === tab.key
                   ? 'bg-orange-500 text-white'
@@ -163,26 +165,28 @@ export default async function ReportsPage({ searchParams }: Props) {
               {tab.label}
             </Link>
           ))}
-        </div>
+        </nav>
 
         {/* 期間ナビ */}
         <div className="flex items-center justify-between">
           <Link
             href={prevLink}
+            aria-label="前の期間へ"
             className="text-sm text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-100"
           >
             ← 前
           </Link>
-          <span className="text-sm font-medium text-gray-700 text-center">{periodLabel}</span>
+          <span className="text-sm font-medium text-gray-700 text-center" aria-live="polite">{periodLabel}</span>
           {!isLatest ? (
             <Link
               href={nextLink}
+              aria-label="次の期間へ"
               className="text-sm text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-100"
             >
               次 →
             </Link>
           ) : (
-            <span className="w-14" />
+            <span className="w-14" aria-hidden="true" />
           )}
         </div>
 
@@ -236,7 +240,7 @@ export default async function ReportsPage({ searchParams }: Props) {
                           ¥{item.revenue.toLocaleString()}
                         </span>
                       </div>
-                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${item.name}: 売上構成比 ${pct}%`}>
                         <div
                           className="h-full bg-orange-400 rounded-full"
                           style={{ width: `${pct}%` }}
