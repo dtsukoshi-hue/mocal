@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useTransition } from 'react'
+import { useRef, useState, useTransition, useCallback } from 'react'
 
 interface Props {
   type: 'logo' | 'cover'
@@ -20,6 +20,7 @@ export default function StoreImageUpload({
   const [url, setUrl] = useState<string | null>(currentUrl)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [isDeleting, setIsDeleting] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -60,6 +61,29 @@ export default function StoreImageUpload({
     })
   }
 
+  const handleDelete = useCallback(async () => {
+    if (!confirm(`${label}の画像を削除しますか？`)) return
+    setError(null)
+    setIsDeleting(true)
+    try {
+      const res = await fetch('/api/admin/store/image', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type }),
+      })
+      const json = await res.json() as { ok?: boolean; error?: string }
+      if (!res.ok || json.error) {
+        setError(json.error ?? '削除に失敗しました。')
+      } else {
+        setUrl(null)
+      }
+    } catch {
+      setError('削除に失敗しました。')
+    } finally {
+      setIsDeleting(false)
+    }
+  }, [label, type])
+
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium text-gray-700">{label}</p>
@@ -96,16 +120,28 @@ export default function StoreImageUpload({
         aria-label={`${label}の画像を選択`}
         className="sr-only"
         onChange={handleChange}
-        disabled={isPending}
+        disabled={isPending || isDeleting}
       />
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        disabled={isPending}
-        className="text-sm text-orange-500 hover:text-orange-600 disabled:opacity-50 font-medium"
-      >
-        {isPending ? 'アップロード中…' : url ? '画像を変更' : '画像をアップロード'}
-      </button>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={isPending || isDeleting}
+          className="text-sm text-orange-500 hover:text-orange-600 disabled:opacity-50 font-medium"
+        >
+          {isPending ? 'アップロード中…' : url ? '画像を変更' : '画像をアップロード'}
+        </button>
+        {url && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={isPending || isDeleting}
+            className="text-sm text-red-500 hover:text-red-600 disabled:opacity-50"
+          >
+            {isDeleting ? '削除中…' : '削除'}
+          </button>
+        )}
+      </div>
     </div>
   )
 }

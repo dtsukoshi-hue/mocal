@@ -77,3 +77,53 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({ url: urlWithCacheBuster })
 }
+
+export async function DELETE(request: NextRequest) {
+  let session: Awaited<ReturnType<typeof verifyStoreSession>>
+  try {
+    session = await verifyStoreSession()
+  } catch {
+    return NextResponse.json({ error: '認証が必要です。' }, { status: 401 })
+  }
+
+  let body: { type?: unknown }
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'リクエストの解析に失敗しました。' }, { status: 400 })
+  }
+
+  const { type } = body
+  if (type !== 'logo' && type !== 'cover') {
+    return NextResponse.json({ error: 'type は logo または cover で指定してください。' }, { status: 400 })
+  }
+
+  const supabase = createServiceClient()
+
+  // ストレージ上の該当プレフィックスのファイルを全削除（拡張子不問）
+  const { data: files } = await supabase.storage
+    .from(BUCKET)
+    .list(session.storeId, { search: `${type}.` })
+
+  if (files && files.length > 0) {
+    const paths = files.map(f => `${session.storeId}/${f.name}`)
+    await supabase.storage.from(BUCKET).remove(paths)
+  }
+
+  // DB の URL を null にクリア
+  const updatePayload = type === 'logo'
+    ? { logo_url: null }
+    : { cover_url: null }
+
+  const { error: updateError } = await supabase
+    .from('stores')
+    .update(updatePayload)
+    .eq('id', session.storeId)
+
+  if (updateError) {
+    console.error('[store/image] delete db update error:', updateError)
+    return NextResponse.json({ error: '画像の削除に失敗しました。' }, { status: 500 })
+  }
+
+  return NextResponse.json({ ok: true })
+}
