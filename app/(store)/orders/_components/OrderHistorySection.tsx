@@ -8,7 +8,7 @@ const OrderHistoryList = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="space-y-3">
+      <div className="space-y-3" aria-busy="true" aria-label="注文履歴を読み込み中">
         {[1, 2, 3].map((i) => (
           <div key={i} className="bg-white rounded-xl h-20 animate-pulse" />
         ))}
