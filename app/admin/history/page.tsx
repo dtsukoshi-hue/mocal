@@ -114,13 +114,14 @@ export default async function HistoryPage({ searchParams }: Props) {
 
       <main id="main-content" className="max-w-2xl mx-auto px-4 py-6 space-y-3">
         {/* 注文番号検索 */}
-        <form method="GET" action="/admin/history" className="flex gap-2">
+        <form method="GET" action="/admin/history" role="search" className="flex gap-2">
           <input
             type="number"
             name="q"
             min={1}
             defaultValue={isSearching ? searchNum : ''}
             placeholder="注文番号で検索（例: 42）"
+            aria-label="注文番号で検索"
             className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
           />
           <button

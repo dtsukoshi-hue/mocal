@@ -91,13 +91,15 @@ function HourRow({
           type="time"
           name={`open_${dow}`}
           defaultValue={defaultOpenTime}
+          aria-label={`${label}曜日 開始時間`}
           className="flex-1 min-w-0 text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-400"
         />
-        <span className="text-xs text-gray-400 shrink-0">〜</span>
+        <span className="text-xs text-gray-400 shrink-0" aria-hidden="true">〜</span>
         <input
           type="time"
           name={`close_${dow}`}
           defaultValue={defaultCloseTime}
+          aria-label={`${label}曜日 終了時間`}
           className="flex-1 min-w-0 text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-400"
         />
       </div>

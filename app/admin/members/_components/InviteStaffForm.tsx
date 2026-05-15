@@ -27,10 +27,12 @@ export default function InviteStaffForm() {
 
       <div className="flex gap-2">
         <input
+          id="invite-email"
           name="email"
           type="email"
           required
           placeholder="staff@example.com"
+          aria-label="追加するスタッフのメールアドレス"
           className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
         />
         <button

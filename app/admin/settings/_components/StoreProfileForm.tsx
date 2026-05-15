@@ -50,8 +50,9 @@ export default function StoreProfileForm({ name, slug, description, area, cuisin
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">店舗名</label>
+        <label htmlFor="store-name" className="block text-sm font-medium text-gray-700 mb-1">店舗名</label>
         <input
+          id="store-name"
           name="name"
           defaultValue={name}
           required
@@ -60,7 +61,7 @@ export default function StoreProfileForm({ name, slug, description, area, cuisin
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">URL（スラッグ）</label>
+        <label htmlFor="store-slug" className="block text-sm font-medium text-gray-700 mb-1">URL（スラッグ）</label>
         <div className={`flex items-center border rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-orange-500 ${
           slugError ? 'border-red-400' : slugValue && !slugError ? 'border-green-400' : 'border-gray-300'
         }`}>
@@ -68,6 +69,7 @@ export default function StoreProfileForm({ name, slug, description, area, cuisin
             mocal.jp/
           </span>
           <input
+            id="store-slug"
             name="slug"
             value={slugValue}
             onChange={e => setSlugValue(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
@@ -86,8 +88,9 @@ export default function StoreProfileForm({ name, slug, description, area, cuisin
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">店舗説明（任意）</label>
+        <label htmlFor="store-description" className="block text-sm font-medium text-gray-700 mb-1">店舗説明（任意）</label>
         <textarea
+          id="store-description"
           name="description"
           defaultValue={description ?? ''}
           placeholder="例：駅前の本格ラーメン店です。行列なしで事前注文できます。"
@@ -100,8 +103,9 @@ export default function StoreProfileForm({ name, slug, description, area, cuisin
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">エリア（任意）</label>
+          <label htmlFor="store-area" className="block text-sm font-medium text-gray-700 mb-1">エリア（任意）</label>
           <input
+            id="store-area"
             name="area"
             defaultValue={area ?? ''}
             placeholder="例：清澄白河"
@@ -110,8 +114,9 @@ export default function StoreProfileForm({ name, slug, description, area, cuisin
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">ジャンル（任意）</label>
+          <label htmlFor="store-cuisine-type" className="block text-sm font-medium text-gray-700 mb-1">ジャンル（任意）</label>
           <input
+            id="store-cuisine-type"
             name="cuisine_type"
             defaultValue={cuisineType ?? ''}
             placeholder="例：バーガー"
