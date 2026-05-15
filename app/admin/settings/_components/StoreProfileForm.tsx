@@ -7,6 +7,8 @@ interface Props {
   name: string
   slug: string | null
   description: string | null
+  area: string | null
+  cuisineType: string | null
 }
 
 const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/
@@ -19,7 +21,7 @@ function validateSlug(value: string): string | null {
   return null
 }
 
-export default function StoreProfileForm({ name, slug, description }: Props) {
+export default function StoreProfileForm({ name, slug, description, area, cuisineType }: Props) {
   const [state, formAction, isPending] = useActionState(updateStoreProfileAction, undefined)
   const [slugValue, setSlugValue] = useState(slug ?? '')
   const slugChanged = slugValue !== (slug ?? '') && slug !== null
@@ -94,6 +96,29 @@ export default function StoreProfileForm({ name, slug, description }: Props) {
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
         />
         <p className="text-xs text-gray-400 mt-1">200文字以内。メニューページ上部と検索結果に表示されます。</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">エリア（任意）</label>
+          <input
+            name="area"
+            defaultValue={area ?? ''}
+            placeholder="例：清澄白河"
+            maxLength={30}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">ジャンル（任意）</label>
+          <input
+            name="cuisine_type"
+            defaultValue={cuisineType ?? ''}
+            placeholder="例：バーガー"
+            maxLength={30}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
+        </div>
       </div>
 
       <button

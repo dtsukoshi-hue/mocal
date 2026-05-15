@@ -22,7 +22,7 @@ export default async function SettingsPage({ searchParams }: Props) {
 
   const { data: store } = await supabase
     .from('stores')
-    .select('name, slug, description, is_open, wait_minutes, stripe_account_id, logo_url, cover_url')
+    .select('name, slug, description, area, cuisine_type, is_open, wait_minutes, stripe_account_id, logo_url, cover_url')
     .eq('id', session.storeId)
     .single()
 
@@ -72,7 +72,15 @@ export default async function SettingsPage({ searchParams }: Props) {
 
         <StoreOpenToggle isOpen={store?.is_open ?? false} />
 
-        {isOwner && <StoreProfileForm name={store?.name ?? ''} slug={store?.slug ?? null} description={store?.description ?? null} />}
+        {isOwner && (
+          <StoreProfileForm
+            name={store?.name ?? ''}
+            slug={store?.slug ?? null}
+            description={store?.description ?? null}
+            area={store?.area ?? null}
+            cuisineType={store?.cuisine_type ?? null}
+          />
+        )}
 
         <WaitMinutesForm defaultWaitMinutes={store?.wait_minutes ?? 20} />
 

@@ -71,6 +71,14 @@ export async function updateStoreProfileAction(
   const description = typeof descriptionRaw === 'string' && descriptionRaw.trim()
     ? descriptionRaw.trim().slice(0, 200)
     : null
+  const areaRaw = formData.get('area')
+  const area = typeof areaRaw === 'string' && areaRaw.trim()
+    ? areaRaw.trim().slice(0, 30)
+    : null
+  const cuisineTypeRaw = formData.get('cuisine_type')
+  const cuisineType = typeof cuisineTypeRaw === 'string' && cuisineTypeRaw.trim()
+    ? cuisineTypeRaw.trim().slice(0, 30)
+    : null
 
   if (typeof name !== 'string' || !name.trim()) return { error: '店舗名を入力してください。' }
   if (typeof slug !== 'string' || !slug.trim()) return { error: 'URLを入力してください。' }
@@ -80,7 +88,7 @@ export async function updateStoreProfileAction(
 
   const { error } = await supabase
     .from('stores')
-    .update({ name: name.trim(), slug: slug.trim(), description })
+    .update({ name: name.trim(), slug: slug.trim(), description, area, cuisine_type: cuisineType })
     .eq('id', session.storeId)
 
   if (error) {
