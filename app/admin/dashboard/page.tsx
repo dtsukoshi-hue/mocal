@@ -107,7 +107,7 @@ export default async function DashboardPage() {
             )}
           </div>
           {/* モバイルでも横スクロールで全リンクにアクセスできるようにする */}
-          <nav className="flex items-center gap-3 overflow-x-auto scrollbar-none flex-1 min-w-0">
+          <nav aria-label="管理メニュー" className="flex items-center gap-3 overflow-x-auto scrollbar-none flex-1 min-w-0">
             <Link href="/admin/history" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">履歴</Link>
             <Link href="/admin/reports" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">レポート</Link>
             <Link href="/admin/menu" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">メニュー</Link>
@@ -130,12 +130,12 @@ export default async function DashboardPage() {
       <div className="max-w-4xl mx-auto px-4 pt-6 space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white rounded-xl shadow-sm px-5 py-4">
-            <p className="text-xs text-gray-400 mb-1">本日の売上</p>
-            <p className="text-2xl font-bold text-gray-900">¥{todaySales.toLocaleString()}</p>
+            <p className="text-xs text-gray-400 mb-1" aria-hidden="true">本日の売上</p>
+            <p className="text-2xl font-bold text-gray-900" aria-label={`本日の売上 ${todaySales.toLocaleString()}円`}>¥{todaySales.toLocaleString()}</p>
           </div>
           <div className="bg-white rounded-xl shadow-sm px-5 py-4">
-            <p className="text-xs text-gray-400 mb-1">本日の注文数</p>
-            <p className="text-2xl font-bold text-gray-900">{todayCount}<span className="text-sm font-normal text-gray-400 ml-1">件</span></p>
+            <p className="text-xs text-gray-400 mb-1" aria-hidden="true">本日の注文数</p>
+            <p className="text-2xl font-bold text-gray-900" aria-label={`本日の注文数 ${todayCount}件`}>{todayCount}<span className="text-sm font-normal text-gray-400 ml-1" aria-hidden="true">件</span></p>
           </div>
         </div>
         <StoreOpenToggle isOpen={storeStatus?.is_open ?? false} />
@@ -172,7 +172,7 @@ export default async function DashboardPage() {
               </span>
             </div>
 
-            <ul className="text-sm text-gray-600 space-y-0.5">
+            <ul aria-label="注文内容" className="text-sm text-gray-600 space-y-0.5">
               {order.order_items?.map((item, i) => (
                 <li key={i}>{item.name} × {item.qty}</li>
               ))}
