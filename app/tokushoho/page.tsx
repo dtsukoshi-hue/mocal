@@ -28,7 +28,7 @@ export default function TokushohoPage() {
       </header>
 
       <main id="main-content" className="max-w-2xl mx-auto px-4 py-8">
-        <p className="text-xs text-gray-400 mb-6">最終更新日：2026年5月9日</p>
+        <p className="text-xs text-gray-400 mb-6">最終更新日：<time dateTime="2026-05-09">2026年5月9日</time></p>
 
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <table className="w-full text-sm">
