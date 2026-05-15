@@ -61,8 +61,8 @@ export default function ResetPasswordPage() {
   if (done) {
     return (
       <main id="main-content" className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center space-y-3">
-          <p className="text-4xl">✅</p>
+        <div className="text-center space-y-3" aria-live="polite">
+          <p className="text-4xl" aria-hidden="true">✅</p>
           <p className="text-gray-700 font-medium">パスワードを更新しました</p>
           <p className="text-sm text-gray-400">ダッシュボードへ移動します...</p>
         </div>
@@ -80,10 +80,11 @@ export default function ResetPasswordPage() {
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow p-8 space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="new-password" className="block text-sm font-medium text-gray-700 mb-1">
               新しいパスワード（8文字以上）
             </label>
             <input
+              id="new-password"
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
@@ -94,10 +95,11 @@ export default function ResetPasswordPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-1">
               パスワード（確認）
             </label>
             <input
+              id="confirm-password"
               type="password"
               value={confirm}
               onChange={e => setConfirm(e.target.value)}
