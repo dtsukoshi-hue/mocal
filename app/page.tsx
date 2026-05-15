@@ -3,7 +3,7 @@ import Link from 'next/link'
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <main className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+      <main id="main-content" className="flex-1 flex flex-col items-center justify-center px-6 text-center">
         {/* ロゴ */}
         <div className="mb-10">
           <h1 className="text-5xl font-bold tracking-tight">

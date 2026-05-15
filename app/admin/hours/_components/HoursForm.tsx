@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useRef } from 'react'
+import { useActionState } from 'react'
 import { saveStoreHoursAction } from '@/app/actions/store'
 
 interface HourRow {
@@ -17,17 +17,9 @@ interface Props {
 
 export default function HoursForm({ hours }: Props) {
   const [state, action, pending] = useActionState(saveStoreHoursAction, undefined)
-  const formRef = useRef<HTMLFormElement>(null)
-
-  // 成功後にフォームをリセット（サーバー側の値で再描画）
-  useEffect(() => {
-    if (state?.success) {
-      // サーバーが revalidatePath するのでリロード不要
-    }
-  }, [state])
 
   return (
-    <form ref={formRef} action={action} className="space-y-3">
+    <form action={action} className="space-y-3">
       {hours.map(({ dow, label, open_time, close_time, is_closed }) => (
         <HourRow
           key={dow}

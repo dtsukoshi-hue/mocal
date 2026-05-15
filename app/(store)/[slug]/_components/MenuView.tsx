@@ -176,7 +176,7 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
       </header>
 
       {/* メニューリスト */}
-      <main className="max-w-lg mx-auto px-4 py-4 space-y-6">
+      <main id="main-content" className="max-w-lg mx-auto px-4 py-4 space-y-6">
         {!isOpen && (
           <div className="rounded-xl bg-gray-100 text-gray-600 text-sm text-center py-6">
             現在、受付を停止しています

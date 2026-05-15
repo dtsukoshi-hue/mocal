@@ -176,7 +176,7 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-6 flex-1 space-y-4 w-full">
+      <main id="main-content" className="max-w-lg mx-auto px-4 py-6 flex-1 space-y-4 w-full">
         {/* ステータス表示 */}
         <div className="bg-white rounded-2xl shadow-sm p-8 text-center" aria-live="polite" aria-atomic="true">
           <div className="text-5xl mb-4" aria-hidden="true">{config.icon}</div>

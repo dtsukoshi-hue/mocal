@@ -96,7 +96,7 @@ export default async function ReceiptPage({ params }: Props) {
       </div>
 
       {/* 領収書本体 */}
-      <main className="max-w-lg mx-auto px-4 pb-12 print:px-0 print:pb-0">
+      <main id="main-content" className="max-w-lg mx-auto px-4 pb-12 print:px-0 print:pb-0">
         <div className="bg-white rounded-2xl shadow-sm p-8 print:shadow-none print:rounded-none space-y-6">
           {/* ヘッダー */}
           <div className="text-center space-y-1 border-b pb-6">

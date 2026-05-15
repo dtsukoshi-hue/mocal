@@ -35,6 +35,16 @@ export default function Loading() {
             <div className="h-3 w-12 bg-gray-100 rounded" />
             <div className="h-20 bg-gray-100 rounded-lg" />
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <div className="h-3 w-16 bg-gray-100 rounded" />
+              <div className="h-10 bg-gray-100 rounded-lg" />
+            </div>
+            <div className="space-y-2">
+              <div className="h-3 w-16 bg-gray-100 rounded" />
+              <div className="h-10 bg-gray-100 rounded-lg" />
+            </div>
+          </div>
           <div className="h-9 w-20 bg-gray-200 rounded-lg" />
         </div>
 
