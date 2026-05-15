@@ -34,17 +34,18 @@ export default function OnboardingPage() {
 
         <form action={formAction} className="bg-white rounded-2xl shadow-sm p-6 space-y-5">
           {state?.error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
+            <div role="alert" className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
               {state.error}
             </div>
           )}
 
           {/* 店舗名 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              店舗名 <span className="text-red-500">*</span>
+            <label htmlFor="store-name" className="block text-sm font-medium text-gray-700 mb-1">
+              店舗名 <span className="text-red-500" aria-hidden="true">*</span>
             </label>
             <input
+              id="store-name"
               name="store_name"
               required
               placeholder="例：3000DAYS BURGER"
@@ -54,8 +55,8 @@ export default function OnboardingPage() {
 
           {/* 店舗 URL */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              店舗 URL <span className="text-red-500">*</span>
+            <label htmlFor="store-slug" className="block text-sm font-medium text-gray-700 mb-1">
+              店舗 URL <span className="text-red-500" aria-hidden="true">*</span>
             </label>
             <div className={`flex items-center border rounded-lg overflow-hidden focus-within:ring-2 transition-colors ${
               slugError
@@ -64,10 +65,11 @@ export default function OnboardingPage() {
                   ? 'border-green-400 focus-within:ring-green-300'
                   : 'border-gray-300 focus-within:ring-orange-500'
             }`}>
-              <span className="px-3 py-2.5 bg-gray-50 text-gray-400 text-sm border-r border-gray-300 shrink-0 select-none">
+              <span className="px-3 py-2.5 bg-gray-50 text-gray-400 text-sm border-r border-gray-300 shrink-0 select-none" aria-hidden="true">
                 mocal.jp/
               </span>
               <input
+                id="store-slug"
                 name="slug"
                 required
                 value={slugValue}
@@ -75,27 +77,29 @@ export default function OnboardingPage() {
                 pattern="[a-z0-9][a-z0-9\-]{1,48}[a-z0-9]"
                 title="英小文字・数字・ハイフンのみ、先頭と末尾は英数字、3文字以上"
                 placeholder="3000days-burger"
+                aria-describedby="slug-hint"
                 className="flex-1 px-3 py-2.5 text-sm focus:outline-none bg-white"
               />
               {slugTouched && (
-                <span className="pr-3 text-sm">
+                <span className="pr-3 text-sm" aria-hidden="true">
                   {slugValid ? '✅' : '❌'}
                 </span>
               )}
             </div>
             {slugError ? (
-              <p className="text-xs text-red-500 mt-1">{slugError}</p>
+              <p role="alert" className="text-xs text-red-500 mt-1">{slugError}</p>
             ) : (
-              <p className="text-xs text-gray-400 mt-1">QR コードに使われる URL です（変更するとQRコードが無効になります）</p>
+              <p id="slug-hint" className="text-xs text-gray-400 mt-1">QR コードに使われる URL です（変更するとQRコードが無効になります）</p>
             )}
           </div>
 
           {/* メールアドレス */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              メールアドレス <span className="text-red-500">*</span>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              メールアドレス <span className="text-red-500" aria-hidden="true">*</span>
             </label>
             <input
+              id="email"
               name="email"
               type="email"
               required
@@ -107,10 +111,11 @@ export default function OnboardingPage() {
 
           {/* パスワード */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              パスワード <span className="text-red-500">*</span>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              パスワード <span className="text-red-500" aria-hidden="true">*</span>
             </label>
             <input
+              id="password"
               name="password"
               type="password"
               required
