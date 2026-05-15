@@ -43,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ja" className={`${geist.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
+        <a href="#main-content" className="skip-link">メインコンテンツへスキップ</a>
         <SwRegister />
         {children}
       </body>
