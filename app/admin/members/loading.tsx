@@ -7,7 +7,7 @@ export default function Loading() {
           <div className="h-5 w-24 bg-gray-200 rounded" />
         </div>
       </header>
-      <main id="main-content" className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+      <main id="main-content" aria-busy="true" aria-label="スタッフ管理を読み込み中" className="max-w-2xl mx-auto px-4 py-6 space-y-4">
         <div className="bg-white rounded-xl shadow-sm p-5 animate-pulse">
           <div className="h-4 w-32 bg-gray-200 rounded mb-3" />
           <div className="h-9 bg-gray-100 rounded-lg" />

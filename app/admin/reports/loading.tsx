@@ -7,7 +7,7 @@ export default function Loading() {
           <div className="h-5 w-20 bg-gray-200 rounded" />
         </div>
       </header>
-      <main id="main-content" className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+      <main id="main-content" aria-busy="true" aria-label="レポートを読み込み中" className="max-w-2xl mx-auto px-4 py-6 space-y-5">
         <div className="bg-white rounded-xl shadow-sm h-10 animate-pulse" />
         <div className="flex justify-between animate-pulse">
           <div className="h-8 w-16 bg-gray-100 rounded" />
