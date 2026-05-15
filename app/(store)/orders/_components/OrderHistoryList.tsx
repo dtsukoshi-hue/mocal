@@ -63,9 +63,9 @@ export default function OrderHistoryList() {
             >
               <div className="space-y-0.5">
                 <p className="font-semibold text-gray-900 text-sm">{entry.storeName}</p>
-                <p className="text-xs text-gray-400">
+                <time className="text-xs text-gray-400" dateTime={entry.createdAt}>
                   #{entry.orderNumber} · {dateStr} {timeStr}
-                </p>
+                </time>
               </div>
               <div className="text-right">
                 <p className="font-bold text-gray-900 text-sm">
