@@ -56,7 +56,7 @@ export default async function MembersPage() {
                   </p>
                 </div>
                 {isOwner && member.role !== 'owner' && (
-                  <RemoveMemberButton memberId={member.id} />
+                  <RemoveMemberButton memberId={member.id} email={userMap[member.user_id] ?? member.user_id} />
                 )}
               </li>
             ))}

@@ -5,9 +5,10 @@ import { removeMemberAction } from '@/app/actions/members'
 
 interface Props {
   memberId: string
+  email: string
 }
 
-export default function RemoveMemberButton({ memberId }: Props) {
+export default function RemoveMemberButton({ memberId, email }: Props) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
@@ -26,6 +27,7 @@ export default function RemoveMemberButton({ memberId }: Props) {
       <button
         onClick={handleRemove}
         disabled={isPending}
+        aria-label={`${email} を削除`}
         className="text-sm text-red-500 hover:text-red-600 disabled:opacity-50"
       >
         {isPending ? '削除中…' : '削除'}
