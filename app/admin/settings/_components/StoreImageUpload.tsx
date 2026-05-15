@@ -95,7 +95,7 @@ export default function StoreImageUpload({
       >
         {url ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={url} alt="" className="w-full h-full object-cover" />
+          <img src={url} alt={label} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">
             未設定
