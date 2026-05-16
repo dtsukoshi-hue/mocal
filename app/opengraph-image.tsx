@@ -1,16 +1,11 @@
 import { ImageResponse } from 'next/og'
-import { loadNotoSansJPBold } from '@/lib/og-font'
 
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
-export default async function Image() {
-  const fontData = await loadNotoSansJPBold()
-
-  const fontOptions = fontData
-    ? [{ name: 'NotoSansJP', data: fontData, weight: 700 as const }]
-    : []
-
+// 注意: 日本語フォントの動的ロードは Turbopack (Next.js 16) と非互換のため
+// ASCII / システムフォントで描画する。日本語テキストは画像非依存の meta タグで提供。
+export default function Image() {
   return new ImageResponse(
     (
       <div
@@ -22,57 +17,54 @@ export default async function Image() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          fontFamily: fontData ? 'NotoSansJP, sans-serif' : 'sans-serif',
+          fontFamily: 'sans-serif',
         }}
       >
-        {/* ロゴ */}
+        {/* ブランドロゴ */}
         <div
           style={{
-            display: 'flex',
-            fontSize: 112,
-            fontWeight: 700,
-            letterSpacing: '-4px',
+            fontSize: 120,
+            fontWeight: 900,
             color: 'white',
+            letterSpacing: '-6px',
+            display: 'flex',
           }}
         >
-          mo
-          <span style={{ color: '#fff7ed' }}>cal</span>
+          mocal
         </div>
 
         {/* タグライン */}
         <div
           style={{
-            fontSize: 38,
+            fontSize: 36,
             fontWeight: 700,
-            color: '#fed7aa',
-            marginTop: 16,
+            color: '#fff7ed',
+            marginTop: 24,
+            letterSpacing: '1px',
           }}
         >
-          テイクアウト事前注文プラットフォーム
+          Takeout Pre-ordering Platform
         </div>
 
-        {/* キービジュアル — 3つの価値提案 */}
+        {/* 価値提案 */}
         <div
           style={{
             display: 'flex',
-            gap: 28,
-            marginTop: 52,
-            fontSize: 26,
+            gap: 32,
+            marginTop: 56,
+            fontSize: 24,
             fontWeight: 700,
-            color: 'rgba(255,255,255,0.8)',
+            color: 'rgba(255,255,255,0.75)',
           }}
         >
-          <span>QRコードで即注文</span>
+          <span>Scan QR</span>
           <span style={{ opacity: 0.4 }}>·</span>
-          <span>アプリ不要</span>
+          <span>No App Needed</span>
           <span style={{ opacity: 0.4 }}>·</span>
-          <span>待ち時間ゼロ</span>
+          <span>Zero Wait</span>
         </div>
       </div>
     ),
-    {
-      ...size,
-      fonts: fontOptions,
-    },
+    { ...size },
   )
 }

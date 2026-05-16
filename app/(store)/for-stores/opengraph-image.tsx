@@ -1,99 +1,85 @@
 import { ImageResponse } from 'next/og'
-import { loadNotoSansJPBold } from '@/lib/og-font'
 
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
-export default async function Image() {
-  const fontData = await loadNotoSansJPBold()
-
-  const fontOptions = fontData
-    ? [{ name: 'NotoSansJP', data: fontData, weight: 700 as const }]
-    : []
-
+export default function Image() {
   return new ImageResponse(
     (
       <div
         style={{
           width: '100%',
           height: '100%',
-          background: '#1c1917', // stone-900
+          background: '#1c1917',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          fontFamily: fontData ? 'NotoSansJP, sans-serif' : 'sans-serif',
+          fontFamily: 'sans-serif',
         }}
       >
-        {/* 対象読者タグ */}
+        {/* サブヘッド */}
         <div
           style={{
-            fontSize: 24,
+            fontSize: 22,
             fontWeight: 700,
             color: '#f97316',
-            letterSpacing: '4px',
+            letterSpacing: '6px',
             marginBottom: 28,
           }}
         >
-          飲食店オーナー様へ
+          FOR RESTAURANT OWNERS
         </div>
 
         {/* ブランド */}
         <div
           style={{
-            display: 'flex',
-            fontSize: 100,
-            fontWeight: 700,
-            letterSpacing: '-3px',
+            fontSize: 108,
+            fontWeight: 900,
             color: 'white',
+            letterSpacing: '-4px',
+            display: 'flex',
           }}
         >
-          mo
-          <span style={{ color: '#f97316' }}>cal</span>
+          mo<span style={{ color: '#f97316' }}>cal</span>
         </div>
 
         {/* メインコピー */}
         <div
           style={{
-            fontSize: 36,
+            fontSize: 34,
             fontWeight: 700,
-            color: '#d6d3d1', // stone-300
-            marginTop: 24,
+            color: '#d6d3d1',
+            marginTop: 28,
             textAlign: 'center',
           }}
         >
-          ポスレジ不要・即日導入。
+          No POS Required. Launch Today.
         </div>
         <div
           style={{
-            fontSize: 36,
+            fontSize: 28,
             fontWeight: 700,
-            color: '#d6d3d1',
-            marginTop: 8,
+            color: '#78716c',
+            marginTop: 12,
           }}
         >
-          顧客手数料ゼロのテイクアウト事前注文。
+          Zero customer fees. 10% only from store revenue.
         </div>
 
-        {/* 料金バッジ */}
-        <div
-          style={{
-            display: 'flex',
-            gap: 20,
-            marginTop: 44,
-          }}
-        >
-          {['初期費用 ¥0', '月額固定費 ¥0', '手数料 10%のみ'].map((label) => (
+        {/* バッジ */}
+        <div style={{ display: 'flex', gap: 16, marginTop: 48 }}>
+          {['Setup: Free', 'Monthly: Free', 'Commission: 10%'].map((label) => (
             <div
               key={label}
               style={{
                 background: 'rgba(249,115,22,0.15)',
-                border: '1px solid rgba(249,115,22,0.4)',
+                border: '1px solid rgba(249,115,22,0.35)',
                 borderRadius: 12,
-                padding: '10px 22px',
+                padding: '10px 24px',
                 fontSize: 22,
                 fontWeight: 700,
-                color: '#fb923c', // orange-400
+                color: '#fb923c',
               }}
             >
               {label}
@@ -102,9 +88,6 @@ export default async function Image() {
         </div>
       </div>
     ),
-    {
-      ...size,
-      fonts: fontOptions,
-    },
+    { ...size },
   )
 }
