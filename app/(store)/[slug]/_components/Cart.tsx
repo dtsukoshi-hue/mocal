@@ -205,23 +205,29 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
           {pickupType === 'scheduled' && (
             <div className="space-y-2">
               <p className="text-xs text-gray-500">受取時刻を選んでください</p>
-              <div className="flex flex-wrap gap-2" role="group" aria-label="受取時刻を選択">
-                {timeSlots.map(slot => (
-                  <button
-                    key={slot.iso}
-                    type="button"
-                    onClick={() => setScheduledAt(slot.iso)}
-                    aria-pressed={scheduledAt === slot.iso}
-                    className={`px-4 py-1.5 rounded-full text-sm border transition-colors ${
-                      scheduledAt === slot.iso
-                        ? 'bg-orange-500 text-white border-orange-500'
-                        : 'border-gray-300 text-gray-700 hover:border-orange-300'
-                    }`}
-                  >
-                    {slot.label}
-                  </button>
-                ))}
-              </div>
+              {timeSlots.length > 0 ? (
+                <div className="flex flex-wrap gap-2" role="group" aria-label="受取時刻を選択">
+                  {timeSlots.map(slot => (
+                    <button
+                      key={slot.iso}
+                      type="button"
+                      onClick={() => setScheduledAt(slot.iso)}
+                      aria-pressed={scheduledAt === slot.iso}
+                      className={`px-4 py-1.5 rounded-full text-sm border transition-colors ${
+                        scheduledAt === slot.iso
+                          ? 'bg-orange-500 text-white border-orange-500'
+                          : 'border-gray-300 text-gray-700 hover:border-orange-300'
+                      }`}
+                    >
+                      {slot.label}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p role="alert" className="text-xs text-red-600">
+                  現在、時間指定での受取枠がありません。「すぐに受け取る」をご利用ください。
+                </p>
+              )}
             </div>
           )}
         </div>

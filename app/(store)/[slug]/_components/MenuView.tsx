@@ -194,7 +194,8 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
       {/* メニューリスト */}
       <main id="main-content" className="max-w-lg mx-auto px-4 py-4 space-y-6">
         {!isOpen && (
-          <div className="rounded-xl bg-gray-100 text-gray-600 text-sm text-center py-6">
+          <div role="status" className="rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm text-center py-6">
+            <span aria-hidden="true" className="block text-2xl mb-2">🚫</span>
             現在、受付を停止しています
           </div>
         )}
@@ -253,7 +254,7 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
                     key={item.id}
                     onClick={() => isOpen && addToCart(item)}
                     disabled={!isOpen}
-                    className="w-full flex items-center justify-between bg-white rounded-xl px-4 py-3 shadow-sm text-left disabled:opacity-50 hover:bg-orange-50 transition-colors"
+                    className="w-full flex items-center justify-between bg-white rounded-xl px-4 py-3 shadow-sm text-left disabled:opacity-50 disabled:cursor-not-allowed hover:bg-orange-50 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       {item.image_url ? (

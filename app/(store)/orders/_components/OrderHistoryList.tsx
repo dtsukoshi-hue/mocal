@@ -32,9 +32,15 @@ export default function OrderHistoryList() {
       <div className="text-center py-16">
         <div className="text-4xl mb-4" aria-hidden="true">🧾</div>
         <p className="text-gray-500 text-sm">注文履歴はまだありません</p>
-        <p className="text-gray-400 text-xs mt-1">
+        <p className="text-gray-400 text-xs mt-1 mb-6">
           注文後にこのページで履歴を確認できます
         </p>
+        <Link
+          href="/"
+          className="inline-block text-sm font-medium text-orange-600 hover:text-orange-700 underline underline-offset-2"
+        >
+          トップページへ
+        </Link>
       </div>
     )
   }

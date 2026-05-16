@@ -1,10 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import type { Database, OrderStatus } from '@/lib/database.types'
 import PushSubscribeButton from './PushSubscribeButton'
+
+/** Realtime が機能しない環境向けのポーリング間隔（ミリ秒）*/
+const POLLING_INTERVAL_MS = 30_000
 
 type Order = {
   id: string
@@ -126,6 +130,9 @@ function saveToHistory(order: Order) {
 
 export default function OrderStatusView({ order: initialOrder }: Props) {
   const [order, setOrder] = useState(initialOrder)
+  const router = useRouter()
+  const realtimeActiveRef = useRef(false)
+  const isTerminalRef = useRef(false)
 
   // 注文履歴を localStorage に保存（初回のみ）
   useEffect(() => {
@@ -133,6 +140,11 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
   // 初回のみ実行
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // 完了・キャンセル系ならポーリング・Realtime 不要
+  useEffect(() => {
+    isTerminalRef.current = ['completed', 'cancelled', 'refunded', 'no_show'].includes(order.status)
+  }, [order.status])
 
   // Supabase Realtime でステータスをリアルタイム更新
   useEffect(() => {
@@ -152,13 +164,27 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
           filter: `id=eq.${order.id}`,
         },
         (payload) => {
+          realtimeActiveRef.current = true
           setOrder(prev => ({ ...prev, ...payload.new }))
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') realtimeActiveRef.current = true
+      })
 
     return () => { supabase.removeChannel(channel) }
   }, [order.id])
+
+  // Realtime のフォールバック: 30s ごとに router.refresh() でサーバーデータを再取得
+  // WebSocket が通らない環境（企業ネットワーク等）でも注文状態を追従できるようにする
+  const refresh = useCallback(() => {
+    if (!isTerminalRef.current) router.refresh()
+  }, [router])
+
+  useEffect(() => {
+    const timer = setInterval(refresh, POLLING_INTERVAL_MS)
+    return () => clearInterval(timer)
+  }, [refresh])
 
   const config = STATUS_CONFIG[order.status as OrderStatus] ?? STATUS_CONFIG.pending
   const isTerminal = ['completed', 'cancelled', 'refunded', 'no_show'].includes(order.status)
