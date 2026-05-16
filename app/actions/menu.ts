@@ -7,16 +7,16 @@ import { verifyStoreSession } from '@/lib/dal'
 /**
  * 公開店舗ページのキャッシュを即時パージする。
  *
- * use cache エントリは revalidateTag(`store:${storeId}`) で一括パージ。
- * store-slug タグも slug ベースでパージし、revalidatePath でパスキャッシュも削除。
+ * store:{storeId} タグ → getCachedMenuItems / getCachedStoreHours を無効化。
+ * store-slug:{slug} タグ → getCachedStore / getCachedStoreMeta を無効化。
+ * revalidatePath でパスキャッシュも削除。
  */
 async function revalidateStore(supabase: ReturnType<typeof createServiceClient>, storeId: string) {
-  // use cache エントリを storeId タグで一括パージ（'minutes' = stale-while-revalidate で最大 1 分間は古いコンテンツを提供）
-  revalidateTag(`store:${storeId}`, 'minutes')
+  revalidateTag(`store:${storeId}`)
   // slug ベースのタグ・パスキャッシュもパージ
   const { data } = await supabase.from('stores').select('slug').eq('id', storeId).single()
   if (data?.slug) {
-    revalidateTag(`store-slug:${data.slug}`, 'minutes')
+    revalidateTag(`store-slug:${data.slug}`)
     revalidatePath(`/${data.slug}`)
   }
 }

@@ -4,8 +4,6 @@ export const metadata = {
   title: '特定商取引法に基づく表示 | mocal',
 }
 
-// nonce-based CSP（proxy.ts）が機能するよう動的レンダリングを強制
-export const dynamic = 'force-dynamic'
 
 const rows: { label: string; value: string }[] = [
   { label: '販売業者',       value: 'Entrust合同会社（設立準備中）' },

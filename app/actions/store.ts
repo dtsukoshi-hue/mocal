@@ -8,19 +8,19 @@ import type { WaitMinutes } from '@/lib/database.types'
 /**
  * 公開店舗ページのキャッシュを即時パージする。
  *
- * use cache エントリは revalidateTag(`store:${storeId}`) で一括パージ。
- * store-slug タグも slug ベースでパージし、revalidatePath でパスキャッシュも削除。
+ * store:{storeId} タグ → getCachedMenuItems / getCachedStoreHours を無効化。
+ * store-slug:{slug} タグ → getCachedStore / getCachedStoreMeta を無効化。
+ * revalidatePath でパスキャッシュも削除。
  */
 async function revalidateStore(
   supabase: ReturnType<typeof createServiceClient>,
   storeId: string,
 ) {
-  // use cache エントリを storeId タグで一括パージ（'minutes' = stale-while-revalidate で最大 1 分間は古いコンテンツを提供）
-  revalidateTag(`store:${storeId}`, 'minutes')
+  revalidateTag(`store:${storeId}`)
   // slug ベースのタグ・パスキャッシュもパージ
   const { data } = await supabase.from('stores').select('slug').eq('id', storeId).single()
   if (data?.slug) {
-    revalidateTag(`store-slug:${data.slug}`, 'minutes')
+    revalidateTag(`store-slug:${data.slug}`)
     revalidatePath(`/${data.slug}`)
   }
 }
@@ -129,16 +129,16 @@ export async function updateStoreProfileAction(
 
   // 旧スラッグのキャッシュを即時パージ（slug 変更前に取得した current.slug を使用）
   if (current?.slug) {
-    revalidateTag(`store-slug:${current.slug}`, 'minutes')
+    revalidateTag(`store-slug:${current.slug}`)
     revalidatePath(`/${current.slug}`)
   }
 
-  // storeId タグで use cache エントリを一括パージ
-  revalidateTag(`store:${session.storeId}`, 'minutes')
+  // storeId タグでキャッシュを一括パージ
+  revalidateTag(`store:${session.storeId}`)
 
   // 新スラッグが変更されていれば新スラッグ側もパージ
   if (slug.trim() !== current?.slug) {
-    revalidateTag(`store-slug:${slug.trim()}`, 'minutes')
+    revalidateTag(`store-slug:${slug.trim()}`)
     revalidatePath(`/${slug.trim()}`)
   }
 

@@ -4,9 +4,6 @@ export const metadata = {
   title: 'プライバシーポリシー | mocal',
 }
 
-// nonce-based CSP（proxy.ts）が機能するよう動的レンダリングを強制
-export const dynamic = 'force-dynamic'
-
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-gray-50">

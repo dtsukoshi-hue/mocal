@@ -2,7 +2,6 @@ import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
-import { cacheLife, cacheTag } from 'next/cache'
 import {
   getCachedStore,
   getCachedStoreMeta,
@@ -141,10 +140,6 @@ async function CachedMenuContent({
 }: {
   store: NonNullable<Awaited<ReturnType<typeof getCachedStore>>>
 }) {
-  'use cache'
-  cacheLife('minutes')
-  cacheTag(`store:${store.id}`)
-
   const [menuItems, storeHours] = await Promise.all([
     getCachedMenuItems(store.id),
     getCachedStoreHours(store.id),

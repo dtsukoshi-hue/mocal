@@ -1,96 +1,114 @@
 /**
  * 公開店舗データのサーバーサイドキャッシュ（server-only）
  *
- * `use cache` ディレクティブを使用するため、このモジュールはサーバー専用です。
- * クライアントコンポーネントから直接インポートしないでください。
+ * `unstable_cache` を使用してデータ層でキャッシュする。
+ * キャッシュタグは `revalidateTag` で即時パージできるよう設計している。
  *
- * cacheComponents: true（PPR モード）における設計:
- * - 各関数に `use cache` を付与することで、RSC ペイロード・HTML をキャッシュ。
- * - `cacheTag` で storeId / slug ベースのタグを設定し、管理者操作時に
- *   `revalidateTag` で即時パージできるようにしている。
- * - 1000 店舗規模では全リクエストで React ツリーを再レンダリングする必要がなく、
- *   キャッシュヒット時はメモリから RSC ペイロードを返す。
+ * TTL:
+ * - store / meta / menu: 60s（受付状態・メニューは頻繁に変わりうる）
+ * - hours:               3600s（営業時間は滅多に変わらない）
+ *
+ * タグ設計（revalidateStore と一致させること）:
+ * - store-slug:{slug}  → getCachedStore, getCachedStoreMeta
+ * - store:{storeId}    → getCachedMenuItems, getCachedStoreHours
+ *
+ * 管理者アクション（app/actions/store.ts, menu.ts）は
+ * revalidateTag('store:{storeId}') と revalidateTag('store-slug:{slug}') を
+ * 両方呼び出すことで全キャッシュをパージする。
  */
-import { cacheLife, cacheTag } from 'next/cache'
+import { unstable_cache } from 'next/cache'
 import { createServiceClient } from './supabase-server'
 
 // ---------------------------------------------------------------------------
-// 店舗データ（minutes TTL — stale: 5m, revalidate: 1m, expire: 1h）
+// 店舗データ（60s TTL）— slug ベースで取得
 // ---------------------------------------------------------------------------
 export async function getCachedStore(slug: string) {
-  'use cache'
-  cacheLife('minutes')
-  cacheTag(`store-slug:${slug}`)
-
-  const supabase = createServiceClient()
-  const { data } = await supabase
-    .from('stores')
-    .select(
-      'id, name, description, is_open, wait_minutes, logo_url, cover_url, area, cuisine_type',
-    )
-    .eq('slug', slug)
-    .single()
-
-  // storeId タグも付与（storeId ベースの一括パージに対応）
-  if (data) cacheTag(`store:${data.id}`)
-  return data ?? null
+  return unstable_cache(
+    async () => {
+      const supabase = createServiceClient()
+      const { data } = await supabase
+        .from('stores')
+        .select(
+          'id, name, description, is_open, wait_minutes, logo_url, cover_url, area, cuisine_type',
+        )
+        .eq('slug', slug)
+        .single()
+      return data ?? null
+    },
+    [`store:${slug}`],
+    {
+      revalidate: 60,
+      tags: [`store-slug:${slug}`],
+    },
+  )()
 }
 
 // ---------------------------------------------------------------------------
-// generateMetadata 用（SEO フィールドも含む）
+// generateMetadata 用（SEO フィールドも含む）— 60s TTL
 // ---------------------------------------------------------------------------
 export async function getCachedStoreMeta(slug: string) {
-  'use cache'
-  cacheLife('minutes')
-  cacheTag(`store-slug:${slug}`)
-
-  const supabase = createServiceClient()
-  const { data } = await supabase
-    .from('stores')
-    .select('id, name, description, area, cuisine_type, cover_url')
-    .eq('slug', slug)
-    .single()
-
-  if (data) cacheTag(`store:${data.id}`)
-  return data ?? null
+  return unstable_cache(
+    async () => {
+      const supabase = createServiceClient()
+      const { data } = await supabase
+        .from('stores')
+        .select('id, name, description, area, cuisine_type, cover_url')
+        .eq('slug', slug)
+        .single()
+      return data ?? null
+    },
+    [`store-meta:${slug}`],
+    {
+      revalidate: 60,
+      tags: [`store-slug:${slug}`],
+    },
+  )()
 }
 
 // ---------------------------------------------------------------------------
-// メニューアイテム（minutes TTL）
+// メニューアイテム（60s TTL）— storeId ベースで取得
 // ---------------------------------------------------------------------------
 export async function getCachedMenuItems(storeId: string) {
-  'use cache'
-  cacheLife('minutes')
-  cacheTag(`store:${storeId}`)
-
-  const supabase = createServiceClient()
-  const { data } = await supabase
-    .from('menu_items')
-    .select(
-      'id, name, description, price, category, emoji, image_url, is_available, sort_order',
-    )
-    .eq('store_id', storeId)
-    .eq('is_available', true)
-    .order('sort_order', { ascending: true })
-    .order('created_at', { ascending: true })
-
-  return data ?? []
+  return unstable_cache(
+    async () => {
+      const supabase = createServiceClient()
+      const { data } = await supabase
+        .from('menu_items')
+        .select(
+          'id, name, description, price, category, emoji, image_url, is_available, sort_order',
+        )
+        .eq('store_id', storeId)
+        .eq('is_available', true)
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true })
+      return data ?? []
+    },
+    [`menu-items:${storeId}`],
+    {
+      revalidate: 60,
+      tags: [`store:${storeId}`],
+    },
+  )()
 }
 
 // ---------------------------------------------------------------------------
-// 営業時間（hours TTL — 頻繁に変わらない）
+// 営業時間（3600s TTL）— storeId ベースで取得
 // ---------------------------------------------------------------------------
 export async function getCachedStoreHours(storeId: string) {
-  'use cache'
-  cacheLife('hours')
-  cacheTag(`store:${storeId}`)
-
-  const supabase = createServiceClient()
-  const { data } = await supabase
-    .from('store_hours')
-    .select('day_of_week, open_time, close_time, is_closed')
-    .eq('store_id', storeId)
-    .order('day_of_week')
-
-  return data ?? []
+  return unstable_cache(
+    async () => {
+      const supabase = createServiceClient()
+      const { data } = await supabase
+        .from('store_hours')
+        .select('day_of_week, open_time, close_time, is_closed')
+        .eq('store_id', storeId)
+        .order('day_of_week')
+      return data ?? []
+    },
+    [`store-hours:${storeId}`],
+    {
+      revalidate: 3600,
+      tags: [`store:${storeId}`],
+    },
+  )()
 }
