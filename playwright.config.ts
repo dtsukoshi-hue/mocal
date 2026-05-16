@@ -1,4 +1,9 @@
 import { defineConfig, devices } from '@playwright/test'
+import { config } from 'dotenv'
+import path from 'path'
+
+// .env.local を読み込む（SUPABASE_SERVICE_ROLE_KEY など）
+config({ path: path.resolve(__dirname, '.env.local') })
 
 /**
  * E2E テスト設定
@@ -11,6 +16,10 @@ import { defineConfig, devices } from '@playwright/test'
 export default defineConfig({
   testDir: './tests/e2e',
   testMatch: '**/*.spec.ts',
+
+  /* グローバルセットアップ・ティアダウン（テスト用店舗の seed / cleanup） */
+  globalSetup: './tests/e2e/global-setup.ts',
+  globalTeardown: './tests/e2e/global-teardown.ts',
 
   /* 並列実行 — CI では 1 ワーカーに制限 */
   fullyParallel: true,

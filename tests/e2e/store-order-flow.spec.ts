@@ -1,17 +1,29 @@
 import { test, expect, type Page } from '@playwright/test'
+import fs from 'fs'
+import path from 'path'
 
 /**
  * 注文フロー E2E テスト
  *
- * Supabase への実接続が必要なため、`PLAYWRIGHT_TEST_STORE_SLUG` 環境変数に
- * テスト用店舗のスラッグを指定する必要がある。
+ * globalSetup が Supabase にテスト用店舗を seed し、
+ * .test-store.json にスラッグを書き出す。
+ * 環境変数 PLAYWRIGHT_TEST_STORE_SLUG で上書き可能（手動実行時）。
  *
- * 例: PLAYWRIGHT_TEST_STORE_SLUG=3000days-burger npx playwright test store-order-flow
- *
- * スラッグが指定されない場合は store-slug-independent テストのみ実行される。
+ * 例: PLAYWRIGHT_TEST_STORE_SLUG=my-store npx playwright test store-order-flow
  */
 
-const TEST_SLUG = process.env.PLAYWRIGHT_TEST_STORE_SLUG
+function resolveTestSlug(): string | undefined {
+  if (process.env.PLAYWRIGHT_TEST_STORE_SLUG) return process.env.PLAYWRIGHT_TEST_STORE_SLUG
+  try {
+    const file = path.resolve(__dirname, '.test-store.json')
+    const info = JSON.parse(fs.readFileSync(file, 'utf-8'))
+    return info.slug as string
+  } catch {
+    return undefined
+  }
+}
+
+const TEST_SLUG = resolveTestSlug()
 
 // ---------------------------------------------------------------------------
 // スラッグ不要のテスト（404 ハンドリング）
