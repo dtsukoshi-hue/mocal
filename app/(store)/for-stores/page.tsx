@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { headers } from 'next/headers'
+import { Suspense } from 'react'
 
-// nonce-based CSP（proxy.ts）が機能するよう動的レンダリングを強制
-export const dynamic = 'force-dynamic'
+// force-dynamic は不要（cacheComponents モードでは nonce アイランドを Suspense で囲む）
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mocal.jp'
 
@@ -82,7 +82,161 @@ const STEPS = [
   },
 ]
 
-export default async function ForStoresPage() {
+// 同期関数に変更（headers は Suspense 内の ForStoresJsonLd で呼ぶ）
+export default function ForStoresPage() {
+  return (
+    <>
+      {/* Dynamic island: nonce は per-request で生成 */}
+      <Suspense fallback={null}>
+        <ForStoresJsonLd />
+      </Suspense>
+      <div className="min-h-screen bg-stone-50">
+        {/* ヘッダー */}
+        <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+          <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+            <Link href="/" className="text-lg font-black text-gray-900">
+              mo<span className="text-orange-500">cal</span>
+            </Link>
+            <Link
+              href="mailto:support@mocal.jp"
+              className="text-sm font-semibold bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl transition-colors"
+            >
+              お問い合わせ
+            </Link>
+          </div>
+        </header>
+
+        <main id="main-content">
+          {/* ヒーロー */}
+          <section className="bg-white border-b border-gray-100">
+            <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-6">
+              <p className="text-xs font-bold text-orange-500 uppercase tracking-widest">
+                飲食店オーナー様へ
+              </p>
+              <h1 className="text-3xl sm:text-4xl font-black text-gray-900 leading-tight">
+                ポスレジ不要。<br />
+                <span className="text-orange-500">即日</span>からテイクアウト注文を受け付ける。
+              </h1>
+              <p className="text-base text-gray-600 max-w-xl mx-auto leading-relaxed">
+                mocal はスマートフォンだけで注文管理ができるテイクアウト事前注文プラットフォームです。
+                顧客手数料ゼロ、店舗手数料は売上の <strong>10%</strong> のみ。
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link
+                  href="mailto:support@mocal.jp?subject=mocal 導入のお問い合わせ"
+                  className="inline-flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm px-6 py-3 rounded-xl transition-colors"
+                >
+                  無料で相談する<span aria-hidden="true"> →</span>
+                </Link>
+                <Link
+                  href="/onboarding"
+                  className="inline-flex items-center justify-center bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold text-sm px-6 py-3 rounded-xl transition-colors"
+                >
+                  今すぐ登録する
+                </Link>
+              </div>
+            </div>
+          </section>
+
+          {/* 料金 */}
+          <section className="max-w-3xl mx-auto px-4 py-12">
+            <h2 className="text-xl font-bold text-gray-900 text-center mb-8">シンプルな料金体系</h2>
+            <div className="grid sm:grid-cols-3 gap-4">
+              {[
+                { label: '初期費用', value: '¥0', note: '無料' },
+                { label: '月額固定費', value: '¥0', note: '無料' },
+                { label: '決済手数料', value: '10%', note: '売上から差し引き（mocal 6.4% + Stripe 3.6%）' },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center"
+                >
+                  <p className="text-xs font-semibold text-gray-500 mb-2">{item.label}</p>
+                  <p className="text-3xl font-black text-orange-500 mb-1">{item.value}</p>
+                  <p className="text-xs text-gray-400">{item.note}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* 機能一覧 */}
+          <section className="bg-white border-y border-gray-100">
+            <div className="max-w-5xl mx-auto px-4 py-12">
+              <h2 className="text-xl font-bold text-gray-900 text-center mb-8">主な機能</h2>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {FEATURES.map((f) => (
+                  <div key={f.title} className="bg-stone-50 rounded-2xl p-5 space-y-2">
+                    <div className="w-1 h-5 bg-orange-400 rounded-full" aria-hidden="true" />
+                    <h3 className="text-sm font-bold text-gray-900">{f.title}</h3>
+                    <p className="text-xs text-gray-600 leading-relaxed">{f.body}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* 導入ステップ */}
+          <section className="max-w-3xl mx-auto px-4 py-12">
+            <h2 className="text-xl font-bold text-gray-900 text-center mb-8">導入までの流れ</h2>
+            <div className="space-y-4">
+              {STEPS.map((s) => (
+                <div
+                  key={s.num}
+                  className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-5 flex gap-5 items-start"
+                >
+                  <span className="text-2xl font-black text-orange-200 tabular-nums shrink-0">
+                    {s.num}
+                  </span>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900 mb-1">{s.label}</h3>
+                    <p className="text-xs text-gray-600 leading-relaxed">{s.body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* CTA */}
+          <section className="bg-orange-500">
+            <div className="max-w-3xl mx-auto px-4 py-12 text-center space-y-4">
+              <h2 className="text-xl font-bold text-white">まずはお気軽にご相談ください</h2>
+              <p className="text-sm text-orange-100">
+                デモのご要望・ご質問はメールにてお受けしています。<br />
+                お返事まで 1〜2 営業日いただく場合があります。
+              </p>
+              <Link
+                href="mailto:support@mocal.jp?subject=mocal 導入のお問い合わせ"
+                className="inline-flex items-center gap-2 bg-white text-orange-500 font-bold text-sm px-6 py-3 rounded-xl hover:bg-orange-50 transition-colors"
+              >
+                support@mocal.jp へメールする<span aria-hidden="true"> →</span>
+              </Link>
+            </div>
+          </section>
+
+          {/* フッター */}
+          <footer className="border-t border-gray-100 bg-white">
+            <div className="max-w-5xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-400">
+              <p>© 2026 Entrust 合同会社（設立準備中）</p>
+              <nav aria-label="関連ページ" className="flex gap-4">
+                <Link href="/privacy" className="hover:text-gray-600">
+                  プライバシーポリシー
+                </Link>
+                <Link href="/tokushoho" className="hover:text-gray-600">
+                  特定商取引法
+                </Link>
+              </nav>
+            </div>
+          </footer>
+        </main>
+      </div>
+    </>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Dynamic island — headers() を使うため Suspense 内で動的実行される
+// ---------------------------------------------------------------------------
+async function ForStoresJsonLd() {
   const nonce = (await headers()).get('x-nonce') ?? undefined
 
   // JSON-LD 構造化データ（SoftwareApplication + Offer）
@@ -118,156 +272,15 @@ export default async function ForStoresPage() {
   }
 
   return (
-    <>
-      <script
-        type="application/ld+json"
-        nonce={nonce}
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd)
-            .replace(/</g, '\\u003c')
-            .replace(/>/g, '\\u003e')
-            .replace(/&/g, '\\u0026'),
-        }}
-      />
-    <div className="min-h-screen bg-stone-50">
-      {/* ヘッダー */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
-          <Link href="/" className="text-lg font-black text-gray-900">
-            mo<span className="text-orange-500">cal</span>
-          </Link>
-          <Link
-            href="mailto:support@mocal.jp"
-            className="text-sm font-semibold bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl transition-colors"
-          >
-            お問い合わせ
-          </Link>
-        </div>
-      </header>
-
-      <main id="main-content">
-        {/* ヒーロー */}
-        <section className="bg-white border-b border-gray-100">
-          <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-6">
-            <p className="text-xs font-bold text-orange-500 uppercase tracking-widest">
-              飲食店オーナー様へ
-            </p>
-            <h1 className="text-3xl sm:text-4xl font-black text-gray-900 leading-tight">
-              ポスレジ不要。<br />
-              <span className="text-orange-500">即日</span>からテイクアウト注文を受け付ける。
-            </h1>
-            <p className="text-base text-gray-600 max-w-xl mx-auto leading-relaxed">
-              mocal はスマートフォンだけで注文管理ができるテイクアウト事前注文プラットフォームです。
-              顧客手数料ゼロ、店舗手数料は売上の <strong>10%</strong> のみ。
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link
-                href="mailto:support@mocal.jp?subject=mocal 導入のお問い合わせ"
-                className="inline-flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm px-6 py-3 rounded-xl transition-colors"
-              >
-                無料で相談する<span aria-hidden="true"> →</span>
-              </Link>
-              <Link
-                href="/onboarding"
-                className="inline-flex items-center justify-center bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold text-sm px-6 py-3 rounded-xl transition-colors"
-              >
-                今すぐ登録する
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* 料金 */}
-        <section className="max-w-3xl mx-auto px-4 py-12">
-          <h2 className="text-xl font-bold text-gray-900 text-center mb-8">シンプルな料金体系</h2>
-          <div className="grid sm:grid-cols-3 gap-4">
-            {[
-              { label: '初期費用', value: '¥0', note: '無料' },
-              { label: '月額固定費', value: '¥0', note: '無料' },
-              { label: '決済手数料', value: '10%', note: '売上から差し引き（mocal 6.4% + Stripe 3.6%）' },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center"
-              >
-                <p className="text-xs font-semibold text-gray-500 mb-2">{item.label}</p>
-                <p className="text-3xl font-black text-orange-500 mb-1">{item.value}</p>
-                <p className="text-xs text-gray-400">{item.note}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* 機能一覧 */}
-        <section className="bg-white border-y border-gray-100">
-          <div className="max-w-5xl mx-auto px-4 py-12">
-            <h2 className="text-xl font-bold text-gray-900 text-center mb-8">主な機能</h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {FEATURES.map((f) => (
-                <div key={f.title} className="bg-stone-50 rounded-2xl p-5 space-y-2">
-                  <div className="w-1 h-5 bg-orange-400 rounded-full" aria-hidden="true" />
-                  <h3 className="text-sm font-bold text-gray-900">{f.title}</h3>
-                  <p className="text-xs text-gray-600 leading-relaxed">{f.body}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* 導入ステップ */}
-        <section className="max-w-3xl mx-auto px-4 py-12">
-          <h2 className="text-xl font-bold text-gray-900 text-center mb-8">導入までの流れ</h2>
-          <div className="space-y-4">
-            {STEPS.map((s) => (
-              <div
-                key={s.num}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-5 flex gap-5 items-start"
-              >
-                <span className="text-2xl font-black text-orange-200 tabular-nums shrink-0">
-                  {s.num}
-                </span>
-                <div>
-                  <h3 className="text-sm font-bold text-gray-900 mb-1">{s.label}</h3>
-                  <p className="text-xs text-gray-600 leading-relaxed">{s.body}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* CTA */}
-        <section className="bg-orange-500">
-          <div className="max-w-3xl mx-auto px-4 py-12 text-center space-y-4">
-            <h2 className="text-xl font-bold text-white">まずはお気軽にご相談ください</h2>
-            <p className="text-sm text-orange-100">
-              デモのご要望・ご質問はメールにてお受けしています。<br />
-              お返事まで 1〜2 営業日いただく場合があります。
-            </p>
-            <Link
-              href="mailto:support@mocal.jp?subject=mocal 導入のお問い合わせ"
-              className="inline-flex items-center gap-2 bg-white text-orange-500 font-bold text-sm px-6 py-3 rounded-xl hover:bg-orange-50 transition-colors"
-            >
-              support@mocal.jp へメールする<span aria-hidden="true"> →</span>
-            </Link>
-          </div>
-        </section>
-
-        {/* フッター */}
-        <footer className="border-t border-gray-100 bg-white">
-          <div className="max-w-5xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-400">
-            <p>© 2026 Entrust 合同会社（設立準備中）</p>
-            <nav aria-label="関連ページ" className="flex gap-4">
-              <Link href="/privacy" className="hover:text-gray-600">
-                プライバシーポリシー
-              </Link>
-              <Link href="/tokushoho" className="hover:text-gray-600">
-                特定商取引法
-              </Link>
-            </nav>
-          </div>
-        </footer>
-      </main>
-    </div>
-    </>
+    <script
+      type="application/ld+json"
+      nonce={nonce}
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(jsonLd)
+          .replace(/</g, '\\u003c')
+          .replace(/>/g, '\\u003e')
+          .replace(/&/g, '\\u0026'),
+      }}
+    />
   )
 }

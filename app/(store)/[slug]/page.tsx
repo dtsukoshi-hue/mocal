@@ -1,16 +1,24 @@
 import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
+import { Suspense } from 'react'
 import type { Metadata } from 'next'
-import { getCachedStore, getCachedStoreMeta, getCachedMenuItems, getCachedStoreHours } from '@/lib/store-cache'
+import { cacheLife, cacheTag } from 'next/cache'
+import {
+  getCachedStore,
+  getCachedStoreMeta,
+  getCachedMenuItems,
+  getCachedStoreHours,
+} from '@/lib/store-cache'
 import MenuView from './_components/MenuView'
 
 interface Props {
   params: Promise<{ slug: string }>
 }
 
+// generateMetadata は use cache 済みの getCachedStoreMeta を呼ぶため
+// メタデータ自体もキャッシュエントリを共有する
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  // キャッシュ済みクエリを使用（generateMetadata と StorePage で同じエントリを共有）
   const store = await getCachedStoreMeta(slug)
 
   if (!store) return { title: '店舗が見つかりません | mocal' }
@@ -21,8 +29,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     store.area ? `${store.area}エリア` : null,
     'テイクアウト事前注文',
   ].filter(Boolean)
-  const description = store.description
-    ?? `${store.name}（${parts.join(' · ')}）。行列なし・待ち時間なしでスムーズに受け取れます。`
+  const description =
+    store.description ??
+    `${store.name}（${parts.join(' · ')}）。行列なし・待ち時間なしでスムーズに受け取れます。`
 
   const ogImages = store.cover_url
     ? [{ url: store.cover_url, width: 1200, height: 630, alt: store.name }]
@@ -48,19 +57,39 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
+// デフォルトエクスポートは dynamic（404 チェックのため per-request）。
+// force-dynamic は cacheComponents モードでは不要。
 export default async function StorePage({ params }: Props) {
   const { slug } = await params
-  const nonce = (await headers()).get('x-nonce') ?? undefined
-
-  // キャッシュ済みクエリ（force-dynamic でもプロセス内メモリから提供）
+  // use cache → キャッシュヒット時はメモリから提供（1000 店舗でも DB 負荷なし）
   const store = await getCachedStore(slug)
   if (!store) notFound()
 
-  const [menuItems, storeHours] = await Promise.all([
-    getCachedMenuItems(store.id),
-    getCachedStoreHours(store.id),
-  ])
+  return (
+    <>
+      {/* Dynamic island: headers() を読む → per-request で実行（nonce が必要） */}
+      <Suspense fallback={null}>
+        <StoreJsonLd store={store} slug={slug} />
+      </Suspense>
+      {/* Cached island: RSC ペイロードを store:storeId タグでキャッシュ */}
+      <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
+        <CachedMenuContent store={store} />
+      </Suspense>
+    </>
+  )
+}
 
+// ---------------------------------------------------------------------------
+// Dynamic island — headers() を使うため Suspense 内で動的実行される
+// ---------------------------------------------------------------------------
+async function StoreJsonLd({
+  store,
+  slug,
+}: {
+  store: NonNullable<Awaited<ReturnType<typeof getCachedStore>>>
+  slug: string
+}) {
+  const nonce = (await headers()).get('x-nonce') ?? undefined
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mocal.jp'
 
   // JSON-LD 構造化データ（FoodEstablishment スキーマ）
@@ -88,20 +117,38 @@ export default async function StorePage({ params }: Props) {
   }
 
   return (
-    <>
-      <script
-        type="application/ld+json"
-        nonce={nonce}
-        dangerouslySetInnerHTML={{
-          // JSON.stringify は '<' '>' '&' を素通しにするため HTML パーサーが
-          // </script> タグと誤認しないよう Unicode エスケープする
-          __html: JSON.stringify(jsonLd)
-            .replace(/</g, '\\u003c')
-            .replace(/>/g, '\\u003e')
-            .replace(/&/g, '\\u0026'),
-        }}
-      />
-      <MenuView store={store} menuItems={menuItems} storeHours={storeHours} />
-    </>
+    <script
+      type="application/ld+json"
+      nonce={nonce}
+      dangerouslySetInnerHTML={{
+        // JSON.stringify は '<' '>' '&' を素通しにするため HTML パーサーが
+        // </script> タグと誤認しないよう Unicode エスケープする
+        __html: JSON.stringify(jsonLd)
+          .replace(/</g, '\\u003c')
+          .replace(/>/g, '\\u003e')
+          .replace(/&/g, '\\u0026'),
+      }}
+    />
   )
+}
+
+// ---------------------------------------------------------------------------
+// Cached island — RSC ペイロードを store:storeId タグでキャッシュ
+// store データは親からシリアライズ可能な plain object として受け取る
+// ---------------------------------------------------------------------------
+async function CachedMenuContent({
+  store,
+}: {
+  store: NonNullable<Awaited<ReturnType<typeof getCachedStore>>>
+}) {
+  'use cache'
+  cacheLife('minutes')
+  cacheTag(`store:${store.id}`)
+
+  const [menuItems, storeHours] = await Promise.all([
+    getCachedMenuItems(store.id),
+    getCachedStoreHours(store.id),
+  ])
+
+  return <MenuView store={store} menuItems={menuItems} storeHours={storeHours} />
 }

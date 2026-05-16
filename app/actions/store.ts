@@ -1,17 +1,26 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { createServiceClient } from '@/lib/supabase-server'
 import { verifyStoreSession } from '@/lib/dal'
 import type { WaitMinutes } from '@/lib/database.types'
 
-/** 公開店舗ページのキャッシュを slug ベースで即時パージ */
-async function revalidateStorePublicPage(
+/**
+ * 公開店舗ページのキャッシュを即時パージする。
+ *
+ * use cache エントリは revalidateTag(`store:${storeId}`) で一括パージ。
+ * store-slug タグも slug ベースでパージし、revalidatePath でパスキャッシュも削除。
+ */
+async function revalidateStore(
   supabase: ReturnType<typeof createServiceClient>,
   storeId: string,
 ) {
+  // use cache エントリを storeId タグで一括パージ（'minutes' = stale-while-revalidate で最大 1 分間は古いコンテンツを提供）
+  revalidateTag(`store:${storeId}`, 'minutes')
+  // slug ベースのタグ・パスキャッシュもパージ
   const { data } = await supabase.from('stores').select('slug').eq('id', storeId).single()
   if (data?.slug) {
+    revalidateTag(`store-slug:${data.slug}`, 'minutes')
     revalidatePath(`/${data.slug}`)
   }
 }
@@ -64,7 +73,7 @@ export async function saveStoreHoursAction(
   }
 
   revalidatePath('/admin/hours')
-  await revalidateStorePublicPage(supabase, session.storeId)
+  await revalidateStore(supabase, session.storeId)
   return { success: true }
 }
 
@@ -117,10 +126,22 @@ export async function updateStoreProfileAction(
   }
 
   revalidatePath('/admin/settings')
-  // 旧スラッグのキャッシュを即時パージ
-  if (current?.slug) revalidatePath(`/${current.slug}`)
+
+  // 旧スラッグのキャッシュを即時パージ（slug 変更前に取得した current.slug を使用）
+  if (current?.slug) {
+    revalidateTag(`store-slug:${current.slug}`, 'minutes')
+    revalidatePath(`/${current.slug}`)
+  }
+
+  // storeId タグで use cache エントリを一括パージ
+  revalidateTag(`store:${session.storeId}`, 'minutes')
+
   // 新スラッグが変更されていれば新スラッグ側もパージ
-  if (slug.trim() !== current?.slug) revalidatePath(`/${slug.trim()}`)
+  if (slug.trim() !== current?.slug) {
+    revalidateTag(`store-slug:${slug.trim()}`, 'minutes')
+    revalidatePath(`/${slug.trim()}`)
+  }
+
   return { success: true }
 }
 
@@ -145,7 +166,7 @@ export async function toggleStoreOpenAction(isOpen: boolean): Promise<{ error: s
   revalidatePath('/admin/settings')
   revalidatePath('/admin/dashboard')
   // 受付状態変更は store_cache の getCachedStore をパージ（is_open フィールドを含むため）
-  await revalidateStorePublicPage(supabase, session.storeId)
+  await revalidateStore(supabase, session.storeId)
 }
 
 export async function updateStoreSettingsAction(
@@ -173,6 +194,6 @@ export async function updateStoreSettingsAction(
   }
 
   revalidatePath('/admin/settings')
-  await revalidateStorePublicPage(supabase, session.storeId)
+  await revalidateStore(supabase, session.storeId)
   return { success: true }
 }

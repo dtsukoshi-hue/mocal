@@ -1,16 +1,22 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { createServiceClient } from '@/lib/supabase-server'
 import { verifyStoreSession } from '@/lib/dal'
 
 /**
  * 公開店舗ページのキャッシュを即時パージする。
- * unstable_cache エントリは revalidatePath でパージできる。
+ *
+ * use cache エントリは revalidateTag(`store:${storeId}`) で一括パージ。
+ * store-slug タグも slug ベースでパージし、revalidatePath でパスキャッシュも削除。
  */
-async function revalidateStorePublicPage(supabase: ReturnType<typeof createServiceClient>, storeId: string) {
+async function revalidateStore(supabase: ReturnType<typeof createServiceClient>, storeId: string) {
+  // use cache エントリを storeId タグで一括パージ（'minutes' = stale-while-revalidate で最大 1 分間は古いコンテンツを提供）
+  revalidateTag(`store:${storeId}`, 'minutes')
+  // slug ベースのタグ・パスキャッシュもパージ
   const { data } = await supabase.from('stores').select('slug').eq('id', storeId).single()
   if (data?.slug) {
+    revalidateTag(`store-slug:${data.slug}`, 'minutes')
     revalidatePath(`/${data.slug}`)
   }
 }
@@ -66,7 +72,7 @@ export async function createMenuItemAction(
   }
 
   revalidatePath('/admin/menu')
-  await revalidateStorePublicPage(supabase, session.storeId)
+  await revalidateStore(supabase, session.storeId)
   return { success: true }
 }
 
@@ -107,7 +113,7 @@ export async function updateMenuItemAction(
   }
 
   revalidatePath('/admin/menu')
-  await revalidateStorePublicPage(supabase, session.storeId)
+  await revalidateStore(supabase, session.storeId)
   return { success: true }
 }
 
@@ -127,7 +133,7 @@ export async function toggleMenuItemAction(id: string, isAvailable: boolean): Pr
   }
 
   revalidatePath('/admin/menu')
-  await revalidateStorePublicPage(supabase, session.storeId)
+  await revalidateStore(supabase, session.storeId)
 }
 
 export async function moveMenuItemAction(id: string, direction: 'up' | 'down'): Promise<void> {
@@ -182,7 +188,7 @@ export async function moveMenuItemAction(id: string, direction: 'up' | 'down'): 
   ])
 
   revalidatePath('/admin/menu')
-  await revalidateStorePublicPage(supabase, session.storeId)
+  await revalidateStore(supabase, session.storeId)
 }
 
 export async function deleteMenuItemAction(id: string): Promise<{ error: string } | undefined> {
@@ -201,5 +207,5 @@ export async function deleteMenuItemAction(id: string): Promise<{ error: string 
   }
 
   revalidatePath('/admin/menu')
-  await revalidateStorePublicPage(supabase, session.storeId)
+  await revalidateStore(supabase, session.storeId)
 }

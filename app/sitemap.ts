@@ -1,7 +1,11 @@
 import type { MetadataRoute } from 'next'
+import { cacheLife } from 'next/cache'
 import { createServiceClient } from '@/lib/supabase-server'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  'use cache'
+  cacheLife('days')
+
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mocal.jp'
 
   const staticRoutes: MetadataRoute.Sitemap = [
