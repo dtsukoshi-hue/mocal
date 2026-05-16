@@ -3,8 +3,43 @@ import { createServiceClient } from '@/lib/supabase-server'
 import { createSupabaseServerClient } from '@/lib/supabase-ssr'
 import { refundPayment } from '@/lib/payment'
 import { notifyOrder } from '@/lib/webpush'
+import { sendOrderStatusEmail } from '@/lib/email'
+import { getStripe } from '@/lib/stripe'
 import { isValidOrderStatusTransition, isValidWaitMinutes, VALID_WAIT_MINUTES } from '@/lib/validation'
 import type { Order, OrderStatus, WaitMinutes } from '@/lib/database.types'
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mocal.jp'
+
+/**
+ * 注文に紐づく顧客メールアドレスを取得する。
+ * 1. ログイン済みユーザー → Supabase Auth から取得
+ * 2. ゲスト注文 + Stripe チャージあり → Stripe API から取得
+ * メール送信不要のケースでは null を返す。
+ */
+async function resolveCustomerEmail(
+  supabase: ReturnType<typeof createServiceClient>,
+  userId: string | null,
+  stripeChargeId: string | null,
+): Promise<string | null> {
+  if (userId) {
+    try {
+      const { data: { user } } = await supabase.auth.admin.getUserById(userId)
+      return user?.email ?? null
+    } catch {
+      return null
+    }
+  }
+  if (stripeChargeId) {
+    try {
+      const stripe = getStripe()
+      const charge = await stripe.charges.retrieve(stripeChargeId)
+      return charge.billing_details?.email ?? charge.receipt_email ?? null
+    } catch {
+      return null
+    }
+  }
+  return null
+}
 
 // 店舗が注文ステータスを更新するエンドポイント
 // PATCH /api/orders/:id  { status: OrderStatus, waitMinutes?: WaitMinutes }
@@ -41,10 +76,10 @@ export async function PATCH(
 
   const supabase = createServiceClient()
 
-  // 注文の所属店舗確認（返金に必要な stripe フィールドも取得）
+  // 注文の所属店舗確認（返金・メール送信に必要なフィールドも取得）
   const { data: order, error: orderErr } = await supabase
     .from('orders')
-    .select('id, status, store_id, stripe_charge_id')
+    .select('id, order_number, status, store_id, user_id, stripe_charge_id, stores(name)')
     .eq('id', id)
     .single()
 
@@ -109,7 +144,10 @@ export async function PATCH(
     return NextResponse.json({ error: '更新に失敗しました。' }, { status: 500 })
   }
 
-  // ステータス別ユーザー通知（仕様書 11.1）
+  // ステータス別ユーザー通知（Web Push + メール）
+  const storeName = (order.stores as { name: string } | null)?.name ?? ''
+  const orderStatusUrl = `${APP_URL}/orders/${id}`
+
   const notifyPayloads: Partial<Record<OrderStatus, { title: string; body: string }>> = {
     accepted: { title: '注文を受け付けました', body: 'もうしばらくお待ちください' },
     ready:    { title: '準備完了！', body: 'カウンターへお越しください' },
@@ -119,6 +157,22 @@ export async function PATCH(
   if (notifyPayload) {
     notifyOrder(id, { ...notifyPayload, url: `/orders/${id}` })
       .catch((e) => console.error('[orders/PATCH] 通知送信失敗:', e))
+  }
+
+  // ready / cancelled をメールでも通知（RESEND_API_KEY が設定されている場合のみ）
+  if (process.env.RESEND_API_KEY && ['ready', 'cancelled'].includes(status)) {
+    resolveCustomerEmail(supabase, order.user_id, order.stripe_charge_id)
+      .then(email => {
+        if (!email) return
+        return sendOrderStatusEmail({
+          to: email,
+          orderNumber: order.order_number,
+          storeName,
+          status,
+          orderStatusUrl,
+        })
+      })
+      .catch(e => console.error('[orders/PATCH] ステータスメール送信失敗:', e))
   }
 
   // キャンセル時の自動返金（paid 以降に決済済みの場合）
@@ -148,6 +202,22 @@ export async function PATCH(
             body: '注文がキャンセルされ、返金処理を行いました',
             url: `/orders/${id}`,
           }).catch((e) => console.error('[orders/PATCH] 返金通知失敗:', e))
+
+          // 返金完了メールも送信
+          if (process.env.RESEND_API_KEY) {
+            resolveCustomerEmail(supabase, order.user_id, order.stripe_charge_id)
+              .then(email => {
+                if (!email) return
+                return sendOrderStatusEmail({
+                  to: email,
+                  orderNumber: order.order_number,
+                  storeName,
+                  status: 'refunded',
+                  orderStatusUrl,
+                })
+              })
+              .catch(e => console.error('[orders/PATCH] 返金メール送信失敗:', e))
+          }
         }
       } catch (err) {
         // Stripe 返金失敗：注文は cancelled のまま、手動対応が必要

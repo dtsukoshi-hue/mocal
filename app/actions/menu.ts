@@ -12,11 +12,11 @@ import { verifyStoreSession } from '@/lib/dal'
  * revalidatePath でパスキャッシュも削除。
  */
 async function revalidateStore(supabase: ReturnType<typeof createServiceClient>, storeId: string) {
-  revalidateTag(`store:${storeId}`)
+  revalidateTag(`store:${storeId}`, 'max')
   // slug ベースのタグ・パスキャッシュもパージ
   const { data } = await supabase.from('stores').select('slug').eq('id', storeId).single()
   if (data?.slug) {
-    revalidateTag(`store-slug:${data.slug}`)
+    revalidateTag(`store-slug:${data.slug}`, 'max')
     revalidatePath(`/${data.slug}`)
   }
 }

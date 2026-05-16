@@ -16,11 +16,11 @@ async function revalidateStore(
   supabase: ReturnType<typeof createServiceClient>,
   storeId: string,
 ) {
-  revalidateTag(`store:${storeId}`)
+  revalidateTag(`store:${storeId}`, 'max')
   // slug ベースのタグ・パスキャッシュもパージ
   const { data } = await supabase.from('stores').select('slug').eq('id', storeId).single()
   if (data?.slug) {
-    revalidateTag(`store-slug:${data.slug}`)
+    revalidateTag(`store-slug:${data.slug}`, 'max')
     revalidatePath(`/${data.slug}`)
   }
 }
@@ -129,16 +129,16 @@ export async function updateStoreProfileAction(
 
   // 旧スラッグのキャッシュを即時パージ（slug 変更前に取得した current.slug を使用）
   if (current?.slug) {
-    revalidateTag(`store-slug:${current.slug}`)
+    revalidateTag(`store-slug:${current.slug}`, 'max')
     revalidatePath(`/${current.slug}`)
   }
 
   // storeId タグでキャッシュを一括パージ
-  revalidateTag(`store:${session.storeId}`)
+  revalidateTag(`store:${session.storeId}`, 'max')
 
   // 新スラッグが変更されていれば新スラッグ側もパージ
   if (slug.trim() !== current?.slug) {
-    revalidateTag(`store-slug:${slug.trim()}`)
+    revalidateTag(`store-slug:${slug.trim()}`, 'max')
     revalidatePath(`/${slug.trim()}`)
   }
 
