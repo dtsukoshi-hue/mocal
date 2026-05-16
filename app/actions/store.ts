@@ -5,6 +5,17 @@ import { createServiceClient } from '@/lib/supabase-server'
 import { verifyStoreSession } from '@/lib/dal'
 import type { WaitMinutes } from '@/lib/database.types'
 
+/** 公開店舗ページのキャッシュを slug ベースで即時パージ */
+async function revalidateStorePublicPage(
+  supabase: ReturnType<typeof createServiceClient>,
+  storeId: string,
+) {
+  const { data } = await supabase.from('stores').select('slug').eq('id', storeId).single()
+  if (data?.slug) {
+    revalidatePath(`/${data.slug}`)
+  }
+}
+
 // ------------------------------------------------------------
 // 営業時間
 // ------------------------------------------------------------
@@ -53,6 +64,7 @@ export async function saveStoreHoursAction(
   }
 
   revalidatePath('/admin/hours')
+  await revalidateStorePublicPage(supabase, session.storeId)
   return { success: true }
 }
 
@@ -86,6 +98,13 @@ export async function updateStoreProfileAction(
     return { error: 'URLは英小文字・数字・ハイフンのみ、3〜50文字で入力してください。' }
   }
 
+  // スラッグ変更の場合は旧スラッグも revalidate する必要があるため更新前に取得
+  const { data: current } = await supabase
+    .from('stores')
+    .select('slug')
+    .eq('id', session.storeId)
+    .single()
+
   const { error } = await supabase
     .from('stores')
     .update({ name: name.trim(), slug: slug.trim(), description, area, cuisine_type: cuisineType })
@@ -98,6 +117,10 @@ export async function updateStoreProfileAction(
   }
 
   revalidatePath('/admin/settings')
+  // 旧スラッグのキャッシュを即時パージ
+  if (current?.slug) revalidatePath(`/${current.slug}`)
+  // 新スラッグが変更されていれば新スラッグ側もパージ
+  if (slug.trim() !== current?.slug) revalidatePath(`/${slug.trim()}`)
   return { success: true }
 }
 
@@ -121,6 +144,8 @@ export async function toggleStoreOpenAction(isOpen: boolean): Promise<{ error: s
 
   revalidatePath('/admin/settings')
   revalidatePath('/admin/dashboard')
+  // 受付状態変更は store_cache の getCachedStore をパージ（is_open フィールドを含むため）
+  await revalidateStorePublicPage(supabase, session.storeId)
 }
 
 export async function updateStoreSettingsAction(
@@ -148,5 +173,6 @@ export async function updateStoreSettingsAction(
   }
 
   revalidatePath('/admin/settings')
+  await revalidateStorePublicPage(supabase, session.storeId)
   return { success: true }
 }

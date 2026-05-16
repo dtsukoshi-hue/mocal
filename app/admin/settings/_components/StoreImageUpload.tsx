@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useTransition, useCallback } from 'react'
+import Image from 'next/image'
 
 interface Props {
   type: 'logo' | 'cover'
@@ -95,8 +96,7 @@ export default function StoreImageUpload({
         className={`${aspectClass} w-full max-w-xs bg-gray-100 rounded-xl overflow-hidden border border-gray-200 relative`}
       >
         {url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={url} alt={label} className="w-full h-full object-cover" />
+          <Image src={url} alt={label} fill className="object-cover" sizes="320px" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">
             未設定

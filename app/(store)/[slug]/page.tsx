@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
 import type { Metadata } from 'next'
-import { createSupabaseServerClient } from '@/lib/supabase-ssr'
+import { getCachedStore, getCachedStoreMeta, getCachedMenuItems, getCachedStoreHours } from '@/lib/store-cache'
 import MenuView from './_components/MenuView'
 
 interface Props {
@@ -10,12 +10,8 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const supabase = await createSupabaseServerClient()
-  const { data: store } = await supabase
-    .from('stores')
-    .select('name, description, area, cuisine_type, cover_url')
-    .eq('slug', slug)
-    .single()
+  // キャッシュ済みクエリを使用（generateMetadata と StorePage で同じエントリを共有）
+  const store = await getCachedStoreMeta(slug)
 
   if (!store) return { title: '店舗が見つかりません | mocal' }
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mocal.jp'
@@ -54,30 +50,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function StorePage({ params }: Props) {
   const { slug } = await params
-  const supabase = await createSupabaseServerClient()
   const nonce = (await headers()).get('x-nonce') ?? undefined
 
-  const { data: store } = await supabase
-    .from('stores')
-    .select('id, name, description, is_open, wait_minutes, logo_url, cover_url, area, cuisine_type')
-    .eq('slug', slug)
-    .single()
-
+  // キャッシュ済みクエリ（force-dynamic でもプロセス内メモリから提供）
+  const store = await getCachedStore(slug)
   if (!store) notFound()
 
-  const [{ data: menuItems }, { data: storeHours }] = await Promise.all([
-    supabase
-      .from('menu_items')
-      .select('id, name, description, price, category, emoji, image_url, is_available, sort_order')
-      .eq('store_id', store.id)
-      .eq('is_available', true)
-      .order('sort_order', { ascending: true })
-      .order('created_at', { ascending: true }),
-    supabase
-      .from('store_hours')
-      .select('day_of_week, open_time, close_time, is_closed')
-      .eq('store_id', store.id)
-      .order('day_of_week'),
+  const [menuItems, storeHours] = await Promise.all([
+    getCachedMenuItems(store.id),
+    getCachedStoreHours(store.id),
   ])
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mocal.jp'
@@ -120,7 +101,7 @@ export default async function StorePage({ params }: Props) {
             .replace(/&/g, '\\u0026'),
         }}
       />
-      <MenuView store={store} menuItems={menuItems ?? []} storeHours={storeHours ?? []} />
+      <MenuView store={store} menuItems={menuItems} storeHours={storeHours} />
     </>
   )
 }

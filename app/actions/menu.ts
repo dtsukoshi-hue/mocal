@@ -4,6 +4,17 @@ import { revalidatePath } from 'next/cache'
 import { createServiceClient } from '@/lib/supabase-server'
 import { verifyStoreSession } from '@/lib/dal'
 
+/**
+ * 公開店舗ページのキャッシュを即時パージする。
+ * unstable_cache エントリは revalidatePath でパージできる。
+ */
+async function revalidateStorePublicPage(supabase: ReturnType<typeof createServiceClient>, storeId: string) {
+  const { data } = await supabase.from('stores').select('slug').eq('id', storeId).single()
+  if (data?.slug) {
+    revalidatePath(`/${data.slug}`)
+  }
+}
+
 export type MenuActionState = { error: string } | { success: true } | undefined
 
 export async function createMenuItemAction(
@@ -55,6 +66,7 @@ export async function createMenuItemAction(
   }
 
   revalidatePath('/admin/menu')
+  await revalidateStorePublicPage(supabase, session.storeId)
   return { success: true }
 }
 
@@ -95,6 +107,7 @@ export async function updateMenuItemAction(
   }
 
   revalidatePath('/admin/menu')
+  await revalidateStorePublicPage(supabase, session.storeId)
   return { success: true }
 }
 
@@ -114,6 +127,7 @@ export async function toggleMenuItemAction(id: string, isAvailable: boolean): Pr
   }
 
   revalidatePath('/admin/menu')
+  await revalidateStorePublicPage(supabase, session.storeId)
 }
 
 export async function moveMenuItemAction(id: string, direction: 'up' | 'down'): Promise<void> {
@@ -168,6 +182,7 @@ export async function moveMenuItemAction(id: string, direction: 'up' | 'down'): 
   ])
 
   revalidatePath('/admin/menu')
+  await revalidateStorePublicPage(supabase, session.storeId)
 }
 
 export async function deleteMenuItemAction(id: string): Promise<{ error: string } | undefined> {
@@ -186,4 +201,5 @@ export async function deleteMenuItemAction(id: string): Promise<{ error: string 
   }
 
   revalidatePath('/admin/menu')
+  await revalidateStorePublicPage(supabase, session.storeId)
 }

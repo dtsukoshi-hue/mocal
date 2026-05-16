@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useTransition, useEffect } from 'react'
+import Image from 'next/image'
 import { toggleMenuItemAction, deleteMenuItemAction, moveMenuItemAction } from '@/app/actions/menu'
 import MenuItemForm from './MenuItemForm'
 import type { MenuItem } from '@/lib/database.types'
@@ -113,13 +114,12 @@ export default function MenuItemCard({ item, isFirst, isLast }: Props) {
           onClick={() => imageInputRef.current?.click()}
           disabled={imageUploading}
           aria-label={`${item.name}の画像をアップロード`}
-          className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-gray-100 bg-gray-50 flex items-center justify-center text-2xl hover:ring-2 hover:ring-orange-400 transition-all disabled:opacity-50"
+          className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-gray-100 bg-gray-50 flex items-center justify-center text-2xl hover:ring-2 hover:ring-orange-400 transition-all disabled:opacity-50"
         >
           {imageUploading ? (
             <div className="w-5 h-5 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
           ) : imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={imageUrl} alt="" className="w-full h-full object-cover" />
+            <Image src={imageUrl} alt="" fill className="object-cover" sizes="48px" />
           ) : (
             <span aria-hidden="true">{item.emoji ?? '🍽️'}</span>
           )}
