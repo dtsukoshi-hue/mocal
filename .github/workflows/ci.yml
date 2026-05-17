@@ -17,14 +17,9 @@ jobs:
           cache: 'npm'
       - name: Install
         run: npm ci
-      - name: Type check
-        run: npx tsc --noEmit
-      - name: Lint
-        run: npm run lint
-        continue-on-error: true
       - name: Test
         run: npx vitest run --reporter=dot
-      - name: Build
+      - name: Build (includes typecheck)
         run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://ci.example.com
@@ -38,3 +33,6 @@ jobs:
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_ci
           NEXT_PUBLIC_APP_URL: https://mocal-iota.vercel.app
           CRON_SECRET: ci-cron
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
