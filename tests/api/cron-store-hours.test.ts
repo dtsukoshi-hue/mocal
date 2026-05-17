@@ -65,7 +65,7 @@ function updateInChain(error: unknown = null) {
 // ---------------------------------------------------------------------------
 
 function setupSupabaseMock({
-  storeHours = [] as { store_id: string; open_time: string; close_time: string; is_closed: boolean }[],
+  storeHours = [] as { store_id: string; open_time: string; close_time: string; is_open: boolean }[],
   storeHoursError = null as unknown,
   stores = [] as { id: string; is_open: boolean; manual_override_until: string | null }[],
   openUpdateError = null as unknown,
@@ -173,7 +173,7 @@ describe('GET /api/cron/store-hours — open/close logic', () => {
   it('opens stores within opening hours that are currently closed', async () => {
     // Store A: open 09:00-18:00 on Tuesday, currently closed (is_open: false)
     const storeHours = [
-      { store_id: STORE_ID_A, open_time: '09:00', close_time: '18:00', is_closed: false },
+      { store_id: STORE_ID_A, open_time: '09:00', close_time: '18:00', is_open: true },
     ]
     const stores = [
       { id: STORE_ID_A, is_open: false, manual_override_until: null },
@@ -189,9 +189,9 @@ describe('GET /api/cron/store-hours — open/close logic', () => {
   })
 
   it('closes stores outside opening hours that are currently open', async () => {
-    // Store B: closed on Tuesday (is_closed: true), but currently open (is_open: true)
+    // Store B: closed on Tuesday (is_open: false), but currently open (is_open: true)
     const storeHours = [
-      { store_id: STORE_ID_B, open_time: '09:00', close_time: '18:00', is_closed: true },
+      { store_id: STORE_ID_B, open_time: '09:00', close_time: '18:00', is_open: false },
     ]
     const stores = [
       { id: STORE_ID_B, is_open: true, manual_override_until: null },
@@ -209,7 +209,7 @@ describe('GET /api/cron/store-hours — open/close logic', () => {
   it('closes stores outside their operating hours', async () => {
     // Store A: open 12:00-18:00 on Tuesday, current time is 10:00 → should close
     const storeHours = [
-      { store_id: STORE_ID_A, open_time: '12:00', close_time: '18:00', is_closed: false },
+      { store_id: STORE_ID_A, open_time: '12:00', close_time: '18:00', is_open: true },
     ]
     const stores = [
       { id: STORE_ID_A, is_open: true, manual_override_until: null },
@@ -226,7 +226,7 @@ describe('GET /api/cron/store-hours — open/close logic', () => {
   it('skips stores with manual_override_until in the future', async () => {
     const futureOverride = new Date(FIXED_NOW.getTime() + 60 * 60 * 1000).toISOString() // 1h from now
     const storeHours = [
-      { store_id: STORE_ID_A, open_time: '09:00', close_time: '18:00', is_closed: false },
+      { store_id: STORE_ID_A, open_time: '09:00', close_time: '18:00', is_open: true },
     ]
     const stores = [
       { id: STORE_ID_A, is_open: false, manual_override_until: futureOverride },
@@ -244,7 +244,7 @@ describe('GET /api/cron/store-hours — open/close logic', () => {
   it('does not update stores already in the correct state', async () => {
     // Store already open and within opening hours — needOpen filter removes it
     const storeHours = [
-      { store_id: STORE_ID_A, open_time: '09:00', close_time: '18:00', is_closed: false },
+      { store_id: STORE_ID_A, open_time: '09:00', close_time: '18:00', is_open: true },
     ]
     const stores = [
       { id: STORE_ID_A, is_open: true, manual_override_until: null },
@@ -260,10 +260,10 @@ describe('GET /api/cron/store-hours — open/close logic', () => {
     expect(closeChain.update).not.toHaveBeenCalled()
   })
 
-  it('treats stores with is_closed: true as should-close regardless of time', async () => {
+  it('treats stores with is_open: false as should-close regardless of time', async () => {
     // is_closed=true with times that would otherwise be open — should always close
     const storeHours = [
-      { store_id: STORE_ID_A, open_time: '09:00', close_time: '18:00', is_closed: true },
+      { store_id: STORE_ID_A, open_time: '09:00', close_time: '18:00', is_open: false },
     ]
     const stores = [
       { id: STORE_ID_A, is_open: true, manual_override_until: null },
@@ -281,8 +281,8 @@ describe('GET /api/cron/store-hours — open/close logic', () => {
     // Store A: should open (within hours, currently closed)
     // Store B: should close (outside hours / is_closed=true, currently open)
     const storeHours = [
-      { store_id: STORE_ID_A, open_time: '09:00', close_time: '18:00', is_closed: false },
-      { store_id: STORE_ID_B, open_time: '09:00', close_time: '18:00', is_closed: true },
+      { store_id: STORE_ID_A, open_time: '09:00', close_time: '18:00', is_open: true },
+      { store_id: STORE_ID_B, open_time: '09:00', close_time: '18:00', is_open: false },
     ]
     const stores = [
       { id: STORE_ID_A, is_open: false, manual_override_until: null },
@@ -302,7 +302,7 @@ describe('GET /api/cron/store-hours — open/close logic', () => {
   it('respects manual_override_until in the past (does not skip)', async () => {
     const pastOverride = new Date(FIXED_NOW.getTime() - 60 * 60 * 1000).toISOString() // 1h ago
     const storeHours = [
-      { store_id: STORE_ID_A, open_time: '09:00', close_time: '18:00', is_closed: false },
+      { store_id: STORE_ID_A, open_time: '09:00', close_time: '18:00', is_open: true },
     ]
     const stores = [
       { id: STORE_ID_A, is_open: false, manual_override_until: pastOverride },

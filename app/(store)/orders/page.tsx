@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function OrdersPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-stone-50">
       <header className="bg-white border-b">
         <div className="max-w-lg mx-auto px-4 py-4">
           <h1 className="text-lg font-bold text-gray-900">注文履歴</h1>

@@ -25,7 +25,7 @@ export default function AdminLoginPage() {
 
   if (showReset) {
     return (
-      <main id="main-content" className="min-h-screen flex items-center justify-center bg-gray-50">
+      <main id="main-content" className="min-h-screen flex items-center justify-center bg-stone-50">
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-gray-900">mocal</h1>
@@ -47,7 +47,7 @@ export default function AdminLoginPage() {
               </p>
               <button
                 onClick={() => setShowReset(false)}
-                className="text-sm text-orange-500 hover:underline"
+                className="text-sm text-amber-600 hover:underline"
               >
                 ログイン画面に戻る
               </button>
@@ -67,7 +67,7 @@ export default function AdminLoginPage() {
                   type="email"
                   required
                   autoComplete="email"
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
                 />
               </div>
               {resetState && 'error' in resetState && (
@@ -78,7 +78,7 @@ export default function AdminLoginPage() {
               <button
                 type="submit"
                 disabled={resetPending}
-                className="w-full rounded-lg bg-orange-500 text-white font-semibold py-3 text-sm hover:bg-orange-600 disabled:opacity-60 transition-colors"
+                className="w-full rounded-lg bg-amber-600 text-white font-semibold py-3 text-sm hover:bg-amber-700 disabled:opacity-60 transition-colors"
               >
                 {resetPending ? '送信中...' : 'リセットメールを送信'}
               </button>
@@ -97,7 +97,7 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <main id="main-content" className="min-h-screen flex items-center justify-center bg-gray-50">
+    <main id="main-content" className="min-h-screen flex items-center justify-center bg-stone-50">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900">mocal</h1>
@@ -124,7 +124,7 @@ export default function AdminLoginPage() {
               type="email"
               autoComplete="email"
               required
-              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
             />
           </div>
 
@@ -141,7 +141,7 @@ export default function AdminLoginPage() {
               type="password"
               autoComplete="current-password"
               required
-              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
             />
           </div>
 
@@ -154,7 +154,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={pending}
-            className="w-full rounded-lg bg-orange-500 text-white font-semibold py-3 text-sm hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            className="w-full rounded-lg bg-amber-600 text-white font-semibold py-3 text-sm hover:bg-amber-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {pending ? 'ログイン中...' : 'ログイン'}
           </button>
@@ -169,7 +169,7 @@ export default function AdminLoginPage() {
           </button>
           <p className="text-sm text-gray-400">
             まだ登録していない方は{' '}
-            <Link href="/onboarding" className="text-orange-500 hover:underline">
+            <Link href="/onboarding" className="text-amber-600 hover:underline">
               新規登録
             </Link>
           </p>

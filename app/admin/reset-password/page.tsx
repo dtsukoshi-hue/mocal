@@ -63,7 +63,7 @@ export default function ResetPasswordPage() {
 
   if (done) {
     return (
-      <main id="main-content" className="min-h-screen flex items-center justify-center bg-gray-50">
+      <main id="main-content" className="min-h-screen flex items-center justify-center bg-stone-50">
         <div className="text-center space-y-3" aria-live="polite">
           <p className="text-4xl" aria-hidden="true">✅</p>
           <p className="text-gray-700 font-medium">パスワードを更新しました</p>
@@ -74,7 +74,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main id="main-content" className="min-h-screen flex items-center justify-center bg-gray-50">
+    <main id="main-content" className="min-h-screen flex items-center justify-center bg-stone-50">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900">mocal</h1>
@@ -94,7 +94,7 @@ export default function ResetPasswordPage() {
               required
               minLength={8}
               autoComplete="new-password"
-              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
             />
           </div>
           <div>
@@ -108,7 +108,7 @@ export default function ResetPasswordPage() {
               onChange={e => setConfirm(e.target.value)}
               required
               autoComplete="new-password"
-              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
             />
           </div>
 
@@ -119,7 +119,7 @@ export default function ResetPasswordPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-orange-500 text-white font-semibold py-3 text-sm hover:bg-orange-600 disabled:opacity-60 transition-colors"
+            className="w-full rounded-lg bg-amber-600 text-white font-semibold py-3 text-sm hover:bg-amber-700 disabled:opacity-60 transition-colors"
           >
             {loading ? '更新中...' : 'パスワードを更新'}
           </button>

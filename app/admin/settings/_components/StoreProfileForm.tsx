@@ -37,14 +37,14 @@ export default function StoreProfileForm({ name, slug, description, area, cuisin
   const submitDisabled = isPending || !!slugError || (slugChanged && !slugChangeAcknowledged)
 
   return (
-    <form action={formAction} className="bg-white rounded-xl shadow-sm p-5 space-y-4">
+    <form action={formAction} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
       <p className="font-semibold text-gray-900">店舗情報</p>
 
       {state?.error && (
         <p role="alert" className="text-sm text-red-600">{state.error}</p>
       )}
       {state?.success && (
-        <p role="status" className="text-sm text-green-600">保存しました</p>
+        <p role="status" className="text-sm text-emerald-700">保存しました</p>
       )}
 
       <div>
@@ -54,16 +54,16 @@ export default function StoreProfileForm({ name, slug, description, area, cuisin
           name="name"
           defaultValue={name}
           required
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-600"
         />
       </div>
 
       <div>
         <label htmlFor="store-slug" className="block text-sm font-medium text-gray-700 mb-1">URL（スラッグ）</label>
-        <div className={`flex items-center border rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-orange-500 ${
+        <div className={`flex items-center border rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-amber-600 ${
           slugError ? 'border-red-400' : slugValue && !slugError ? 'border-green-400' : 'border-gray-300'
         }`}>
-          <span className="px-3 py-2 bg-gray-50 text-gray-400 text-sm border-r border-gray-300 shrink-0" aria-hidden="true">
+          <span className="px-3 py-2 bg-stone-50 text-gray-400 text-sm border-r border-gray-300 shrink-0" aria-hidden="true">
             mocal.jp/
           </span>
           <input
@@ -95,7 +95,7 @@ export default function StoreProfileForm({ name, slug, description, area, cuisin
           placeholder="例：駅前の本格ラーメン店です。行列なしで事前注文できます。"
           rows={3}
           maxLength={200}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-600 resize-none"
         />
         <p className="text-xs text-gray-400 mt-1">200文字以内。メニューページ上部と検索結果に表示されます。</p>
       </div>
@@ -109,7 +109,7 @@ export default function StoreProfileForm({ name, slug, description, area, cuisin
             defaultValue={area ?? ''}
             placeholder="例：清澄白河"
             maxLength={30}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-600"
           />
         </div>
         <div>
@@ -120,7 +120,7 @@ export default function StoreProfileForm({ name, slug, description, area, cuisin
             defaultValue={cuisineType ?? ''}
             placeholder="例：バーガー"
             maxLength={30}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-600"
           />
         </div>
       </div>
@@ -136,7 +136,7 @@ export default function StoreProfileForm({ name, slug, description, area, cuisin
               type="checkbox"
               checked={slugChangeAcknowledged}
               onChange={e => setSlugChangeAcknowledged(e.target.checked)}
-              className="rounded border-amber-400 text-orange-500 focus:ring-orange-400"
+              className="rounded border-amber-400 text-amber-600 focus:ring-amber-400"
             />
             <span className="text-xs text-amber-800">QRコードが無効になることを理解しました</span>
           </label>
@@ -146,7 +146,7 @@ export default function StoreProfileForm({ name, slug, description, area, cuisin
       <button
         type="submit"
         disabled={submitDisabled}
-        className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg px-4 py-2 disabled:opacity-50"
+        className="bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg px-4 py-2 disabled:opacity-50"
       >
         {isPending ? '保存中…' : '保存する'}
       </button>

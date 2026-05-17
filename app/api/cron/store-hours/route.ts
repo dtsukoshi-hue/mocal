@@ -38,8 +38,8 @@ export async function GET(request: NextRequest) {
   // 全店舗の今日の営業時間を一括取得（N+1 を避けるため結合クエリ）
   const { data: storeHours, error: fetchErr } = await supabase
     .from('store_hours')
-    .select('store_id, open_time, close_time, is_closed')
-    .eq('day_of_week', dowJST)
+    .select('store_id, open_time, close_time, is_open')
+    .eq('weekday', dowJST)
 
   if (fetchErr) {
     console.error('[cron/store-hours] store_hours 取得失敗:', fetchErr)
@@ -54,7 +54,9 @@ export async function GET(request: NextRequest) {
   const toClose: string[] = []
 
   for (const sh of storeHours ?? []) {
-    const shouldBeOpen = !sh.is_closed
+    const shouldBeOpen = sh.is_open
+      && sh.open_time !== null
+      && sh.close_time !== null
       && currentTimeStr >= sh.open_time
       && currentTimeStr < sh.close_time
 

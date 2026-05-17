@@ -1,6 +1,6 @@
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-gray-50 pb-32">
+    <div className="min-h-screen bg-stone-50 pb-32">
       {/* カバー画像スケルトン */}
       <div className="w-full h-36 sm:h-48 bg-gray-200 animate-pulse" />
 

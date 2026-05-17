@@ -104,7 +104,7 @@ export default function StoreImageUpload({
         )}
         {isPending && (
           <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-            <div className="w-5 h-5 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
       </div>
@@ -128,7 +128,7 @@ export default function StoreImageUpload({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={isPending || isDeleting}
-          className="text-sm text-orange-500 hover:text-orange-600 disabled:opacity-50 font-medium"
+          className="text-sm text-amber-500 hover:text-amber-700 disabled:opacity-50 font-medium"
         >
           {isPending ? 'アップロード中…' : url ? '画像を変更' : '画像をアップロード'}
         </button>

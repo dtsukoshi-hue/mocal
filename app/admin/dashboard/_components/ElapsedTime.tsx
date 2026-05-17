@@ -23,10 +23,15 @@ function getMinutes(createdAt: string): number {
 }
 
 export default function ElapsedTime({ createdAt, warnAfterMinutes }: Props) {
-  const [elapsed, setElapsed] = useState(() => formatElapsed(createdAt))
-  const [minutes, setMinutes] = useState(() => getMinutes(createdAt))
+  // 初期値は null（サーバーとクライアントで Date.now() が異なるため SSR では描画しない）
+  const [elapsed, setElapsed] = useState<string | null>(null)
+  const [minutes, setMinutes] = useState(0)
 
   useEffect(() => {
+    // マウント後に初回計算（サーバー/クライアントの不一致を回避）
+    setElapsed(formatElapsed(createdAt))
+    setMinutes(getMinutes(createdAt))
+
     const update = () => {
       setElapsed(formatElapsed(createdAt))
       setMinutes(getMinutes(createdAt))
@@ -35,6 +40,9 @@ export default function ElapsedTime({ createdAt, warnAfterMinutes }: Props) {
     const interval = setInterval(update, 10_000)
     return () => clearInterval(interval)
   }, [createdAt])
+
+  // マウント前はサーバー HTML と一致させるため何も描画しない
+  if (elapsed === null) return null
 
   const isWarning = warnAfterMinutes !== undefined && minutes >= warnAfterMinutes
 

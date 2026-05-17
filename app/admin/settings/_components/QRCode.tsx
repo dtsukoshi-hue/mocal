@@ -56,7 +56,7 @@ export default function QRCode({ url, storeName }: Props) {
         <button
           onClick={handleCopyLink}
           aria-label={copied ? 'URLをコピーしました' : 'URLをコピー'}
-          className="shrink-0 text-orange-500 hover:text-orange-600 font-medium"
+          className="shrink-0 text-amber-500 hover:text-amber-700 font-medium"
         >
           {copied ? 'コピー済!' : 'コピー'}
         </button>
@@ -64,7 +64,7 @@ export default function QRCode({ url, storeName }: Props) {
       </div>
       <button
         onClick={handleDownload}
-        className="text-sm text-orange-500 hover:text-orange-600 hover:underline"
+        className="text-sm text-amber-500 hover:text-amber-700 hover:underline"
       >
         PNG をダウンロード
       </button>

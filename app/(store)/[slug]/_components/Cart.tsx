@@ -83,7 +83,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
   // PaymentIntent 作成完了 → Stripe Elements を表示
   if (state && 'clientSecret' in state) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-10">
+      <div className="min-h-screen bg-stone-50 pb-10">
         <header className="bg-white border-b sticky top-0 z-10">
           <div className="max-w-lg mx-auto px-4 py-4">
             <h1 ref={paymentHeadingRef} tabIndex={-1} className="text-lg font-bold text-gray-900 focus:outline-none">お支払い</h1>
@@ -108,10 +108,10 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
   const canSubmit = !pending && cart.length > 0 && (pickupType === 'standard' || scheduledAt)
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-40">
+    <div className="min-h-screen bg-stone-50 pb-40">
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center gap-3">
-          <button onClick={onBack} className="text-orange-500 text-sm font-medium">
+          <button onClick={onBack} className="text-amber-600 text-sm font-medium">
             <span aria-hidden="true">← </span>メニューに戻る
           </button>
           <h1 ref={headingRef} tabIndex={-1} className="text-lg font-bold text-gray-900 focus:outline-none">カート</h1>
@@ -120,7 +120,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
 
       <main id="main-content" className="max-w-lg mx-auto px-4 py-4 space-y-4">
         {/* 注文内容 */}
-        <div className="bg-white rounded-xl shadow-sm divide-y">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 divide-y">
           {cart.map(item => {
             const atItemMax = item.qty >= MAX_QTY_PER_ITEM
             const atTotalMax = totalQty >= MAX_QTY_TOTAL
@@ -156,7 +156,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
           })}
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm px-4 py-3 flex justify-between items-center">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-4 py-3 flex justify-between items-center">
           <span className="text-sm font-medium text-gray-700">
             合計
             <span className="text-xs text-gray-400 ml-2">({totalQty}点)</span>
@@ -173,7 +173,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
         )}
 
         {/* 受取方法 */}
-        <div className="bg-white rounded-xl shadow-sm p-4 space-y-3">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-3">
           <p className="text-sm font-medium text-gray-700">受取方法</p>
           <div className="flex gap-2" role="group" aria-label="受取方法を選択">
             <button
@@ -182,7 +182,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
               aria-pressed={pickupType === 'standard'}
               className={`flex-1 text-sm rounded-lg py-2 border transition-colors ${
                 pickupType === 'standard'
-                  ? 'border-orange-500 bg-orange-50 text-orange-700 font-medium'
+                  ? 'border-amber-600 bg-amber-50 text-amber-800 font-medium'
                   : 'border-gray-200 text-gray-600'
               }`}
             >
@@ -194,7 +194,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
               aria-pressed={pickupType === 'scheduled'}
               className={`flex-1 text-sm rounded-lg py-2 border transition-colors ${
                 pickupType === 'scheduled'
-                  ? 'border-orange-500 bg-orange-50 text-orange-700 font-medium'
+                  ? 'border-amber-600 bg-amber-50 text-amber-800 font-medium'
                   : 'border-gray-200 text-gray-600'
               }`}
             >
@@ -215,8 +215,8 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
                       aria-pressed={scheduledAt === slot.iso}
                       className={`px-4 py-1.5 rounded-full text-sm border transition-colors ${
                         scheduledAt === slot.iso
-                          ? 'bg-orange-500 text-white border-orange-500'
-                          : 'border-gray-300 text-gray-700 hover:border-orange-300'
+                          ? 'bg-amber-600 text-white border-amber-600'
+                          : 'border-gray-300 text-gray-700 hover:border-amber-300'
                       }`}
                     >
                       {slot.label}
@@ -233,7 +233,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
         </div>
 
         {/* 注文メモ（アレルギー・要望） */}
-        <div className="bg-white rounded-xl shadow-sm p-4 space-y-2">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-2">
           <label htmlFor="customer-note" className="text-sm font-medium text-gray-700">
             要望・メモ（任意）
           </label>
@@ -244,7 +244,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
             placeholder="例：ソースは少なめで、アレルギーはナッツ"
             rows={2}
             maxLength={200}
-            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-orange-400"
+            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
           />
           <p className="text-xs text-gray-400 text-right" aria-live="polite">
             {customerNote.length > 0 ? `${customerNote.length}/200` : ''}
@@ -282,7 +282,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="w-full rounded-2xl bg-orange-500 text-white font-bold py-4 shadow-lg disabled:opacity-60 hover:bg-orange-600 transition-colors"
+              className="w-full rounded-2xl bg-amber-600 text-white font-bold py-4 shadow-lg disabled:opacity-60 hover:bg-amber-700 transition-colors"
             >
               {pending ? '準備中...' : `¥${totalAmount.toLocaleString()} でお支払いへ`}
             </button>

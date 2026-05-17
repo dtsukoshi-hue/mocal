@@ -37,3 +37,23 @@ export const getSession = cache(async () => {
   const { data: { user } } = await supabase.auth.getUser()
   return user ?? null
 })
+
+// API ルート用: セッション無効時に redirect しない代わりに null を返す
+// 本流の getSessionPayload と同じ用途（401 を返したい場合に使う）
+export const getStoreSession = cache(async () => {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+  const { data: membership } = await supabase
+    .from('store_members')
+    .select('store_id, role')
+    .eq('user_id', user.id)
+    .single()
+  if (!membership) return null
+  return {
+    userId: user.id,
+    email: user.email!,
+    storeId: membership.store_id,
+    role: membership.role,
+  }
+})

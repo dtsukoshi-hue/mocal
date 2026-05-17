@@ -1,10 +1,9 @@
 import type { Metadata } from 'next'
 import { verifyStoreSession } from '@/lib/dal'
 import { createSupabaseServerClient } from '@/lib/supabase-ssr'
-import Link from 'next/link'
-import MenuItemCard from './_components/MenuItemCard'
-import AddMenuItemButton from './_components/AddMenuItemButton'
-import type { MenuItem } from '@/lib/database.types'
+import MenuList from './_components/MenuList'
+import CombosManager from './_components/CombosManager'
+import AdminNav from '../_components/AdminNav'
 
 export const metadata: Metadata = { title: 'メニュー管理 | mocal' }
 
@@ -14,55 +13,35 @@ export default async function MenuPage() {
 
   const { data: items } = await supabase
     .from('menu_items')
-    .select('id, name, description, price, category, emoji, is_available, sort_order, created_at')
+    .select('id, name, price, description, category, emoji, image_url, is_available, sort_order')
     .eq('store_id', session.storeId)
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true })
 
-  const grouped = (items ?? []).reduce<Record<string, MenuItem[]>>((acc, item) => {
-    const cat = item.category ?? '未分類'
-    if (!acc[cat]) acc[cat] = []
-    acc[cat].push(item as MenuItem)
-    return acc
-  }, {})
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
-          <Link href="/admin/dashboard" className="text-gray-400 hover:text-gray-600 text-sm">
-            <span aria-hidden="true">← </span>注文管理
-          </Link>
-          <h1 className="text-lg font-bold text-gray-900">メニュー管理</h1>
-        </div>
-      </header>
+    <div className="min-h-screen bg-stone-50">
+      <AdminNav active="menu" role={session.role as 'owner' | 'staff'} />
 
-      <main id="main-content" className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        <AddMenuItemButton />
+      <main id="main-content" className="max-w-4xl mx-auto px-4 py-6 space-y-8">
+        <section>
+          <h1 className="text-lg font-bold text-gray-900 mb-4">メニュー管理</h1>
+          <MenuList items={items ?? []} />
+        </section>
 
-        {Object.entries(grouped).map(([category, categoryItems]) => (
-          <section key={category}>
-            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-1">
-              {category}
-            </h2>
-            <div className="space-y-2">
-              {categoryItems.map((item, i) => (
-                <MenuItemCard
-                  key={item.id}
-                  item={item}
-                  isFirst={i === 0}
-                  isLast={i === categoryItems.length - 1}
-                />
-              ))}
-            </div>
-          </section>
-        ))}
-
-        {(!items || items.length === 0) && (
-          <p className="text-center text-gray-400 py-12 text-sm">
-            まだ商品が登録されていません
+        <section>
+          <h2 className="text-base font-bold text-gray-900 mb-3">🎁 お得なセット（コンボ商品）</h2>
+          <p className="text-xs text-gray-500 mb-3">
+            既存メニューの組み合わせを「セット」として提示できます。注文時には個別の商品として展開されます。
           </p>
-        )}
+          <CombosManager
+            menuItems={(items ?? []).map((i) => ({
+              id: i.id,
+              name: i.name,
+              price: i.price,
+              emoji: i.emoji,
+            }))}
+          />
+        </section>
       </main>
     </div>
   )

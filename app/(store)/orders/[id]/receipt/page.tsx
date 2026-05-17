@@ -51,13 +51,13 @@ export default async function ReceiptPage({ params }: Props) {
   // 領収書は completed または refunded のみ表示
   if (!['completed', 'refunded'].includes(order.status)) {
     return (
-      <main id="main-content" className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <main id="main-content" className="min-h-screen bg-stone-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-sm p-8 text-center max-w-sm w-full">
           <div className="text-4xl mb-4" aria-hidden="true">⏳</div>
           <p className="text-gray-600 text-sm">領収書は注文の受取完了後に発行されます。</p>
           <Link
             href={`/orders/${id}`}
-            className="mt-4 inline-block text-sm text-orange-600 underline"
+            className="mt-4 inline-block text-sm text-amber-700 underline"
           >
             注文状況を確認する
           </Link>
@@ -83,7 +83,7 @@ export default async function ReceiptPage({ params }: Props) {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50 print:bg-white">
+    <div className="min-h-screen bg-stone-50 print:bg-white">
       {/* ナビゲーション（印刷時非表示） */}
       <div className="print:hidden max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
         <Link
@@ -145,7 +145,7 @@ export default async function ReceiptPage({ params }: Props) {
                 href={order.stripe_receipt_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-orange-600 underline"
+                className="text-xs text-amber-700 underline"
               >
                 Stripe 公式領収書を開く
                 <span className="sr-only">（新しいタブで開きます）</span>

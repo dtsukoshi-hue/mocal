@@ -13,7 +13,7 @@ export default function StoreError({ error, reset }: Props) {
   }, [error])
 
   return (
-    <main id="main-content" className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <main id="main-content" className="min-h-screen bg-stone-50 flex items-center justify-center px-4">
       <div className="text-center space-y-4">
         <p className="text-4xl" aria-hidden="true">😔</p>
         <h1 className="text-xl font-semibold text-gray-700">エラーが発生しました</h1>
@@ -22,7 +22,7 @@ export default function StoreError({ error, reset }: Props) {
         </p>
         <button
           onClick={reset}
-          className="mt-2 text-sm bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded-lg"
+          className="mt-2 text-sm bg-amber-600 hover:bg-amber-700 text-white px-5 py-2 rounded-lg"
         >
           再試行
         </button>

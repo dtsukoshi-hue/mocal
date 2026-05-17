@@ -100,9 +100,9 @@ export async function getCachedStoreHours(storeId: string) {
       const supabase = createServiceClient()
       const { data } = await supabase
         .from('store_hours')
-        .select('day_of_week, open_time, close_time, is_closed')
+        .select('weekday, open_time, close_time, is_open, last_order')
         .eq('store_id', storeId)
-        .order('day_of_week')
+        .order('weekday')
       return data ?? []
     },
     [`store-hours:${storeId}`],

@@ -1,6 +1,6 @@
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-stone-50">
       <header className="bg-white border-b">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3 animate-pulse">
           <div className="h-4 w-16 bg-gray-200 rounded" />
@@ -13,7 +13,7 @@ export default function Loading() {
 
         <div className="space-y-2">
           {[1, 2, 3, 4, 5].map(i => (
-            <div key={i} className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3 animate-pulse">
+            <div key={i} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center gap-3 animate-pulse">
               <div className="flex flex-col gap-0.5 shrink-0">
                 <div className="w-4 h-3 bg-gray-100 rounded" />
                 <div className="w-4 h-3 bg-gray-100 rounded" />

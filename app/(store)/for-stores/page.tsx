@@ -1,9 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { headers } from 'next/headers'
 import { Suspense } from 'react'
 
-// force-dynamic は不要（cacheComponents モードでは nonce アイランドを Suspense で囲む）
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mocal.jp'
 
@@ -82,11 +80,10 @@ const STEPS = [
   },
 ]
 
-// 同期関数に変更（headers は Suspense 内の ForStoresJsonLd で呼ぶ）
 export default function ForStoresPage() {
   return (
     <>
-      {/* Dynamic island: nonce は per-request で生成 */}
+      
       <Suspense fallback={null}>
         <ForStoresJsonLd />
       </Suspense>
@@ -95,11 +92,11 @@ export default function ForStoresPage() {
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
             <Link href="/" className="text-lg font-black text-gray-900">
-              mo<span className="text-orange-500">cal</span>
+              mo<span className="text-amber-600">cal</span>
             </Link>
             <Link
               href="mailto:support@mocal.jp"
-              className="text-sm font-semibold bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl transition-colors"
+              className="text-sm font-semibold bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl transition-colors"
             >
               お問い合わせ
             </Link>
@@ -110,12 +107,12 @@ export default function ForStoresPage() {
           {/* ヒーロー */}
           <section className="bg-white border-b border-gray-100">
             <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-6">
-              <p className="text-xs font-bold text-orange-500 uppercase tracking-widest">
+              <p className="text-xs font-bold text-amber-600 uppercase tracking-widest">
                 飲食店オーナー様へ
               </p>
               <h1 className="text-3xl sm:text-4xl font-black text-gray-900 leading-tight">
                 ポスレジ不要。<br />
-                <span className="text-orange-500">即日</span>からテイクアウト注文を受け付ける。
+                <span className="text-amber-600">即日</span>からテイクアウト注文を受け付ける。
               </h1>
               <p className="text-base text-gray-600 max-w-xl mx-auto leading-relaxed">
                 mocal はスマートフォンだけで注文管理ができるテイクアウト事前注文プラットフォームです。
@@ -124,13 +121,13 @@ export default function ForStoresPage() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link
                   href="mailto:support@mocal.jp?subject=mocal 導入のお問い合わせ"
-                  className="inline-flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm px-6 py-3 rounded-xl transition-colors"
+                  className="inline-flex items-center justify-center bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm px-6 py-3 rounded-xl transition-colors"
                 >
                   無料で相談する<span aria-hidden="true"> →</span>
                 </Link>
                 <Link
                   href="/onboarding"
-                  className="inline-flex items-center justify-center bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold text-sm px-6 py-3 rounded-xl transition-colors"
+                  className="inline-flex items-center justify-center bg-white border border-gray-200 hover:bg-stone-50 text-gray-700 font-semibold text-sm px-6 py-3 rounded-xl transition-colors"
                 >
                   今すぐ登録する
                 </Link>
@@ -152,7 +149,7 @@ export default function ForStoresPage() {
                   className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center"
                 >
                   <p className="text-xs font-semibold text-gray-500 mb-2">{item.label}</p>
-                  <p className="text-3xl font-black text-orange-500 mb-1">{item.value}</p>
+                  <p className="text-3xl font-black text-amber-600 mb-1">{item.value}</p>
                   <p className="text-xs text-gray-400">{item.note}</p>
                 </div>
               ))}
@@ -166,7 +163,7 @@ export default function ForStoresPage() {
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {FEATURES.map((f) => (
                   <div key={f.title} className="bg-stone-50 rounded-2xl p-5 space-y-2">
-                    <div className="w-1 h-5 bg-orange-400 rounded-full" aria-hidden="true" />
+                    <div className="w-1 h-5 bg-amber-400 rounded-full" aria-hidden="true" />
                     <h3 className="text-sm font-bold text-gray-900">{f.title}</h3>
                     <p className="text-xs text-gray-600 leading-relaxed">{f.body}</p>
                   </div>
@@ -184,7 +181,7 @@ export default function ForStoresPage() {
                   key={s.num}
                   className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-5 flex gap-5 items-start"
                 >
-                  <span className="text-2xl font-black text-orange-200 tabular-nums shrink-0">
+                  <span className="text-2xl font-black text-amber-200 tabular-nums shrink-0">
                     {s.num}
                   </span>
                   <div>
@@ -197,16 +194,16 @@ export default function ForStoresPage() {
           </section>
 
           {/* CTA */}
-          <section className="bg-orange-500">
+          <section className="bg-amber-600">
             <div className="max-w-3xl mx-auto px-4 py-12 text-center space-y-4">
               <h2 className="text-xl font-bold text-white">まずはお気軽にご相談ください</h2>
-              <p className="text-sm text-orange-100">
+              <p className="text-sm text-amber-100">
                 デモのご要望・ご質問はメールにてお受けしています。<br />
                 お返事まで 1〜2 営業日いただく場合があります。
               </p>
               <Link
                 href="mailto:support@mocal.jp?subject=mocal 導入のお問い合わせ"
-                className="inline-flex items-center gap-2 bg-white text-orange-500 font-bold text-sm px-6 py-3 rounded-xl hover:bg-orange-50 transition-colors"
+                className="inline-flex items-center gap-2 bg-white text-amber-600 font-bold text-sm px-6 py-3 rounded-xl hover:bg-amber-50 transition-colors"
               >
                 support@mocal.jp へメールする<span aria-hidden="true"> →</span>
               </Link>
@@ -234,11 +231,9 @@ export default function ForStoresPage() {
 }
 
 // ---------------------------------------------------------------------------
-// Dynamic island — headers() を使うため Suspense 内で動的実行される
+// JSON-LD 構造化データ（非実行スクリプト = CSP nonce 不要）
 // ---------------------------------------------------------------------------
-async function ForStoresJsonLd() {
-  const nonce = (await headers()).get('x-nonce') ?? undefined
-
+function ForStoresJsonLd() {
   // JSON-LD 構造化データ（SoftwareApplication + Offer）
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -274,7 +269,6 @@ async function ForStoresJsonLd() {
   return (
     <script
       type="application/ld+json"
-      nonce={nonce}
       dangerouslySetInnerHTML={{
         __html: JSON.stringify(jsonLd)
           .replace(/</g, '\\u003c')

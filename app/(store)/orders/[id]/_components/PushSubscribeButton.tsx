@@ -9,18 +9,19 @@ interface Props {
 
 export default function PushSubscribeButton({ orderId }: Props) {
   const lsKey = `mocal_order_push_${orderId}`
-  // SSR では window が未定義のため遅延初期化で判定
-  const [supported] = useState(() =>
-    typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window
-  )
-  // localStorage ヒントで初期 UI を先行表示（フラッシュ防止）
-  const [subscribed, setSubscribed] = useState(() =>
-    typeof window !== 'undefined' && localStorage.getItem(`mocal_order_push_${orderId}`) === '1'
-  )
+  // 初期値は常に false（サーバー/クライアントで一致させるため）
+  const [supported, setSupported] = useState(false)
+  const [subscribed, setSubscribed] = useState(false)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (supported) {
+    const isPushSupported = 'serviceWorker' in navigator && 'PushManager' in window
+    setSupported(isPushSupported)
+
+    if (isPushSupported) {
+      // localStorage ヒントで先行表示（SW 確認前のフラッシュ防止）
+      if (localStorage.getItem(lsKey) === '1') setSubscribed(true)
+
       navigator.serviceWorker
         .register('/sw.js', { scope: '/', updateViaCache: 'none' })
         .then((reg) => reg.pushManager.getSubscription())
@@ -32,8 +33,6 @@ export default function PushSubscribeButton({ orderId }: Props) {
         })
         .catch(() => {})
     }
-  // supported は mount 時に確定した静的値なので依存配列から除外可
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lsKey])
 
   if (!supported) return null
@@ -101,7 +100,7 @@ export default function PushSubscribeButton({ orderId }: Props) {
     <button
       onClick={subscribe}
       disabled={loading}
-      className="w-full rounded-xl border border-orange-300 text-orange-600 text-sm font-medium py-3 hover:bg-orange-50 transition-colors disabled:opacity-60"
+      className="w-full rounded-xl border border-amber-300 text-amber-700 text-sm font-medium py-3 hover:bg-amber-50 transition-colors disabled:opacity-60"
     >
       {loading ? '設定中...' : <><span aria-hidden="true">🔔</span>{' '}準備完了の通知を受け取る</>}
     </button>

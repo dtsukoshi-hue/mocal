@@ -28,54 +28,8 @@ async function revalidateStore(
 // ------------------------------------------------------------
 // 営業時間
 // ------------------------------------------------------------
-
-/** フォームから送られてきた 7 曜日分の営業時間を upsert する */
-export async function saveStoreHoursAction(
-  _prev: { error?: string; success?: boolean } | undefined,
-  formData: FormData
-): Promise<{ error?: string; success?: boolean }> {
-  const session = await verifyStoreSession()
-  const supabase = createServiceClient()
-
-  // formData 形式: is_closed_{dow}, open_{dow}, close_{dow}
-  type Row = {
-    store_id: string
-    day_of_week: 0 | 1 | 2 | 3 | 4 | 5 | 6
-    open_time: string
-    close_time: string
-    is_closed: boolean
-  }
-  const rows = (Array.from({ length: 7 }, (_, dow) => {
-    const isClosed = formData.get(`is_closed_${dow}`) === '1'
-    const openTime  = String(formData.get(`open_${dow}`)  ?? '10:00').slice(0, 5)
-    const closeTime = String(formData.get(`close_${dow}`) ?? '20:00').slice(0, 5)
-    // HH:MM 形式の簡易バリデーション
-    const timeRe = /^\d{2}:\d{2}$/
-    if (!timeRe.test(openTime) || !timeRe.test(closeTime)) return null
-    return {
-      store_id: session.storeId,
-      day_of_week: dow as 0 | 1 | 2 | 3 | 4 | 5 | 6,
-      open_time: openTime,
-      close_time: closeTime,
-      is_closed: isClosed,
-    }
-  }).filter((r): r is Row => r !== null))
-
-  if (rows.length !== 7) return { error: '時間の形式が不正です（HH:MM で入力してください）。' }
-
-  const { error } = await supabase
-    .from('store_hours')
-    .upsert(rows, { onConflict: 'store_id,day_of_week' })
-
-  if (error) {
-    console.error('[store/hours]', error)
-    return { error: '営業時間の保存に失敗しました。' }
-  }
-
-  revalidatePath('/admin/hours')
-  await revalidateStore(supabase, session.storeId)
-  return { success: true }
-}
+// saveStoreHoursAction は HoursPanel への移行に伴い削除。
+// 営業時間の保存は /api/admin/hours の PUT エンドポイントで行う。
 
 const VALID_WAIT_MINUTES = [10, 15, 20, 30, 40, 60] as const
 
@@ -166,6 +120,50 @@ export async function toggleStoreOpenAction(isOpen: boolean): Promise<{ error: s
   revalidatePath('/admin/settings')
   revalidatePath('/admin/dashboard')
   // 受付状態変更は store_cache の getCachedStore をパージ（is_open フィールドを含むため）
+  await revalidateStore(supabase, session.storeId)
+}
+
+/** ヘッダー右上の StoreToggle 専用：受取時間（wait_minutes）のみを更新する */
+export async function updateWaitMinutesAction(
+  waitMinutes: number,
+): Promise<{ error: string } | undefined> {
+  const session = await verifyStoreSession()
+  const supabase = createServiceClient()
+
+  if (!VALID_WAIT_MINUTES.includes(waitMinutes as typeof VALID_WAIT_MINUTES[number])) {
+    return { error: '受取時間の値が不正です。' }
+  }
+
+  const { error } = await supabase
+    .from('stores')
+    .update({ wait_minutes: waitMinutes as WaitMinutes })
+    .eq('id', session.storeId)
+
+  if (error) {
+    console.error('[store/wait]', error)
+    return { error: '受取時間の更新に失敗しました。' }
+  }
+
+  revalidatePath('/admin/dashboard')
+  await revalidateStore(supabase, session.storeId)
+}
+
+/** ヘッダー右上の StoreToggle 専用：手動オーバーライドを解除して自動制御へ戻す */
+export async function clearStoreOverrideAction(): Promise<{ error: string } | undefined> {
+  const session = await verifyStoreSession()
+  const supabase = createServiceClient()
+
+  const { error } = await supabase
+    .from('stores')
+    .update({ manual_override_until: null })
+    .eq('id', session.storeId)
+
+  if (error) {
+    console.error('[store/override-clear]', error)
+    return { error: '解除に失敗しました。' }
+  }
+
+  revalidatePath('/admin/dashboard')
   await revalidateStore(supabase, session.storeId)
 }
 

@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation'
-import { headers } from 'next/headers'
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import {
@@ -66,12 +65,12 @@ export default async function StorePage({ params }: Props) {
 
   return (
     <>
-      {/* Dynamic island: headers() を読む → per-request で実行（nonce が必要） */}
+      
       <Suspense fallback={null}>
         <StoreJsonLd store={store} slug={slug} />
       </Suspense>
       {/* Cached island: RSC ペイロードを store:storeId タグでキャッシュ */}
-      <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
+      <Suspense fallback={<div className="min-h-screen bg-stone-50" />}>
         <CachedMenuContent store={store} />
       </Suspense>
     </>
@@ -79,7 +78,7 @@ export default async function StorePage({ params }: Props) {
 }
 
 // ---------------------------------------------------------------------------
-// Dynamic island — headers() を使うため Suspense 内で動的実行される
+// JSON-LD 構造化データ（非実行スクリプト = CSP nonce 不要）
 // ---------------------------------------------------------------------------
 async function StoreJsonLd({
   store,
@@ -88,7 +87,6 @@ async function StoreJsonLd({
   store: NonNullable<Awaited<ReturnType<typeof getCachedStore>>>
   slug: string
 }) {
-  const nonce = (await headers()).get('x-nonce') ?? undefined
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mocal.jp'
 
   // JSON-LD 構造化データ（FoodEstablishment スキーマ）
@@ -118,7 +116,6 @@ async function StoreJsonLd({
   return (
     <script
       type="application/ld+json"
-      nonce={nonce}
       dangerouslySetInnerHTML={{
         // JSON.stringify は '<' '>' '&' を素通しにするため HTML パーサーが
         // </script> タグと誤認しないよう Unicode エスケープする

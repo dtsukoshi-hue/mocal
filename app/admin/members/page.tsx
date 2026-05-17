@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import { verifyStoreSession } from '@/lib/dal'
 import { createServiceClient } from '@/lib/supabase-server'
-import Link from 'next/link'
 import InviteStaffForm from './_components/InviteStaffForm'
 import RemoveMemberButton from './_components/RemoveMemberButton'
+import AdminNav from '../_components/AdminNav'
 
 export const metadata: Metadata = { title: 'スタッフ管理 | mocal' }
 
@@ -30,20 +30,13 @@ export default async function MembersPage() {
   const isOwner = session.role === 'owner'
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
-          <Link href="/admin/dashboard" className="text-gray-400 hover:text-gray-600 text-sm">
-            <span aria-hidden="true">← </span>注文管理
-          </Link>
-          <h1 className="text-lg font-bold text-gray-900">スタッフ管理</h1>
-        </div>
-      </header>
+    <div className="min-h-screen bg-stone-50">
+      <AdminNav active="staff" role={session.role as 'owner' | 'staff'} title="スタッフ管理" />
 
       <main id="main-content" className="max-w-2xl mx-auto px-4 py-6 space-y-5">
         {isOwner && <InviteStaffForm />}
 
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <ul className="divide-y">
             {(members ?? []).map(member => (
               <li key={member.id} className="flex items-center justify-between px-5 py-4">

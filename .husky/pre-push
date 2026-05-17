@@ -1,0 +1,58 @@
+#!/usr/bin/env sh
+# 二度と worktree↔main 並走事故を起こさないための push-time ガード
+
+set -e
+
+# stdin で push 対象 ref が来る (local_ref local_sha remote_ref remote_sha)
+# 全部 refs/tags/ なら tag push のみなのでスキップ
+HAS_BRANCH_PUSH=0
+while read local_ref local_sha remote_ref remote_sha; do
+  case "$remote_ref" in
+    refs/tags/*) ;;
+    refs/heads/*) HAS_BRANCH_PUSH=1 ;;
+    *) HAS_BRANCH_PUSH=1 ;;
+  esac
+done
+
+if [ "$HAS_BRANCH_PUSH" = "0" ]; then
+  echo "🏷  tag push のみ → pre-push チェックをスキップします。"
+  exit 0
+fi
+
+CURRENT_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "DETACHED")
+
+# 1) DETACHED HEAD からの push は許可しない
+if [ "$CURRENT_BRANCH" = "DETACHED" ]; then
+  echo "❌ DETACHED HEAD からの push は禁止です。必ず main で作業してください。"
+  exit 1
+fi
+
+# 2) main 以外への direct push を警告
+if [ "$CURRENT_BRANCH" != "main" ]; then
+  echo "⚠️  ブランチ '$CURRENT_BRANCH' を push しようとしています。"
+  echo "    一本化方針により、原則として main で直接作業してください。"
+  echo "    どうしても feature ブランチが必要なら GitHub で PR を作成してください。"
+  # SKIP_PREPUSH=1 で非対話バイパス
+  if [ "$SKIP_PREPUSH" = "1" ]; then
+    echo "    SKIP_PREPUSH=1 のため警告のみで続行します。"
+  elif exec < /dev/tty 2>/dev/null; then
+    printf "    続行しますか？ [y/N] "
+    read REPLY
+    case "$REPLY" in
+      y|Y) ;;
+      *) echo "中止しました。"; exit 1 ;;
+    esac
+  else
+    echo "    非対話環境では SKIP_PREPUSH=1 を付けて push してください。"
+    exit 1
+  fi
+fi
+
+# 3) typecheck + test を強制
+echo "→ typecheck..."
+npx tsc --noEmit || { echo "❌ TypeScript エラーが残っています。push を中止します。"; exit 1; }
+
+echo "→ vitest..."
+npx vitest run --reporter=dot --silent || { echo "❌ テストが失敗しました。push を中止します。"; exit 1; }
+
+echo "✅ pre-push チェック通過。push を続行します。"

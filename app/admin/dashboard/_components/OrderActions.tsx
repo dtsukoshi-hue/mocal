@@ -70,7 +70,7 @@ export default function OrderActions({ orderId, status, defaultWaitMinutes = 20 
           <button
             disabled={disabled}
             onClick={() => setConfirmingCancel(true)}
-            className="text-sm font-medium bg-white hover:bg-gray-50 text-red-600 border border-red-200 rounded-lg px-4 py-1.5 disabled:opacity-50"
+            className="text-sm font-medium bg-white hover:bg-stone-50 text-red-600 border border-red-200 rounded-lg px-4 py-1.5 disabled:opacity-50"
           >
             キャンセル
           </button>
@@ -96,7 +96,7 @@ export default function OrderActions({ orderId, status, defaultWaitMinutes = 20 
           <button
             disabled={disabled}
             onClick={() => setConfirmingCancel(true)}
-            className="text-sm font-medium bg-white hover:bg-gray-50 text-red-600 border border-red-200 rounded-lg px-4 py-1.5 disabled:opacity-50"
+            className="text-sm font-medium bg-white hover:bg-stone-50 text-red-600 border border-red-200 rounded-lg px-4 py-1.5 disabled:opacity-50"
           >
             キャンセル
           </button>
@@ -115,7 +115,7 @@ export default function OrderActions({ orderId, status, defaultWaitMinutes = 20 
           <button
             disabled={disabled}
             onClick={() => setConfirmingCancel(true)}
-            className="text-sm font-medium bg-white hover:bg-gray-50 text-red-600 border border-red-200 rounded-lg px-4 py-1.5 disabled:opacity-50"
+            className="text-sm font-medium bg-white hover:bg-stone-50 text-red-600 border border-red-200 rounded-lg px-4 py-1.5 disabled:opacity-50"
           >
             キャンセル
           </button>
@@ -156,7 +156,7 @@ export default function OrderActions({ orderId, status, defaultWaitMinutes = 20 
           <button
             disabled={disabled}
             onClick={() => patch({ status: 'no_show' })}
-            className="text-sm font-medium bg-white hover:bg-gray-50 text-gray-600 border border-gray-200 rounded-lg px-4 py-1.5 disabled:opacity-50"
+            className="text-sm font-medium bg-white hover:bg-stone-50 text-gray-600 border border-gray-200 rounded-lg px-4 py-1.5 disabled:opacity-50"
           >
             ノーショウ
           </button>

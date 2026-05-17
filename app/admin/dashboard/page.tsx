@@ -1,10 +1,9 @@
 import type { Metadata } from 'next'
 import { verifyStoreSession } from '@/lib/dal'
 import { createSupabaseServerClient } from '@/lib/supabase-ssr'
-import { logoutAction } from '@/app/actions/auth'
-import Link from 'next/link'
+import AdminNav from '../_components/AdminNav'
 import StorePushSubscribe from './_components/StorePushSubscribe'
-import StoreOpenToggle from '../settings/_components/StoreOpenToggle'
+import StoreToggle from './_components/StoreToggle'
 import OrderActions from './_components/OrderActions'
 import RealtimeDashboard from './_components/RealtimeDashboard'
 import ElapsedTime from './_components/ElapsedTime'
@@ -28,7 +27,7 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     supabase
       .from('stores')
-      .select('is_open, wait_minutes')
+      .select('is_open, wait_minutes, manual_override_until')
       .eq('id', session.storeId)
       .single(),
     supabase
@@ -88,15 +87,16 @@ export default async function DashboardPage() {
     paid:      'bg-yellow-100 text-yellow-800',
     accepted:  'bg-blue-100 text-blue-800',
     preparing: 'bg-purple-100 text-purple-800',
-    ready:     'bg-green-100 text-green-800',
+    ready:     'bg-emerald-100 text-emerald-800',
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
-          <div className="flex items-center gap-2 shrink-0">
-            <h1 className="text-lg font-bold text-gray-900">注文管理</h1>
+    <div className="min-h-screen bg-stone-50">
+      <AdminNav
+        active="orders"
+        role={session.role as 'owner' | 'staff'}
+        rightSlot={
+          <>
             {paidCount > 0 && (
               <span
                 className="bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse"
@@ -105,40 +105,30 @@ export default async function DashboardPage() {
                 {paidCount}
               </span>
             )}
-          </div>
-          {/* モバイルでも横スクロールで全リンクにアクセスできるようにする */}
-          <nav aria-label="管理メニュー" className="flex items-center gap-3 overflow-x-auto scrollbar-none flex-1 min-w-0">
-            <Link href="/admin/history" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">履歴</Link>
-            <Link href="/admin/reports" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">レポート</Link>
-            <Link href="/admin/menu" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">メニュー</Link>
-            <Link href="/admin/hours" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">営業時間</Link>
-            <Link href="/admin/members" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">スタッフ</Link>
-            <Link href="/admin/settings" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">設定</Link>
             <StorePushSubscribe storeId={session.storeId} />
-            <form action={logoutAction}>
-              <button type="submit" className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">
-                ログアウト
-              </button>
-            </form>
-          </nav>
-        </div>
-      </header>
+            <StoreToggle
+              isOpen={storeStatus?.is_open ?? false}
+              waitMinutes={storeStatus?.wait_minutes ?? 20}
+              overrideUntil={storeStatus?.manual_override_until ?? null}
+            />
+          </>
+        }
+      />
 
       <RealtimeDashboard storeId={session.storeId} initialPaidCount={paidCount} />
 
-      {/* 今日の KPI + 受付トグル */}
-      <div className="max-w-4xl mx-auto px-4 pt-6 space-y-3">
+      {/* 今日の KPI（受付状態はヘッダー右上の StoreToggle に集約） */}
+      <div className="max-w-4xl mx-auto px-4 pt-6">
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white rounded-xl shadow-sm px-5 py-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-4">
             <p className="text-xs text-gray-400 mb-1" aria-hidden="true">本日の売上</p>
             <p className="text-2xl font-bold text-gray-900" aria-label={`本日の売上 ${todaySales.toLocaleString()}円`}>¥{todaySales.toLocaleString()}</p>
           </div>
-          <div className="bg-white rounded-xl shadow-sm px-5 py-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-4">
             <p className="text-xs text-gray-400 mb-1" aria-hidden="true">本日の注文数</p>
             <p className="text-2xl font-bold text-gray-900" aria-label={`本日の注文数 ${todayCount}件`}>{todayCount}<span className="text-sm font-normal text-gray-400 ml-1" aria-hidden="true">件</span></p>
           </div>
         </div>
-        <StoreOpenToggle isOpen={storeStatus?.is_open ?? false} />
       </div>
 
       <main id="main-content" className="max-w-4xl mx-auto px-4 py-4 space-y-4">
@@ -151,7 +141,7 @@ export default async function DashboardPage() {
         {sortedOrders.map(order => (
           <div
             key={order.id}
-            className={`bg-white rounded-xl shadow-sm p-5 space-y-3 ${
+            className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-3 ${
               order.status === 'paid' ? 'ring-2 ring-yellow-400' : ''
             }`}
           >

@@ -46,8 +46,28 @@ export function isValidWaitMinutes(value: number): value is WaitMinutes {
 // UUID バリデーション
 // ---------------------------------------------------------------------------
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+export const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export function isUuid(value: unknown): value is string {
-  return typeof value === 'string' && UUID_RE.test(value)
+  return typeof value === 'string' && UUID_REGEX.test(value)
+}
+
+/**
+ * /api/orders/lookup で使う: localStorage 由来の id リストを正規化
+ *  - UUID のみ通す
+ *  - 重複除去
+ *  - max 件を超えたら 'too_many' を返す
+ */
+export type NormalizeLookupResult =
+  | { ok: true; ids: string[] }
+  | { ok: false; reason: 'invalid' | 'too_many' }
+
+export function normalizeLookupIds(input: unknown, max: number): NormalizeLookupResult {
+  if (!Array.isArray(input)) return { ok: false, reason: 'invalid' }
+  if (input.length > max) return { ok: false, reason: 'too_many' }
+  const uniq = new Set<string>()
+  for (const v of input) {
+    if (typeof v === 'string' && UUID_REGEX.test(v)) uniq.add(v)
+  }
+  return { ok: true, ids: Array.from(uniq) }
 }

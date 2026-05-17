@@ -1,13 +1,13 @@
 export default function HoursLoading() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-stone-50">
       <header className="bg-white border-b">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="h-6 bg-gray-200 rounded w-32 animate-pulse" />
         </div>
       </header>
       <main id="main-content" aria-busy="true" aria-label="営業時間を読み込み中" className="max-w-2xl mx-auto px-4 py-6">
-        <div className="bg-white rounded-xl shadow-sm p-5 space-y-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
           <div className="h-4 bg-gray-200 rounded w-40 animate-pulse" />
           <div className="space-y-3">
             {Array.from({ length: 7 }).map((_, i) => (

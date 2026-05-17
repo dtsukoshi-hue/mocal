@@ -47,7 +47,7 @@ export default function PaymentForm({ orderId, orderNumber, totalAmount }: Props
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="bg-white rounded-xl shadow-sm p-5">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
         <p className="text-xs text-gray-500 mb-4">
           注文番号 #{orderNumber} ・ ¥{totalAmount.toLocaleString()}
         </p>
@@ -67,7 +67,7 @@ export default function PaymentForm({ orderId, orderNumber, totalAmount }: Props
       <button
         type="submit"
         disabled={!stripe || !elements || isLoading}
-        className="w-full rounded-2xl bg-orange-500 text-white font-bold py-4 shadow-lg disabled:opacity-60 hover:bg-orange-600 transition-colors"
+        className="w-full rounded-2xl bg-amber-600 text-white font-bold py-4 shadow-lg disabled:opacity-60 hover:bg-amber-700 transition-colors"
       >
         {isLoading ? '処理中...' : `¥${totalAmount.toLocaleString()} を支払う`}
       </button>

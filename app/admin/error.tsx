@@ -14,7 +14,7 @@ export default function AdminError({ error, reset }: Props) {
   }, [error])
 
   return (
-    <main id="main-content" className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <main id="main-content" className="min-h-screen bg-stone-50 flex items-center justify-center px-4">
       <div className="text-center space-y-4">
         <p className="text-5xl font-bold text-gray-200" aria-hidden="true">エラー</p>
         <h1 className="text-xl font-semibold text-gray-700">問題が発生しました</h1>
@@ -24,7 +24,7 @@ export default function AdminError({ error, reset }: Props) {
         <div className="flex flex-col items-center gap-2 mt-4">
           <button
             onClick={reset}
-            className="text-sm bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded-lg"
+            className="text-sm bg-amber-600 hover:bg-amber-700 text-white px-5 py-2 rounded-lg"
           >
             再試行
           </button>

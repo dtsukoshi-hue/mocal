@@ -64,9 +64,9 @@ function OrderProgressBar({ status }: { status: string }) {
                   aria-hidden="true"
                   className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
                     isDone
-                      ? 'bg-orange-500 text-white'
+                      ? 'bg-amber-600 text-white'
                       : isCurrent
-                        ? 'bg-orange-500 text-white ring-2 ring-orange-200'
+                        ? 'bg-amber-600 text-white ring-2 ring-amber-200'
                         : 'bg-gray-200 text-gray-400'
                   }`}
                 >
@@ -75,7 +75,7 @@ function OrderProgressBar({ status }: { status: string }) {
                 <span
                   aria-hidden="true"
                   className={`mt-1 text-center leading-tight whitespace-nowrap text-gray-500 transition-colors ${
-                    isCurrent ? 'text-orange-600 font-semibold' : isDone ? 'text-gray-400' : 'text-gray-300'
+                    isCurrent ? 'text-amber-700 font-semibold' : isDone ? 'text-gray-400' : 'text-gray-300'
                   }`}
                   style={{ fontSize: '9px' }}
                 >
@@ -85,7 +85,7 @@ function OrderProgressBar({ status }: { status: string }) {
               {!isLast && (
                 <div
                   className={`h-0.5 flex-1 mx-0.5 mb-4 transition-colors ${
-                    i < currentIdx ? 'bg-orange-400' : 'bg-gray-200'
+                    i < currentIdx ? 'bg-amber-400' : 'bg-gray-200'
                   }`}
                 />
               )}
@@ -190,7 +190,7 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
   const isTerminal = ['completed', 'cancelled', 'refunded', 'no_show'].includes(order.status)
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-stone-50 flex flex-col">
       <header className="bg-white border-b">
         <div className="max-w-lg mx-auto px-4 py-4">
           <p className="text-sm text-gray-500">{order.stores?.name}</p>
@@ -222,7 +222,7 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
           )}
 
           {order.estimated_ready_at && ['accepted', 'preparing'].includes(order.status) && (
-            <div className="mt-4 inline-flex items-center gap-1.5 bg-orange-50 text-orange-700 text-sm font-semibold px-3 py-1.5 rounded-full">
+            <div className="mt-4 inline-flex items-center gap-1.5 bg-amber-50 text-amber-800 text-sm font-semibold px-3 py-1.5 rounded-full">
               <span aria-hidden="true">⏱</span> 受取予定：<time dateTime={order.estimated_ready_at}>{new Date(order.estimated_ready_at).toLocaleTimeString('ja-JP', {
                 hour: '2-digit',
                 minute: '2-digit',
@@ -248,14 +248,14 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
         {['completed', 'refunded'].includes(order.status) && (
           <Link
             href={`/orders/${order.id}/receipt`}
-            className="flex items-center justify-center gap-2 w-full rounded-xl border border-gray-200 text-gray-600 text-sm font-medium py-3 hover:bg-gray-50 transition-colors"
+            className="flex items-center justify-center gap-2 w-full rounded-xl border border-gray-200 text-gray-600 text-sm font-medium py-3 hover:bg-stone-50 transition-colors"
           >
             <span aria-hidden="true">🧾</span> 領収書を表示する
           </Link>
         )}
 
         {/* 注文内容 */}
-        <div className="bg-white rounded-xl shadow-sm p-5 space-y-3">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-3">
           <h3 className="text-sm font-semibold text-gray-700">注文内容</h3>
           <ul className="divide-y text-sm">
             {order.order_items.map((item, i) => (

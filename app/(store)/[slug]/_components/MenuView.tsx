@@ -7,7 +7,7 @@ import type { Database, MenuItem, Store, StoreHour } from '@/lib/database.types'
 import Cart from './Cart'
 import StoreStatusBanner from './StoreStatusBanner'
 
-type HourRow = Pick<StoreHour, 'day_of_week' | 'open_time' | 'close_time' | 'is_closed'>
+type HourRow = Pick<StoreHour, 'weekday' | 'open_time' | 'close_time' | 'is_open' | 'last_order'>
 
 interface Props {
   store: Pick<Store, 'id' | 'name' | 'description' | 'is_open' | 'wait_minutes' | 'logo_url' | 'cover_url'>
@@ -132,7 +132,7 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32">
+    <div className="min-h-screen bg-stone-50 pb-32">
       {/* カバー画像（あれば） */}
       {store.cover_url && (
         <div className="relative w-full h-36 sm:h-48">
@@ -179,7 +179,7 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
                   aria-pressed={activeCategory === category}
                   className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                     activeCategory === category
-                      ? 'bg-orange-500 text-white'
+                      ? 'bg-amber-600 text-white'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
@@ -202,7 +202,7 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
 
         {/* 営業時間（設定がある場合のみ表示） */}
         {storeHours.length > 0 && (
-          <details className="bg-white rounded-xl shadow-sm group">
+          <details className="bg-white rounded-2xl shadow-sm border border-gray-100 group">
             <summary className="px-4 py-3 text-sm font-medium text-gray-700 cursor-pointer select-none list-none flex items-center justify-between">
               <span>営業時間</span>
               <svg
@@ -218,11 +218,14 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
             </summary>
             <div className="border-t border-gray-100 px-4 py-3 space-y-1">
               {storeHours.map(h => (
-                <div key={h.day_of_week} className="flex justify-between text-xs text-gray-600">
-                  <span className="w-5 font-medium">{DAY_LABELS[h.day_of_week]}</span>
-                  {h.is_closed
+                <div key={h.weekday} className="flex justify-between text-xs text-gray-600">
+                  <span className="w-5 font-medium">{DAY_LABELS[h.weekday]}</span>
+                  {!h.is_open || !h.open_time || !h.close_time
                     ? <span className="text-gray-400">定休日</span>
-                    : <span>{h.open_time.slice(0, 5)} 〜 {h.close_time.slice(0, 5)}</span>}
+                    : <span>
+                        {h.open_time.slice(0, 5)} 〜 {h.close_time.slice(0, 5)}
+                        {h.last_order ? `（LO ${h.last_order.slice(0, 5)}）` : ''}
+                      </span>}
                 </div>
               ))}
             </div>
@@ -254,7 +257,7 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
                     key={item.id}
                     onClick={() => isOpen && addToCart(item)}
                     disabled={!isOpen}
-                    className="w-full flex items-center justify-between bg-white rounded-xl px-4 py-3 shadow-sm text-left disabled:opacity-50 disabled:cursor-not-allowed hover:bg-orange-50 transition-colors"
+                    className="w-full flex items-center justify-between bg-white rounded-xl px-4 py-3 shadow-sm text-left disabled:opacity-50 disabled:cursor-not-allowed hover:bg-amber-50 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       {item.image_url ? (
@@ -282,7 +285,7 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
                     <div className="flex items-center gap-2 shrink-0 ml-2">
                       {cart.find(c => c.menuItemId === item.id) && (
                         <span
-                          className="bg-orange-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center"
+                          className="bg-amber-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center"
                           aria-label={`カート内${cart.find(c => c.menuItemId === item.id)?.qty}点`}
                         >
                           <span aria-hidden="true">{cart.find(c => c.menuItemId === item.id)?.qty}</span>
@@ -312,9 +315,9 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
               ref={cartButtonRef}
               onClick={() => setShowCart(true)}
               aria-label={`カートを確認する - ${totalItems}点, ¥${totalAmount.toLocaleString()}`}
-              className="w-full flex items-center justify-between bg-orange-500 text-white rounded-2xl px-5 py-4 shadow-lg font-semibold"
+              className="w-full flex items-center justify-between bg-amber-600 text-white rounded-2xl px-5 py-4 shadow-lg font-semibold"
             >
-              <span className="bg-orange-400 rounded-full w-6 h-6 flex items-center justify-center text-sm">
+              <span className="bg-amber-400 rounded-full w-6 h-6 flex items-center justify-center text-sm">
                 {totalItems}
               </span>
               <span>カートを確認する</span>

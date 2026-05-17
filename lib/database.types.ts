@@ -27,16 +27,62 @@ export type StoreRole = 'owner' | 'staff'
 
 export type WaitMinutes = 10 | 15 | 20 | 30 | 40 | 60
 
-// day_of_week: 0=日, 1=月, 2=火, 3=水, 4=木, 5=金, 6=土（JS の getDay() に合わせる）
+// weekday: 0=日, 1=月, 2=火, 3=水, 4=木, 5=金, 6=土（JS の getDay() に合わせる）
 export type StoreHour = {
   id: string
   store_id: string
-  day_of_week: 0 | 1 | 2 | 3 | 4 | 5 | 6
-  open_time: string   // "HH:MM"
-  close_time: string  // "HH:MM"
-  is_closed: boolean
+  weekday: 0 | 1 | 2 | 3 | 4 | 5 | 6
+  is_open: boolean
+  open_time: string | null   // "HH:MM" 定休日 (is_open=false) のとき null 可
+  close_time: string | null
+  last_order: string | null
   created_at: string
   updated_at: string
+}
+
+// ------------------------------------------------------------
+// コンボ（お得セット）
+// ------------------------------------------------------------
+
+export type ComboOffer = {
+  id: string
+  store_id: string
+  name: string
+  description: string | null
+  /** セット価格 = 含まれるアイテムの合計 + price_delta */
+  price_delta: number
+  emoji: string | null
+  is_available: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export type ComboOfferItem = {
+  id: string
+  combo_id: string
+  menu_item_id: string
+  qty: number
+}
+
+export type ComboOfferInsert = {
+  id?: string
+  store_id: string
+  name: string
+  description?: string | null
+  price_delta?: number
+  emoji?: string | null
+  is_available?: boolean
+  sort_order?: number
+  created_at?: string
+  updated_at?: string
+}
+
+export type ComboOfferItemInsert = {
+  id?: string
+  combo_id: string
+  menu_item_id: string
+  qty?: number
 }
 
 // ------------------------------------------------------------
@@ -211,7 +257,7 @@ export type Database = {
       store_hours: {
         Row: StoreHour
         Insert: Omit<StoreHour, 'id' | 'created_at' | 'updated_at'> & { id?: string; created_at?: string; updated_at?: string }
-        Update: Partial<Omit<StoreHour, 'id' | 'store_id' | 'day_of_week' | 'created_at' | 'updated_at'>>
+        Update: Partial<Omit<StoreHour, 'id' | 'store_id' | 'weekday' | 'created_at' | 'updated_at'>>
         Relationships: [
           {
             foreignKeyName: 'store_hours_store_id_fkey'
@@ -354,6 +400,41 @@ export type Database = {
             columns: ['order_id']
             isOneToOne: false
             referencedRelation: 'orders'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      combo_offers: {
+        Row: ComboOffer
+        Insert: ComboOfferInsert
+        Update: Partial<ComboOfferInsert>
+        Relationships: [
+          {
+            foreignKeyName: 'combo_offers_store_id_fkey'
+            columns: ['store_id']
+            isOneToOne: false
+            referencedRelation: 'stores'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      combo_offer_items: {
+        Row: ComboOfferItem
+        Insert: ComboOfferItemInsert
+        Update: Partial<ComboOfferItemInsert>
+        Relationships: [
+          {
+            foreignKeyName: 'combo_offer_items_combo_id_fkey'
+            columns: ['combo_id']
+            isOneToOne: false
+            referencedRelation: 'combo_offers'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'combo_offer_items_menu_item_id_fkey'
+            columns: ['menu_item_id']
+            isOneToOne: false
+            referencedRelation: 'menu_items'
             referencedColumns: ['id']
           }
         ]
