@@ -40,3 +40,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 tests/e2e/.test-store.json
+.env*.local
