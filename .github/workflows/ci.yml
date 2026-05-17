@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install
+        run: npm ci
+      - name: Type check
+        run: npx tsc --noEmit
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
+      - name: Test
+        run: npx vitest run --reporter=dot
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://ci.example.com
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-anon
+          SUPABASE_SERVICE_ROLE_KEY: ci-service
+          NEXT_PUBLIC_VAPID_PUBLIC_KEY: ci-vapid-public
+          VAPID_PRIVATE_KEY: ci-vapid-private
+          VAPID_SUBJECT: mailto:ci@example.com
+          STRIPE_SECRET_KEY: sk_test_ci
+          STRIPE_WEBHOOK_SECRET: whsec_ci
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_ci
+          NEXT_PUBLIC_APP_URL: https://mocal-iota.vercel.app
+          CRON_SECRET: ci-cron
