@@ -41,8 +41,21 @@ git diff main...HEAD --stat
 # 2) DB と types の整合チェック
 npm run db:check
 
-# 3) spec を読む（このファイル AGENTS.md を最後まで。CLAUDE.md は `@AGENTS.md` への参照のみ）
+# 3) spec を読む
+#    - このファイル AGENTS.md（運用ルール）
+#    - docs/workflow.md（アーキテクチャ全体図）
+#    - docs/backlog.md（残作業・進捗管理）
+#    CLAUDE.md は `@AGENTS.md` への参照のみ。
 ```
+
+### バックログ更新ルール（厳守）
+
+`docs/backlog.md` が残作業の単一の真実。**会話やメモで残作業を管理しない**（ドリフト・取りこぼし防止）。
+
+- 着手するときに `[ ]` → `[~]` に変更し commit/push（並行作業の見える化）
+- 完了したら実装と同じ commit で `[~]` → `[x]` に変更
+- 新規発見の作業は**着手前**に `docs/backlog.md` へ追加してから実装
+- 廃案は `[-]` + 理由を1行付記（削除はしない、履歴保全）
 
 ### ブランチ運用
 
