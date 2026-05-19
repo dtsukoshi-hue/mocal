@@ -22,21 +22,26 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | 6 | mocal-iota.vercel.app/admin/login がずっと壊れていた | main のコードが実 DB と整合せず deploy されたまま放置 |
 | 7 | 「正常」と何度も誤判定 | spec と本流との比較を最初にやらなかった |
 | 8 | 顧客 push / cron / webhook の動作未確認のまま deploy | E2E が回っておらず、エンドポイントを手動疎通もしていなかった |
+| 9 | ローカル main を `git reset --hard <タグ>` で旧 main backup へ巻き戻し、origin/main を pull せず開発を 175 commit 継続。Initial commit でしか origin と繋がらない並走状態が 24h+（2026-05-18〜19） | reset 後と各セッション冒頭で `git fetch && git log HEAD..origin/main` を確認せず開発続行。origin/main にある再発防止策（.husky・scripts・AGENTS.md 拡張）が手元から消えたまま気付かなかった |
 
 ## ルール（厳守）
 
 ### 作業開始時に必ずやること
 
 ```bash
-# 1) main から離れていないか確認
+# 0) ローカルと origin/main の同期確認（最重要・最初に必ず）
+git fetch origin
+git log HEAD..origin/main --oneline   # 何か出たら origin が先行 → pull してから作業
+git log origin/main..HEAD --oneline   # 何か出たら自分が先行 → push する commit がある
+
+# 1) main から離れていないか確認（worktree / 別 branch 利用時）
 git log main..HEAD --oneline
 git diff main...HEAD --stat
 
 # 2) DB と types の整合チェック
 npm run db:check
 
-# 3) spec を読む（特に §12 UI 規約）
-cat /Users/daisuke/mocal/CLAUDE.md | head -350
+# 3) spec を読む（このファイル AGENTS.md を最後まで。CLAUDE.md は `@AGENTS.md` への参照のみ）
 ```
 
 ### ブランチ運用
@@ -62,8 +67,28 @@ cat /Users/daisuke/mocal/CLAUDE.md | head -350
 `.husky/pre-push` で以下を自動実行:
 - DETACHED HEAD 拒否
 - main 以外への direct push は警告（PR 必須）
+- `.next/types/` が無ければ `npx next build --no-lint` で typegen
 - `npx tsc --noEmit` 必須
 - `npx vitest run` 必須
+
+### ローカル `.env.local` の復旧手順
+
+`.env.local` が消失/破損したときの復旧。**Vercel の Sensitive 環境変数は `vercel env pull` では空文字で返ってくる**ため、Dashboard から手動コピーが必要。
+
+```
+1. Vercel Dashboard を開く: https://vercel.com/dtsukoshi-hues-projects/mocal/settings/environment-variables
+2. .env.local.example を参照し、必要な変数を1つずつ「Show value」して値をコピー
+3. .env.local に貼り付け（書式: KEY="value"。クォートあり推奨、Vercel CLI 形式と一致）
+4. 最後に動作確認:
+   npx tsc --noEmit   # 型エラーゼロ
+   npx vitest run     # 全テストパス
+   npm run db:check   # 本番 DB と types の整合
+```
+
+**注意**:
+- `vercel env pull .env.local --environment=production` で取得可能なのは VERCEL_OIDC_TOKEN 等の非 Sensitive のみ。必須14変数は値が空文字で来る。
+- Sensitive 解除すれば pull できるが Dashboard 上で平文表示になり、漏洩リスク増。原則「美しい状態」かつセキュア。Sensitive 維持・手動コピー運用とする。
+- `.env.local` は `.gitignore` 済み。コミット禁止。
 
 ### CI（自動化済み）
 
