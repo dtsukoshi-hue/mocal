@@ -41,8 +41,8 @@
   「販売業者: Entrust合同会社（設立準備中）」「メールアドレス: support@mocal.jp（準備中）」を実値に。15分
 - [ ] **2. cron 外部スケジューラを実稼働化**  
   `vercel.json` の `crons` は空。cron-job.org 等から `Authorization: Bearer ${CRON_SECRET}` で `/api/cron/store-hours`（5分）と `/api/cron/no-show`（1分）を叩く。1〜2時間
-- [ ] **3. `CRON_SECRET` を Vercel に登録**  
-  現在 Vercel env に無い。生成して production/preview に追加 + スケジューラのヘッダー設定。30分
+- [~] **3. `CRON_SECRET` を Vercel に登録**  
+  現在 Vercel env に無い。生成して production/preview に追加 + スケジューラのヘッダー設定。30分。⚠️ 未設定中は `/api/cron/*` が公開状態（`if (secret)` 条件で auth スキップ）でセキュリティリスクあり、優先度を実質 🔴 最上位扱い。
 - [ ] **4. 新規店舗 onboarding の Stripe Connect 動作確認**  
   `STRIPE_CLIENT_ID` が Vercel env に無く `/api/onboarding/stripe/connect` が 500 になる。新規店舗追加時に必須。1時間
 
@@ -58,6 +58,8 @@
   `.env.local.example` を一次情報にして `README.md` はそこへの参照に簡素化。15分
 - [ ] **9. 顧客キャンセル機能の実装**  
   `paid` 状態の注文を顧客自身がキャンセル可能にする `POST /api/orders/[id]/cancel`（UUID をアクセストークン扱い）。半日
+- [ ] **21. `.env.local` ノイズ変数の cleanup**  
+  `NX_DAEMON` / `TURBO_*` / `VERCEL_*` / `VERCEL_OIDC_TOKEN` などが過去の `vercel env pull` 由来で混入。`.env.local.example` に無い変数を整理。15分
 
 ## 🟡 中期の機能拡張（Phase 2）
 
