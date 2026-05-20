@@ -45,6 +45,10 @@
   現在 Vercel env に無い。生成して production/preview に追加 + スケジューラのヘッダー設定。30分。⚠️ 未設定中は `/api/cron/*` が公開状態（`if (secret)` 条件で auth スキップ）でセキュリティリスクあり、優先度を実質 🔴 最上位扱い。
 - [ ] **4. 新規店舗 onboarding の Stripe Connect 動作確認**  
   `STRIPE_CLIENT_ID` が Vercel env に無く `/api/onboarding/stripe/connect` が 500 になる。新規店舗追加時に必須。1時間
+- [ ] **22. Next.js 16.2.4 → 16.2.6 セキュリティ更新（F-02）**  
+  `npm audit` で next high 1 + postcss/brace-expansion moderate 2。**CSP nonce XSS (GHSA-ffhc-5mcf-pf4q) が本アプリ直撃**。`npm install next@16.2.6` で 3 → 0 件、semver patch 非破壊。30〜45分。
+- [ ] **23. Supabase migrations を repo に取り込む（F-01）**  
+  `supabase/migrations/` が空で、実 DB の RLS / トリガー / 関数が不可視。disaster recovery 不能。`supabase link` → `npm run db:pull` → `npm run types:gen`。生成 SQL をレビューして RLS 不備があれば追加 finding 化。1〜2時間。
 
 ## 🟠 直近の品質改善
 
@@ -62,6 +66,8 @@
   `paid` 状態の注文を顧客自身がキャンセル可能にする `POST /api/orders/[id]/cancel`（UUID をアクセストークン扱い）。半日
 - [ ] **21. `.env.local` ノイズ変数の cleanup**  
   `NX_DAEMON` / `TURBO_*` / `VERCEL_*` / `VERCEL_OIDC_TOKEN` などが過去の `vercel env pull` 由来で混入。`.env.local.example` に無い変数を整理。15分
+- [ ] **24. Stripe Webhook 冪等性レコード挿入順の修正（F-05）**  
+  `processed_webhook_events` INSERT が処理前に行われ、処理失敗時に 200 を返して Stripe retry を止めてしまう。注文 pending 永久放置のリスク。修正案 A/B/C を提示してユーザー判断。テスト追加必須。1時間。
 
 ## 🟡 中期の機能拡張（Phase 2）
 
