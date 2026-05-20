@@ -52,8 +52,10 @@
   Settings → Branches → "Do not allow bypassing the above settings" を ON。5分
 - [ ] **6. 管理画面 Push 通知の実環境確認**  
   本番 VAPID キーで `notifyStore()` が届くか。新規注文受付通知が機能するか目視確認。30分
-- [ ] **7. 生成値の 1Password 保管**  
-  `SESSION_SECRET` / VAPID 3 値 / 将来生成する `CRON_SECRET` を二重バックアップ。10分
+- [ ] **7. 生成値のバックアップ（暫定: 暗号化 sparsebundle + iCloud Drive）**  
+  `SESSION_SECRET` / VAPID 3 値 / `CRON_SECRET` / Stripe・Supabase secret を二重バックアップ。`hdiutil create -encryption AES-256 -type SPARSEBUNDLE` で iCloud Drive に保存、パスフレーズは紙メモ + 物理金庫。30分。
+- [ ] **7b. 1Password への移行（法人化を見据えて）**  
+  法人化（〜1年後想定）のタイミングで Teams 版へ。それまでは #7 の暫定運用。CLI `op inject` で `.env.local` を git に置かず都度展開する運用も検討。
 - [ ] **8. `README.md` の env 記述を最新化**  
   `.env.local.example` を一次情報にして `README.md` はそこへの参照に簡素化。15分
 - [ ] **9. 顧客キャンセル機能の実装**  
