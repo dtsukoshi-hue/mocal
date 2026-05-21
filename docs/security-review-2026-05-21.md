@@ -15,11 +15,13 @@
 
 | 深刻度 | 件数 | 内訳 |
 |---|---|---|
-| 🔴 出荷ブロック級 | **3** | F-01 / F-02 / F-03 |
+| 🔴 出荷ブロック級 | **4** | F-01 / F-02 / F-03 / **F-18** |
 | 🟠 高 | **2** | F-05 / F-06 |
 | 🟡 中 | **5** | F-04 / F-07 / F-08 / F-09 / F-10 |
 | 🟢 低 | **7** | F-11 / F-12 / F-13 / F-14 / F-15 / F-16 / F-17 |
 | ✅ 良好 | 12 項目 | 設計が原則通り |
+
+**F-18** は F-01（migrations 取り込み）実施中の RLS レビューで追加発見。
 
 ---
 
@@ -40,6 +42,35 @@
 - **その他**: proxy bypass（GHSA-492v / GHSA-267c / GHSA-36qx）、cache poisoning、SSRF
 - **推奨対応**: `npm install next@16.2.6`（patch update、semver 非破壊）
 - **検証コマンド**: `npm audit` で 3 件 → 0 件
+
+### F-18. RLS の `orders` / `order_items` で anon SELECT 全件可能（追加発見・経験的確認済み）
+
+- **場所**: `supabase/migrations/20260521013317_remote_schema.sql:728, 1097-1098`
+- **問題ポリシー**:
+  ```sql
+  CREATE POLICY "orders_public_select_by_uuid"
+    ON "public"."orders" FOR SELECT USING (true);
+  GRANT ALL ON TABLE "public"."orders" TO "anon";
+  GRANT ALL ON TABLE "public"."order_items" TO "anon";
+  ```
+- **本番実証** (2026-05-21):
+  ```
+  curl https://<project>.supabase.co/rest/v1/orders?select=*
+    -H "apikey: $ANON_KEY"
+  → 200 OK、全 orders 返却
+  ```
+- **設計意図**: UUID = bearer token として「UUID 知っている人だけ読める」想定だったが、RLS の USING(true) は UUID 知識を強制しないため**全件列挙が可能**
+- **漏洩データ**: 注文 UUID（= push subscribe トークン）、order_number、status、total_amount、store_id、user_id、customer_note、order_items（商品名・数量）
+- **実害シナリオ**:
+  1. anon key で全 orders dump
+  2. UUID 取得 → 顧客の注文ステータス画面に侵入
+  3. push subscription 作成で顧客なりすまし通知
+- **対応**: backlog #25 として独立対応（Phase 2.5）。修正案 A/B/C 比較必要
+  - A) `access_token` 列追加 + RLS で UUID+token 両方検証
+  - B) 顧客 Realtime を server-side polling へ変更
+  - C) 即 REVOKE（Realtime が壊れる前提で）
+
+---
 
 ### F-03. 本番 cron エンドポイントが現在公開状態（経験的確認済み）
 
