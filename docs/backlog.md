@@ -53,8 +53,8 @@
   `CREATE POLICY orders_public_select_by_uuid ON orders FOR SELECT USING (true)` + `GRANT ALL ... TO anon` により、anon キーで全 orders / order_items を SELECT 可能（UUID 列挙攻撃可能・PII 漏洩）。本番実証済み。  
   **採択方針**: A+ (注文ごと専用 JWT 発行 + RLS で `auth.jwt() ->> 'order_id'` 検証)。  
   Step 0 (#26〜#30 再発防止策) → Step 1 (#31 設計ドキュメント) → Step 2 (#32 実装) の順で進める。
-- [ ] **26. anon REST アクセスのセキュリティ regression test 追加（P1）**  
-  `tests/security/anon-rest-access.test.ts` で「anon は orders/order_items を SELECT できない」「stores/menu_items は公開」「INSERT は pending+user_id=null のみ」を verify。F-18 修正前は skip、修正後に unskip して CI で恒久監視。半日。
+- [x] **26. anon REST アクセスのセキュリティ regression test 追加（P1）** (2026-05-21 完了)  
+  `tests/security/anon-rest-access.test.ts` (11 ケース) + `npm run test:security` script。`.env.local` を直接読んで `process.env` 汚染なし、`RUN_SECURITY_TESTS=1` flag で意図実行。現状 F-18 を正しく検出（orders / order_items / processed_webhook_events で 3 FAIL）。default `npm test` には影響なし (180 pass / 11 skipped)。**A+ 実装後にガードを外して default 実行に組み込み、CI で恒久監視**する。
 - [ ] **27. RLS policy レビューチェックリスト作成（P2）**  
   `docs/rls-review-checklist.md`。`USING (true)` 禁止原則、`GRANT ALL ... TO anon` 禁止、公開テーブル明示リスト等。30分。
 - [ ] **28. workflow.md / AGENTS.md の bearer-token 表現整備（P3+P4）**  

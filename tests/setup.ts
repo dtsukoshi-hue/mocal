@@ -1,4 +1,9 @@
 // テスト環境共通セットアップ — 必須環境変数のダミー値
+//
+// `.env.local` はここでは load しない（unit test は dummy env を期待しているため）。
+// 実 Supabase を必要とする security regression test 等は、
+// テストファイル内で個別に `.env.local` を読み込む（process.env 汚染なし）。
+
 const TEST_ENV: Record<string, string> = {
   NEXT_PUBLIC_SUPABASE_URL:           'https://test.supabase.co',
   NEXT_PUBLIC_SUPABASE_ANON_KEY:      'test-anon-key',
