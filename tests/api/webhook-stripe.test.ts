@@ -307,6 +307,51 @@ describe('POST /api/webhook/stripe — payment_intent.succeeded', () => {
     expect(res.status).toBe(200)
     expect(refundPaymentMock.fn).toHaveBeenCalled()
   })
+
+  it('returns 500 and deletes idempotency record when paid update fails (F-05)', async () => {
+    // F-05 修正の核心: paid 更新が失敗したら 200 ではなく 500 を返し、
+    // 冪等性レコードを削除して Stripe にリトライさせる。
+    // 旧実装ではこのケースで 200 を返し、注文が pending 永久放置されていた。
+    stripeMock.webhooks.constructEvent.mockReturnValueOnce(
+      makeEvent('payment_intent.succeeded', makeIntent())
+    )
+
+    const eventInsertChain = insertChain(null)
+    const eventDeleteChain: Record<string, unknown> = {}
+    eventDeleteChain.delete = vi.fn().mockReturnValue(eventDeleteChain)
+    eventDeleteChain.eq     = vi.fn().mockResolvedValue({ error: null })
+
+    const order = { store_id: STORE_ID, user_id: null, total_amount: 1000, status: 'pending' }
+    const store = { stripe_account_id: 'acct_test', is_open: true }
+
+    const orderFetchChain = singleChain(order)
+    const storeFetchChain = singleChain(store)
+    // paid 更新で error を返す
+    const orderUpdateChain: Record<string, unknown> = {}
+    orderUpdateChain.update = vi.fn().mockReturnValue(orderUpdateChain)
+    orderUpdateChain.eq     = vi.fn().mockResolvedValue({ error: { message: 'connection lost' } })
+
+    let eventCall = 0
+    let orderTableCall = 0
+    const client = {
+      from: vi.fn().mockImplementation((table: string) => {
+        if (table === 'processed_webhook_events') {
+          eventCall++
+          return eventCall === 1 ? eventInsertChain : eventDeleteChain
+        }
+        if (table === 'stores') return storeFetchChain
+        // orders: 1 回目は fetch (single), 2 回目は update
+        orderTableCall++
+        return orderTableCall === 1 ? orderFetchChain : orderUpdateChain
+      }),
+    }
+    vi.mocked(createServiceClient).mockReturnValue(client as never)
+
+    const res = await POST(makeRequest())
+    expect(res.status).toBe(500)
+    expect(eventDeleteChain.delete).toHaveBeenCalled()
+    expect(eventDeleteChain.eq).toHaveBeenCalledWith('stripe_event_id', EVENT_ID)
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -348,12 +393,20 @@ describe('POST /api/webhook/stripe — payment_intent.payment_failed', () => {
     )
   })
 
-  it('returns 200 even if update fails (non-fatal)', async () => {
+  it('returns 500 when update fails so Stripe retries (F-05)', async () => {
+    // F-05 修正後: DB エラー時は冪等性レコードを削除して 500 を返す。
+    // Stripe が retry → 次回 webhook で正常処理される、
+    // または order 状態が永久放置されることを防ぐ。
     stripeMock.webhooks.constructEvent.mockReturnValueOnce(
       makeEvent('payment_intent.payment_failed', makeIntent())
     )
 
-    const eventChain  = insertChain(null)
+    // processed_webhook_events: 1回目は INSERT 成功、2回目は DELETE
+    const eventInsertChain = insertChain(null)
+    const eventDeleteChain: Record<string, unknown> = {}
+    eventDeleteChain.delete = vi.fn().mockReturnValue(eventDeleteChain)
+    eventDeleteChain.eq     = vi.fn().mockResolvedValue({ error: null })
+
     let eqCount2 = 0
     const updateChain: Record<string, unknown> = {}
     updateChain.update = vi.fn().mockReturnValue(updateChain)
@@ -363,16 +416,23 @@ describe('POST /api/webhook/stripe — payment_intent.payment_failed', () => {
       return updateChain
     })
 
+    let eventCallCount = 0
     const client = {
       from: vi.fn().mockImplementation((table: string) => {
-        if (table === 'processed_webhook_events') return eventChain
+        if (table === 'processed_webhook_events') {
+          eventCallCount++
+          return eventCallCount === 1 ? eventInsertChain : eventDeleteChain
+        }
         return updateChain
       }),
     }
     vi.mocked(createServiceClient).mockReturnValue(client as never)
 
     const res = await POST(makeRequest())
-    expect(res.status).toBe(200)
+    expect(res.status).toBe(500)
+    // 冪等性レコードが削除されたことを verify (Stripe retry 時に重複扱いされないため)
+    expect(eventDeleteChain.delete).toHaveBeenCalled()
+    expect(eventDeleteChain.eq).toHaveBeenCalled()
   })
 })
 

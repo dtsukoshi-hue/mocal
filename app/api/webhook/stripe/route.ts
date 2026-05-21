@@ -41,6 +41,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'DB エラー' }, { status: 500 })
   }
 
+  // 処理経路で DB エラーが発生した場合は throw → outer catch で
+  // 冪等性レコードを削除して 500 を返す → Stripe にリトライさせる (F-05 修正)。
+  // 一方、Stripe API 失敗 (refundPayment 等) や「処理対象外で break」は
+  // throw せず log のみ。Stripe にリトライさせても解決しないため。
+  try {
   switch (event.type) {
     case 'payment_intent.succeeded': {
       const intent = event.data.object
@@ -56,8 +61,7 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (orderErr) {
-        console.error('[webhook] 注文取得失敗:', orderErr)
-        break
+        throw new Error(`[webhook/succeeded] 注文取得失敗: ${orderErr.message}`)
       }
       if (!order) break
 
@@ -97,8 +101,7 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (storeErr) {
-        console.error('[webhook] 店舗取得失敗:', storeErr)
-        break
+        throw new Error(`[webhook/succeeded] 店舗取得失敗: ${storeErr.message}`)
       }
 
       // 金額整合チェック（JPY は amount がそのまま円）
@@ -132,8 +135,7 @@ export async function POST(request: NextRequest) {
           .eq('id', orderId)
 
         if (cancelErr) {
-          console.error('[webhook] 注文キャンセル更新失敗:', cancelErr)
-          break
+          throw new Error(`[webhook/succeeded] 注文キャンセル更新失敗: ${cancelErr.message}`)
         }
 
         if (chargeId) {
@@ -171,8 +173,9 @@ export async function POST(request: NextRequest) {
         .eq('id', orderId)
 
       if (paidErr) {
-        console.error('[webhook] paid 更新失敗:', paidErr)
-        break
+        // ここで throw すると Stripe がリトライ → 次回 webhook で同じ
+        // 注文を再度 paid に update する。idempotent な操作なので安全。
+        throw new Error(`[webhook/succeeded] paid 更新失敗: ${paidErr.message}`)
       }
 
       // 店舗へ新規注文通知（tag=new-order で同種の通知を1つにまとめ、複数注文でも通知過多を防ぐ）
@@ -239,7 +242,7 @@ export async function POST(request: NextRequest) {
         .eq('status', 'pending')
 
       if (cancelErr) {
-        console.error('[webhook] 決済失敗キャンセル更新失敗:', cancelErr)
+        throw new Error(`[webhook/payment_failed] キャンセル更新失敗: ${cancelErr.message}`)
       }
 
       break
@@ -257,8 +260,7 @@ export async function POST(request: NextRequest) {
         .maybeSingle()
 
       if (orderErr) {
-        console.error('[webhook/charge.refunded] 注文取得失敗:', orderErr)
-        break
+        throw new Error(`[webhook/charge.refunded] 注文取得失敗: ${orderErr.message}`)
       }
       if (!order) break
 
@@ -269,8 +271,7 @@ export async function POST(request: NextRequest) {
         .neq('status', 'refunded')
 
       if (updateErr) {
-        console.error('[webhook/charge.refunded] refunded 更新失敗:', updateErr)
-        break
+        throw new Error(`[webhook/charge.refunded] refunded 更新失敗: ${updateErr.message}`)
       }
 
       notifyOrder(order.id, {
@@ -281,6 +282,20 @@ export async function POST(request: NextRequest) {
 
       break
     }
+  }
+  } catch (err) {
+    // 処理失敗時: 冪等性レコードを削除して Stripe にリトライさせる (F-05 修正)。
+    // 削除自体は best effort — 失敗しても致命ではない（次回 retry でも
+    // idempotency check が 23505 を返すだけ、order の状態に変化はない）。
+    const { error: delErr } = await supabase
+      .from('processed_webhook_events')
+      .delete()
+      .eq('stripe_event_id', event.id)
+    if (delErr) {
+      console.error('[webhook] 冪等性レコード削除失敗 (best effort):', delErr)
+    }
+    console.error('[webhook] 処理失敗 → 500 で Stripe にリトライ要求:', err)
+    return NextResponse.json({ error: '処理失敗' }, { status: 500 })
   }
 
   return NextResponse.json({ received: true })
