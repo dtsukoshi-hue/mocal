@@ -69,10 +69,20 @@ export async function createOrderAction(
   if (totalQty > 30) return { error: '1回の注文は最大30点までです。' }
   if (items.some(i => (i.qty ?? 0) > 10)) return { error: '1品目あたり最大10点までです。' }
 
-  // ログインユーザーのIDを取得（ゲストは null）
+  // 顧客セッションを取得。Cart.tsx で signInAnonymously 済みのはずだが、
+  // 旧バージョン client や cookie ブロック環境に対する graceful fallback として
+  // server 側でも anonymous sign-in を試みる（design doc §3-A）。
   const supabaseUser = await createSupabaseServerClient()
-  const { data: { user } } = await supabaseUser.auth.getUser()
-  const userId = user?.id ?? null
+  let { data: { user } } = await supabaseUser.auth.getUser()
+  if (!user) {
+    const { data, error: signInError } = await supabaseUser.auth.signInAnonymously()
+    if (signInError || !data.user) {
+      console.error('[createOrderAction] server-side signInAnonymously 失敗:', signInError)
+      return { error: 'セッションを開始できませんでした。時間をおいて再試行してください。' }
+    }
+    user = data.user
+  }
+  const userId = user.id
 
   // service_role で注文作成（RLS をバイパス）
   const supabase = createServiceClient()
@@ -123,6 +133,9 @@ export async function createOrderAction(
   }, 0)
 
   // 2. 注文レコードを作成（pending）
+  // user_id は anonymous sign-in 経由で必ず取得済み。RLS の
+  // orders_user_own_select (auth.uid() = user_id) で顧客自身が
+  // 自分の注文を Realtime/REST で読めるようにする (F-18 修正)。
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .insert({
@@ -167,11 +180,13 @@ export async function createOrderAction(
   // 4. Stripe PaymentIntent 作成
   let clientSecret: string
   try {
+    // anonymous user は email を持たないため null。Stripe の receipt_email は
+    // 顧客が決済 form で入力したアドレス（PaymentElement）が優先される。
     const payment = await createPayment(
       totalAmount,
       order.id,
       store.stripe_account_id,
-      user?.email ?? null
+      user.email ?? null
     )
     clientSecret = payment.clientSecret
 

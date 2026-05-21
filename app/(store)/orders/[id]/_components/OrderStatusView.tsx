@@ -8,8 +8,15 @@ import type { Database } from '@/lib/database.types'
 import type { OrderStatus } from '@/lib/database.aliases'
 import PushSubscribeButton from './PushSubscribeButton'
 
-/** Realtime が機能しない環境向けのポーリング間隔（ミリ秒）*/
-const POLLING_INTERVAL_MS = 30_000
+/**
+ * ポーリング間隔（ミリ秒）。
+ * 用途:
+ *  (1) Realtime が機能しない環境（企業 NW、WebSocket ブロック）でのフォールバック
+ *  (2) URL 共有された別端末で Realtime RLS が deny した場合のフォールバック
+ *      (F-18 修正後の P3 Anonymous Sign-Ins モデル：別 anonymous UID では Realtime 不可)
+ *  (3) 自分自身の端末でも追加の保険として
+ */
+const POLLING_INTERVAL_MS = 10_000
 
 type Order = {
   id: string
