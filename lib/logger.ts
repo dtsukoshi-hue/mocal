@@ -2,7 +2,9 @@ import 'server-only'
 
 // 構造化ログ
 // JSON 1行 = 1イベント。Vercel / 集約ログサービスで grep / parse しやすい形式。
-// 将来 Sentry 等に差し替える場合はここを書き換える。
+// TODO(#15 / F-12): Sentry 導入時にこの emit() を Sentry.captureException 等に
+// 差し替える。errorToFields() の error_stack はそのまま渡さず、フルパスを
+// 含まないよう sanitize するかを #15 で検討する。
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 

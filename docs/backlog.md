@@ -100,8 +100,8 @@
   `.env.local.example` を一次情報にして `README.md` はそこへの参照に簡素化。15分
 - [ ] **9. 顧客キャンセル機能の実装**  
   `paid` 状態の注文を顧客自身がキャンセル可能にする `POST /api/orders/[id]/cancel`（UUID をアクセストークン扱い）。半日
-- [ ] **21. `.env.local` ノイズ変数の cleanup**  
-  `NX_DAEMON` / `TURBO_*` / `VERCEL_*` / `VERCEL_OIDC_TOKEN` などが過去の `vercel env pull` 由来で混入。`.env.local.example` に無い変数を整理。15分
+- [x] **21. `.env.local` ノイズ変数の cleanup** (2026-05-22 完了)  
+  9 変数 (NX_DAEMON / TURBO_CACHE / TURBO_DOWNLOAD_LOCAL_ENABLED / TURBO_REMOTE_ONLY / TURBO_RUN_SUMMARY / VERCEL / VERCEL_ENV / VERCEL_OIDC_TOKEN / VERCEL_TARGET_ENV) を削除。`.env.local` と `.env.local.example` の key が完全一致（optional 系 4 つの未設定を除く）。
 - [x] **24. Stripe Webhook 冪等性レコード挿入順の修正（F-05）** (2026-05-22 完了)  
   `processed_webhook_events` INSERT が処理前に行われ、処理失敗時に 200 を返して Stripe retry を止めてしまう。注文 pending 永久放置のリスク。修正案 A/B/C を提示してユーザー判断。テスト追加必須。1時間。
 
@@ -111,8 +111,8 @@
   FAQ / プロフィール編集 / 支払い方法。FAQ は `local-main-2026-05-19` タグから cherry-pick 候補。FAQ: 1時間、他: 各半日〜1日
 - [ ] **11. 顧客向けログイン機能**  
   Supabase Auth ベース。クロス端末で注文履歴を参照可能に。1〜2日
-- [ ] **12. ADMIN_* dead code 削除**  
-  `lib/env.ts` REQUIRED から `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_STORE_ID` を外し、`.env.local.example` も同期。15分
+- [x] **12. ADMIN_* dead code 削除** (2026-05-22 完了)  
+  `lib/env.ts` REQUIRED と `.env.local.example` から削除、`.env.local` からも除去。コード参照ゼロ確認済 (Supabase Auth 移行後の残骸)。Vercel env 側の ADMIN_* も削除推奨（参照されていないので緊急性なし）。
 - [ ] **13. `next build` ローカルハング調査**  
   本番 build は健全、ローカルで `_not-found` collect 時にハング。Turbopack / Node 24.x 相性？ 半日
 - [ ] **14. キュー補正の調整**  

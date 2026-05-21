@@ -3,7 +3,7 @@ import { createServiceClient } from '@/lib/supabase-server'
 import { verifyStoreSession } from '@/lib/dal'
 
 // GET /api/admin/reports/export?start=YYYY-MM-DD&end=YYYY-MM-DD
-// カスタムセッション（admin_session クッキー）で認証
+// 認証: lib/dal.ts の verifyStoreSession (Supabase Auth) で店舗メンバー検証
 export async function GET(request: NextRequest) {
   let session: Awaited<ReturnType<typeof verifyStoreSession>>
   try {

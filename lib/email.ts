@@ -46,8 +46,9 @@ export async function sendOrderConfirmEmail(data: OrderConfirmEmailData): Promis
     .map(i => `<tr><td style="padding:6px 0;color:#374151;">${escapeHtml(i.name)} × ${i.qty}</td><td style="padding:6px 0;text-align:right;color:#374151;">¥${(i.price * i.qty).toLocaleString()}</td></tr>`)
     .join('')
 
-  // orderStatusUrl はサーバー側で組み立てた信頼できる URL のみ渡ること
-  const safeStoreUrl = orderStatusUrl.startsWith('http') ? orderStatusUrl : '#'
+  // orderStatusUrl はサーバー側で組み立てた信頼できる URL のみ渡る前提だが、
+  // 防御層として HTML エスケープも実施 (F-17)
+  const safeStoreUrl = orderStatusUrl.startsWith('http') ? escapeHtml(orderStatusUrl) : '#'
 
   const html = `<!DOCTYPE html>
 <html lang="ja">
@@ -139,7 +140,8 @@ export async function sendOrderStatusEmail(data: OrderStatusEmailData): Promise<
   const config = configs[status]
   if (!config) return // 対象外ステータスはスキップ
 
-  const safeStatusUrl = orderStatusUrl.startsWith('http') ? orderStatusUrl : '#'
+  // orderStatusUrl は信頼できる URL 前提だが、防御層として HTML エスケープ (F-17)
+  const safeStatusUrl = orderStatusUrl.startsWith('http') ? escapeHtml(orderStatusUrl) : '#'
 
   const html = `<!DOCTYPE html>
 <html lang="ja">

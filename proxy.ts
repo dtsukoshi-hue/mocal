@@ -114,11 +114,12 @@ export async function proxy(request: NextRequest) {
     : null
   const csp = nonce ? buildCsp(nonce) : null
 
-  // nonce を request headers にも付与（Server Components が headers() で読めるようにする）
+  // nonce を request headers に付与（Server Components が headers() で読めるようにする）。
+  // Content-Security-Policy は response 専用 (CSP は request header に意味を持たない)
+  // ため、ここでは設定しない (F-13 修正)。
   const requestHeaders = new Headers(request.headers)
-  if (nonce && csp) {
+  if (nonce) {
     requestHeaders.set('x-nonce', nonce)
-    requestHeaders.set('Content-Security-Policy', csp)
   }
 
   // 認証不要の管理画面ページはスキップ
@@ -146,10 +147,10 @@ export async function proxy(request: NextRequest) {
             )
             // request.cookies.set が request.headers の Cookie も更新するため、
             // 最新の request.headers から再取得して nonce を付与し直す
+            // (Content-Security-Policy は response 専用なので request に設定しない / F-13)
             const updatedHeaders = new Headers(request.headers)
-            if (nonce && csp) {
+            if (nonce) {
               updatedHeaders.set('x-nonce', nonce)
-              updatedHeaders.set('Content-Security-Policy', csp)
             }
             response = NextResponse.next({ request: { headers: updatedHeaders } })
             cookiesToSet.forEach(({ name, value, options }) =>
