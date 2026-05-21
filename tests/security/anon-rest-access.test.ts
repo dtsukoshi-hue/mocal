@@ -7,16 +7,17 @@
  * 設計上の注意:
  *  - `.env.local` を**テストファイル内で直接読む**（process.env を汚染しない）
  *    → unit test の dummy env と分離、副作用なし
- *  - 実 Supabase に向いている、かつ RUN_SECURITY_TESTS=1 のときのみ実行
+ *  - 実 Supabase に向いているときのみ実行（CI ダミー env なら skip）
  *
  * 実行:
- *  npm run test:security
+ *  npm test                # default で走る
+ *  npm run test:security   # security のみ
  *
  * 期待:
- *  - F-18 修正前: orders/order_items の SELECT が「行返却」→ test FAIL（脆弱性検出）
- *  - F-18 修正後: 空配列 or 401 → test PASS（防衛確認）
- *
- *  この test が **緑になることが F-18 修正の done 条件**。
+ *  - すべて PASS（F-18 修正完了済み）
+ *  - 1 件でも FAIL したら **RLS の regression** を意味する。
+ *    docs/security-review-2026-05-21.md F-18 と
+ *    docs/rls-review-checklist.md を参照して修復すること。
  */
 
 import { describe, it, expect } from 'vitest'
@@ -41,15 +42,11 @@ const SUPABASE_URL = dotenv.NEXT_PUBLIC_SUPABASE_URL ?? ''
 const ANON_KEY = dotenv.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
 
 // 実行ガード:
-//  (a) 実 Supabase（test ダミーではない）に向いていること
-//  (b) RUN_SECURITY_TESTS=1 が明示的に設定されていること
+//  - 実 Supabase（test ダミーではない）に向いている場合のみ実行
+//  - CI 等で .env.local が無い環境では skip（dummy env のため）
 //
-// (b) があるのは:
-//  - default の `npm test` / pre-push は通過させる（F-18 修正前でも push を妨げない）
-//  - `npm run test:security` で env を立てて意図的に実行する
-//
-// F-18 修正完了後、このガードは削除して default 実行に組み込む。
-const RUN = process.env.RUN_SECURITY_TESTS === '1'
+// F-18 修正完了 (2026-05-21) によりガード `RUN_SECURITY_TESTS` を撤廃。
+// default の `npm test` / pre-push でも常時走る = 恒久的な regression net。
 const isRealSupabase =
   SUPABASE_URL.includes('.supabase.co') &&
   !SUPABASE_URL.includes('test.supabase.co') &&
@@ -69,7 +66,7 @@ async function fetchAnon(path: string) {
   return { status: res.status, body }
 }
 
-describe.skipIf(!RUN || !isRealSupabase)('Security: anon REST access boundaries', () => {
+describe.skipIf(!isRealSupabase)('Security: anon REST access boundaries', () => {
   describe('🔒 顧客データ（anon は SELECT 不可）', () => {
     it('anon cannot SELECT orders (F-18)', async () => {
       const { status, body } = await fetchAnon('/orders?select=id&limit=10')
