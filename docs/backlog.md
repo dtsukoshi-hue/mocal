@@ -59,10 +59,10 @@
   `docs/rls-review-checklist.md` 作成。大原則 5 つ、新規ポリシー追加時の A〜D チェックリスト、`USING (true)` を書く前の 4 条件、良い / 悪いパターン例、A+ 用 JWT claim パターンの先行記述。
 - [x] **28. workflow.md / AGENTS.md の bearer-token 表現整備（P3+P4）** (2026-05-21 完了)  
   workflow.md §3 を「移行中：A+ 設計へ」に改訂、F-18 既知課題と修正方針を明記。AGENTS.md に「Supabase RLS の罠」セクション (5 項目) を追加、`docs/rls-review-checklist.md` への導線を整備。supabase CLI 説明も dev dep に更新。
-- [ ] **29. `supabase db lint` 等の自動 RLS 検査（P5 / 調査タスク）**  
-  pre-push に組み込めるか調査。導入可能なら次タスク化。1時間（調査）。
-- [ ] **30. 旧 .archive 内 migrations の整合確認**  
-  `.archive/supabase-migrations-legacy/` と現実 DB の差分を読み、参考価値があるか判断。無価値なら削除提案。30分。
+- [x] **29. `supabase db lint` 等の自動 RLS 検査（P5 / 調査タスク）** (2026-05-21 完了)  
+  `npx supabase db lint --linked` 実行可能、構文エラーは検出するが RLS のセマンティクス（`USING(true)` 等）は検出しない。F-18 同類は #26 の security regression test で検出するのが正解。pre-push 組み込みは見送り（ネットワーク依存・効用限定的）。将来 CI の補助 job として追加可。
+- [x] **30. 旧 .archive 内 migrations の整合確認** (2026-05-21 完了)  
+  `.archive/supabase-migrations-legacy/20260509020000_rls_fixes.sql` に F-18 を導入した RLS 設定の**原典コードと意図**を確認。コメント「UUID は 128bit ランダムで推測不可能なため、ID を知っていれば参照を許可」が RLS セマンティクス誤解の証拠。**学習用に保持**、supabase/migrations/README.md で archive の意義を明文化。
 - [ ] **31. 顧客 JWT 認証設計ドキュメント作成（A+ Step 1）**  
   `docs/customer-jwt-design.md`。claim 構造 / TTL / 署名鍵 / 発行 endpoint / URL 形式（fragment vs query）/ 既存注文の backfill / rollback 計画 / Realtime 連携 / 漏洩時 rotation 手順。Opus が書く → ユーザー承認 → #32 へ。1〜2時間。
 - [ ] **32. 顧客 JWT 認証の実装（A+ Step 2 / #25 修正本体）**  
