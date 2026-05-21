@@ -1,451 +1,693 @@
-// mocal — Supabase データベース型定義
-// supabase gen types typescript で自動生成する代わりに手動管理
-
-export type OrderStatus =
-  | 'pending'
-  | 'paid'
-  | 'accepted'
-  | 'preparing'
-  | 'ready'
-  | 'completed'
-  | 'cancelled'
-  | 'refunded'
-  | 'no_show'
-
-export type PickupType = 'standard' | 'scheduled'
-
-export type CancelledReasonType =
-  | 'store_closed'
-  | 'out_of_stock'
-  | 'store_cancel'    // 店舗スタッフによる手動キャンセル
-  | 'user_cancel'
-  | 'timeout'
-  | 'payment_failed'
-  | 'amount_mismatch'
-
-export type StoreRole = 'owner' | 'staff'
-
-export type WaitMinutes = 10 | 15 | 20 | 30 | 40 | 60
-
-// weekday: 0=日, 1=月, 2=火, 3=水, 4=木, 5=金, 6=土（JS の getDay() に合わせる）
-export type StoreHour = {
-  id: string
-  store_id: string
-  weekday: 0 | 1 | 2 | 3 | 4 | 5 | 6
-  is_open: boolean
-  open_time: string | null   // "HH:MM" 定休日 (is_open=false) のとき null 可
-  close_time: string | null
-  last_order: string | null
-  created_at: string
-  updated_at: string
-}
-
-// ------------------------------------------------------------
-// コンボ（お得セット）
-// ------------------------------------------------------------
-
-export type ComboOffer = {
-  id: string
-  store_id: string
-  name: string
-  description: string | null
-  /** セット価格 = 含まれるアイテムの合計 + price_delta */
-  price_delta: number
-  emoji: string | null
-  is_available: boolean
-  sort_order: number
-  created_at: string
-  updated_at: string
-}
-
-export type ComboOfferItem = {
-  id: string
-  combo_id: string
-  menu_item_id: string
-  qty: number
-}
-
-export type ComboOfferInsert = {
-  id?: string
-  store_id: string
-  name: string
-  description?: string | null
-  price_delta?: number
-  emoji?: string | null
-  is_available?: boolean
-  sort_order?: number
-  created_at?: string
-  updated_at?: string
-}
-
-export type ComboOfferItemInsert = {
-  id?: string
-  combo_id: string
-  menu_item_id: string
-  qty?: number
-}
-
-// ------------------------------------------------------------
-// テーブル行型（type を使用 — interface は Record<string,unknown> を満たさない）
-// ------------------------------------------------------------
-
-export type Store = {
-  id: string
-  name: string
-  slug: string | null
-  description: string | null
-  stripe_account_id: string | null
-  is_open: boolean
-  wait_minutes: WaitMinutes
-  manual_override_until: string | null
-  area: string | null
-  cuisine_type: string | null
-  logo_url: string | null
-  cover_url: string | null
-  created_at: string
-}
-
-export type Profile = {
-  id: string
-  phone: string | null
-  nickname: string | null
-  created_at: string
-}
-
-export type StoreMember = {
-  id: string
-  store_id: string
-  user_id: string
-  role: StoreRole
-}
-
-export type MenuItem = {
-  id: string
-  store_id: string
-  name: string
-  description: string | null
-  price: number
-  category: string | null
-  emoji: string | null
-  image_url: string | null
-  is_available: boolean
-  sort_order: number
-  created_at: string
-}
-
-export type Order = {
-  id: string
-  order_number: number
-  store_id: string
-  user_id: string | null   // null = ゲスト注文
-  status: OrderStatus
-  pickup_type: PickupType
-  scheduled_at: string | null
-  customer_note: string | null
-  total_amount: number
-  estimated_ready_at: string | null
-  accepted_at: string | null
-  ready_at: string | null
-  no_show_at: string | null
-  cancelled_reason_type: CancelledReasonType | null
-  cancelled_reason_detail: string | null
-  stripe_payment_intent_id: string | null
-  stripe_charge_id: string | null
-  stripe_receipt_url: string | null
-  alert_30min_sent: boolean
-  created_at: string
-}
-
-export type OrderItem = {
-  id: string
-  order_id: string
-  menu_item_id: string | null  // 削除されたメニューは null
-  name: string                  // スナップショット
-  price: number                 // スナップショット
-  qty: number
-  combo_id: string | null
-  combo_label: string | null
-}
-
-export type ProcessedWebhookEvent = {
-  stripe_event_id: string
-  processed_at: string
-}
-
-// ------------------------------------------------------------
-// INSERT 用型（nullable フィールドはオプション）
-// ------------------------------------------------------------
-
-export type StoreInsert = {
-  id?: string
-  name: string
-  slug?: string | null
-  description?: string | null
-  stripe_account_id?: string | null
-  is_open?: boolean
-  wait_minutes?: WaitMinutes
-  manual_override_until?: string | null
-  area?: string | null
-  cuisine_type?: string | null
-  logo_url?: string | null
-  cover_url?: string | null
-  created_at?: string
-}
-
-export type ProfileInsert = {
-  id: string
-  phone?: string | null
-  nickname?: string | null
-  created_at?: string
-}
-
-export type MenuItemInsert = {
-  id?: string
-  store_id: string
-  name: string
-  description?: string | null
-  price: number
-  category?: string | null
-  emoji?: string | null
-  image_url?: string | null
-  is_available?: boolean
-  sort_order?: number
-  created_at?: string
-}
-
-export type OrderInsert = {
-  id?: string
-  order_number?: number
-  store_id: string
-  user_id?: string | null
-  status?: OrderStatus
-  pickup_type: PickupType
-  scheduled_at?: string | null
-  customer_note?: string | null
-  total_amount: number
-  estimated_ready_at?: string | null
-  accepted_at?: string | null
-  ready_at?: string | null
-  no_show_at?: string | null
-  cancelled_reason_type?: CancelledReasonType | null
-  cancelled_reason_detail?: string | null
-  stripe_payment_intent_id?: string | null
-  stripe_charge_id?: string | null
-  stripe_receipt_url?: string | null
-  alert_30min_sent?: boolean
-  created_at?: string
-}
-
-export type OrderItemInsert = {
-  id?: string
-  order_id: string
-  menu_item_id?: string | null
-  name: string
-  price: number
-  qty: number
-  combo_id?: string | null
-  combo_label?: string | null
-}
-
-// ------------------------------------------------------------
-// Supabase Database 型（クライアント生成用）
-// ------------------------------------------------------------
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
-      store_hours: {
-        Row: StoreHour
-        Insert: Omit<StoreHour, 'id' | 'created_at' | 'updated_at'> & { id?: string; created_at?: string; updated_at?: string }
-        Update: Partial<Omit<StoreHour, 'id' | 'store_id' | 'weekday' | 'created_at' | 'updated_at'>>
+      combo_offer_items: {
+        Row: {
+          combo_id: string
+          id: string
+          menu_item_id: string
+          qty: number
+        }
+        Insert: {
+          combo_id: string
+          id?: string
+          menu_item_id: string
+          qty?: number
+        }
+        Update: {
+          combo_id?: string
+          id?: string
+          menu_item_id?: string
+          qty?: number
+        }
         Relationships: [
           {
-            foreignKeyName: 'store_hours_store_id_fkey'
-            columns: ['store_id']
+            foreignKeyName: "combo_offer_items_combo_id_fkey"
+            columns: ["combo_id"]
             isOneToOne: false
-            referencedRelation: 'stores'
-            referencedColumns: ['id']
-          }
-        ]
-      }
-      stores: {
-        Row: Store
-        Insert: StoreInsert
-        Update: Partial<StoreInsert>
-        Relationships: []
-      }
-      profiles: {
-        Row: Profile
-        Insert: ProfileInsert
-        Update: Partial<ProfileInsert>
-        Relationships: []
-      }
-      store_members: {
-        Row: StoreMember
-        Insert: Omit<StoreMember, 'id'> & { id?: string }
-        Update: Partial<Omit<StoreMember, 'id'>>
-        Relationships: [
-          {
-            foreignKeyName: 'store_members_store_id_fkey'
-            columns: ['store_id']
-            isOneToOne: false
-            referencedRelation: 'stores'
-            referencedColumns: ['id']
+            referencedRelation: "combo_offers"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'store_members_user_id_fkey'
-            columns: ['user_id']
+            foreignKeyName: "combo_offer_items_menu_item_id_fkey"
+            columns: ["menu_item_id"]
             isOneToOne: false
-            referencedRelation: 'profiles'
-            referencedColumns: ['id']
-          }
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      combo_offers: {
+        Row: {
+          created_at: string
+          description: string | null
+          emoji: string | null
+          id: string
+          is_available: boolean
+          name: string
+          price_delta: number
+          sort_order: number
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          is_available?: boolean
+          name: string
+          price_delta?: number
+          sort_order?: number
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          is_available?: boolean
+          name?: string
+          price_delta?: number
+          sort_order?: number
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "combo_offers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
         ]
       }
       menu_items: {
-        Row: MenuItem
-        Insert: MenuItemInsert
-        Update: Partial<MenuItemInsert>
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          emoji: string | null
+          id: string
+          image_url: string | null
+          is_available: boolean
+          name: string
+          price: number
+          sort_order: number
+          store_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean
+          name: string
+          price: number
+          sort_order?: number
+          store_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean
+          name?: string
+          price?: number
+          sort_order?: number
+          store_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'menu_items_store_id_fkey'
-            columns: ['store_id']
+            foreignKeyName: "menu_items_store_id_fkey"
+            columns: ["store_id"]
             isOneToOne: false
-            referencedRelation: 'stores'
-            referencedColumns: ['id']
-          }
-        ]
-      }
-      orders: {
-        Row: Order
-        Insert: OrderInsert
-        Update: Partial<OrderInsert>
-        Relationships: [
-          {
-            foreignKeyName: 'orders_store_id_fkey'
-            columns: ['store_id']
-            isOneToOne: false
-            referencedRelation: 'stores'
-            referencedColumns: ['id']
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: 'orders_user_id_fkey'
-            columns: ['user_id']
-            isOneToOne: false
-            referencedRelation: 'profiles'
-            referencedColumns: ['id']
-          }
         ]
       }
       order_items: {
-        Row: OrderItem
-        Insert: OrderItemInsert
-        Update: Partial<OrderItemInsert>
+        Row: {
+          combo_id: string | null
+          combo_label: string | null
+          id: string
+          menu_item_id: string | null
+          name: string
+          order_id: string
+          price: number
+          qty: number
+        }
+        Insert: {
+          combo_id?: string | null
+          combo_label?: string | null
+          id?: string
+          menu_item_id?: string | null
+          name: string
+          order_id: string
+          price: number
+          qty: number
+        }
+        Update: {
+          combo_id?: string | null
+          combo_label?: string | null
+          id?: string
+          menu_item_id?: string | null
+          name?: string
+          order_id?: string
+          price?: number
+          qty?: number
+        }
         Relationships: [
           {
-            foreignKeyName: 'order_items_order_id_fkey'
-            columns: ['order_id']
+            foreignKeyName: "order_items_combo_id_fkey"
+            columns: ["combo_id"]
             isOneToOne: false
-            referencedRelation: 'orders'
-            referencedColumns: ['id']
+            referencedRelation: "combo_offers"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'order_items_menu_item_id_fkey'
-            columns: ['menu_item_id']
+            foreignKeyName: "order_items_menu_item_id_fkey"
+            columns: ["menu_item_id"]
             isOneToOne: false
-            referencedRelation: 'menu_items'
-            referencedColumns: ['id']
-          }
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          order_id: string
+          p256dh: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          order_id: string
+          p256dh: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          order_id?: string
+          p256dh?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_push_subscriptions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          accepted_at: string | null
+          alert_30min_sent: boolean
+          cancelled_reason_detail: string | null
+          cancelled_reason_type: string | null
+          created_at: string
+          customer_note: string | null
+          estimated_ready_at: string | null
+          id: string
+          no_show_at: string | null
+          order_number: number
+          pickup_type: string
+          ready_at: string | null
+          scheduled_at: string | null
+          status: string
+          store_id: string
+          stripe_charge_id: string | null
+          stripe_payment_intent_id: string | null
+          stripe_receipt_url: string | null
+          total_amount: number
+          user_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          alert_30min_sent?: boolean
+          cancelled_reason_detail?: string | null
+          cancelled_reason_type?: string | null
+          created_at?: string
+          customer_note?: string | null
+          estimated_ready_at?: string | null
+          id?: string
+          no_show_at?: string | null
+          order_number?: number
+          pickup_type: string
+          ready_at?: string | null
+          scheduled_at?: string | null
+          status?: string
+          store_id: string
+          stripe_charge_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_receipt_url?: string | null
+          total_amount: number
+          user_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          alert_30min_sent?: boolean
+          cancelled_reason_detail?: string | null
+          cancelled_reason_type?: string | null
+          created_at?: string
+          customer_note?: string | null
+          estimated_ready_at?: string | null
+          id?: string
+          no_show_at?: string | null
+          order_number?: number
+          pickup_type?: string
+          ready_at?: string | null
+          scheduled_at?: string | null
+          status?: string
+          store_id?: string
+          stripe_charge_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_receipt_url?: string | null
+          total_amount?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       processed_webhook_events: {
-        Row: ProcessedWebhookEvent
-        Insert: { stripe_event_id: string; processed_at?: string }
-        Update: never
+        Row: {
+          processed_at: string
+          stripe_event_id: string
+        }
+        Insert: {
+          processed_at?: string
+          stripe_event_id: string
+        }
+        Update: {
+          processed_at?: string
+          stripe_event_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          nickname: string | null
+          phone: string | null
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          nickname?: string | null
+          phone?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nickname?: string | null
+          phone?: string | null
+        }
         Relationships: []
       }
       push_subscriptions: {
         Row: {
-          id: string
-          store_id: string | null
-          order_id: string | null
-          endpoint: string
-          p256dh: string
           auth_key: string
+          created_at: string | null
+          endpoint: string
+          id: string
+          order_id: string | null
+          p256dh: string
+          store_id: string | null
+        }
+        Insert: {
+          auth_key: string
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          order_id?: string | null
+          p256dh: string
+          store_id?: string | null
+        }
+        Update: {
+          auth_key?: string
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          order_id?: string | null
+          p256dh?: string
+          store_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "push_subscriptions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_hours: {
+        Row: {
+          close_time: string | null
           created_at: string
+          id: string
+          is_open: boolean
+          last_order: string | null
+          open_time: string | null
+          store_id: string
+          updated_at: string
+          weekday: number
+        }
+        Insert: {
+          close_time?: string | null
+          created_at?: string
+          id?: string
+          is_open?: boolean
+          last_order?: string | null
+          open_time?: string | null
+          store_id: string
+          updated_at?: string
+          weekday: number
+        }
+        Update: {
+          close_time?: string | null
+          created_at?: string
+          id?: string
+          is_open?: boolean
+          last_order?: string | null
+          open_time?: string | null
+          store_id?: string
+          updated_at?: string
+          weekday?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_hours_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_members: {
+        Row: {
+          id: string
+          role: string
+          store_id: string
+          user_id: string
         }
         Insert: {
           id?: string
-          store_id?: string | null
-          order_id?: string | null
-          endpoint: string
-          p256dh: string
-          auth_key: string
-          created_at?: string
+          role?: string
+          store_id: string
+          user_id: string
         }
         Update: {
-          endpoint?: string
-          p256dh?: string
-          auth_key?: string
+          id?: string
+          role?: string
+          store_id?: string
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: 'push_subscriptions_store_id_fkey'
-            columns: ['store_id']
+            foreignKeyName: "store_members_store_id_fkey"
+            columns: ["store_id"]
             isOneToOne: false
-            referencedRelation: 'stores'
-            referencedColumns: ['id']
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: 'push_subscriptions_order_id_fkey'
-            columns: ['order_id']
-            isOneToOne: false
-            referencedRelation: 'orders'
-            referencedColumns: ['id']
-          }
         ]
       }
-      combo_offers: {
-        Row: ComboOffer
-        Insert: ComboOfferInsert
-        Update: Partial<ComboOfferInsert>
-        Relationships: [
-          {
-            foreignKeyName: 'combo_offers_store_id_fkey'
-            columns: ['store_id']
-            isOneToOne: false
-            referencedRelation: 'stores'
-            referencedColumns: ['id']
-          }
-        ]
-      }
-      combo_offer_items: {
-        Row: ComboOfferItem
-        Insert: ComboOfferItemInsert
-        Update: Partial<ComboOfferItemInsert>
-        Relationships: [
-          {
-            foreignKeyName: 'combo_offer_items_combo_id_fkey'
-            columns: ['combo_id']
-            isOneToOne: false
-            referencedRelation: 'combo_offers'
-            referencedColumns: ['id']
-          },
-          {
-            foreignKeyName: 'combo_offer_items_menu_item_id_fkey'
-            columns: ['menu_item_id']
-            isOneToOne: false
-            referencedRelation: 'menu_items'
-            referencedColumns: ['id']
-          }
-        ]
+      stores: {
+        Row: {
+          area: string | null
+          cover_url: string | null
+          created_at: string
+          cuisine_type: string | null
+          description: string | null
+          id: string
+          is_open: boolean
+          logo_url: string | null
+          manual_override_until: string | null
+          name: string
+          slug: string | null
+          stripe_account_id: string | null
+          wait_minutes: number
+        }
+        Insert: {
+          area?: string | null
+          cover_url?: string | null
+          created_at?: string
+          cuisine_type?: string | null
+          description?: string | null
+          id?: string
+          is_open?: boolean
+          logo_url?: string | null
+          manual_override_until?: string | null
+          name: string
+          slug?: string | null
+          stripe_account_id?: string | null
+          wait_minutes?: number
+        }
+        Update: {
+          area?: string | null
+          cover_url?: string | null
+          created_at?: string
+          cuisine_type?: string | null
+          description?: string | null
+          id?: string
+          is_open?: boolean
+          logo_url?: string | null
+          manual_override_until?: string | null
+          name?: string
+          slug?: string | null
+          stripe_account_id?: string | null
+          wait_minutes?: number
+        }
+        Relationships: []
       }
     }
-    Views: Record<never, never>
+    Views: {
+      [_ in never]: never
+    }
     Functions: {
-      get_user_id_by_email: {
-        Args: { p_email: string }
-        Returns: string | null
-      }
+      get_user_id_by_email: { Args: { p_email: string }; Returns: string }
+      should_be_open: { Args: { p_store_id: string }; Returns: boolean }
+      sync_store_open_status: { Args: never; Returns: undefined }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
     }
   }
 }
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
+  public: {
+    Enums: {},
+  },
+} as const

@@ -1,4 +1,4 @@
-import type { OrderStatus, WaitMinutes } from './database.types'
+import type { OrderStatus, WaitMinutes } from './database.aliases'
 
 // ---------------------------------------------------------------------------
 // 注文ステータス遷移ルール（仕様書 §14.2 / §14.3 に基づく）

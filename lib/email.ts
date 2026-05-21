@@ -1,6 +1,6 @@
 import 'server-only'
 import { Resend } from 'resend'
-import type { OrderStatus } from './database.types'
+import type { OrderStatus } from './database.aliases'
 
 let _resend: Resend | null = null
 

@@ -3,7 +3,7 @@
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { createServiceClient } from '@/lib/supabase-server'
 import { verifyStoreSession } from '@/lib/dal'
-import type { WaitMinutes } from '@/lib/database.types'
+import type { WaitMinutes } from '@/lib/database.aliases'
 
 /**
  * 公開店舗ページのキャッシュを即時パージする。

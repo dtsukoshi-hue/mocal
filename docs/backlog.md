@@ -47,8 +47,10 @@
   `STRIPE_CLIENT_ID` が Vercel env に無く `/api/onboarding/stripe/connect` が 500 になる。新規店舗追加時に必須。1時間
 - [x] **22. Next.js 16.2.4 → 16.2.6 セキュリティ更新（F-02）** (2026-05-21 完了)  
   next 16.2.6 + overrides で postcss ^8.5.15 / brace-expansion ^5.0.6。`npm audit` 3 → 0、180 tests pass、本番 smoke 全 200、CSP nonce / security headers / cron 認証も regression なし。
-- [~] **23. Supabase migrations を repo に取り込む（F-01）**  
-  `supabase/migrations/` が空で、実 DB の RLS / トリガー / 関数が不可視。disaster recovery 不能。`supabase link` → `npm run db:pull` → `npm run types:gen`。生成 SQL をレビューして RLS 不備があれば追加 finding 化。1〜2時間。
+- [x] **23. Supabase migrations を repo に取り込む（F-01）** (2026-05-21 完了)  
+  supabase CLI を dev dep として導入、`db pull` で `20260521013317_remote_schema.sql` 生成 (1208 行)。auto-gen `database.types.ts` の helper エイリアスを `database.aliases.ts` に分離、11 ファイルの import を切替、`store-cache.ts` で narrow cast 追加（DB の CHECK 制約と整合）。RLS レビューで重大 finding → 新規 #25 として追加。
+- [ ] **25. RLS の `orders` / `order_items` anon SELECT 漏洩（F-18 / 🔴 出荷ブロッカー）**  
+  `CREATE POLICY orders_public_select_by_uuid ON orders FOR SELECT USING (true)` + `GRANT ALL ... TO anon` により、anon キーで全 orders / order_items を SELECT 可能（UUID 列挙攻撃可能・PII 漏洩）。本番実証済み。修正案: A) `access_token` 列追加 + RLS で UUID+token 検証 / B) 顧客 Realtime を server-side polling へ変更 / C) 即 REVOKE。設計判断要、Phase 2.5 として独立対応。半日〜1日。
 
 ## 🟠 直近の品質改善
 

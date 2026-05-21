@@ -3,7 +3,7 @@ import { createServiceClient } from '@/lib/supabase-server'
 import { getStoreSession } from '@/lib/dal'
 import { logger } from '@/lib/logger'
 import { isUuid } from '@/lib/validation'
-import type { ComboOfferInsert } from '@/lib/database.types'
+import type { ComboOfferInsert } from '@/lib/database.aliases'
 
 const MAX_NAME_LENGTH = 60
 const MAX_DESC_LENGTH = 200

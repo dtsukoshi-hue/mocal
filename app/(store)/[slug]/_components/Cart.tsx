@@ -6,7 +6,7 @@ import { Elements } from '@stripe/react-stripe-js'
 import { createOrderAction, type OrderState } from '@/app/actions/orders'
 import PaymentForm from './PaymentForm'
 import type { CartItem } from './MenuView'
-import type { Store } from '@/lib/database.types'
+import type { Store } from '@/lib/database.aliases'
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!

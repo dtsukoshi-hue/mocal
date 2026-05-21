@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { getStoreSession } from '@/lib/dal'
 import { isUuid } from '@/lib/validation'
-import type { MenuItemInsert } from '@/lib/database.types'
+import type { MenuItemInsert } from '@/lib/database.aliases'
 
 async function authorize(id: string) {
   if (!isUuid(id)) return { error: '見つかりません', status: 404 }

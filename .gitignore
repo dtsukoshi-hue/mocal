@@ -42,3 +42,7 @@ yarn-error.log*
 next-env.d.ts
 tests/e2e/.test-store.json
 .env*.local
+
+# supabase CLI のローカル状態（link 情報・version cache）
+supabase/.temp/
+supabase/.branches/

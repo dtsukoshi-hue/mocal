@@ -4,7 +4,7 @@ import { createServiceClient } from '@/lib/supabase-server'
 import { getStoreSession } from '@/lib/dal'
 import { logger } from '@/lib/logger'
 import { VALID_WAIT_MINUTES } from '@/lib/validation'
-import type { StoreInsert, WaitMinutes } from '@/lib/database.types'
+import type { StoreInsert, WaitMinutes } from '@/lib/database.aliases'
 
 // PATCH /api/admin/store
 //   - { is_open: boolean }                       → 受付切替（manual_override_until を当日 23:59:59 まで設定）

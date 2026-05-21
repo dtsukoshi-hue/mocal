@@ -18,6 +18,14 @@
  */
 import { unstable_cache } from 'next/cache'
 import { createServiceClient } from './supabase-server'
+import type { Store, StoreHour } from './database.aliases'
+
+// DB の CHECK 制約 (wait_minutes IN (10,15,20,30,40,60) / weekday 0..6) が
+// auto-generated 型の number を narrow union (WaitMinutes / Weekday) と等価に保証する。
+// supabase gen types は CHECK を読まないため、ここで境界で cast する。
+type StoreRow = Pick<Store, 'id' | 'name' | 'description' | 'is_open' | 'wait_minutes' | 'logo_url' | 'cover_url' | 'area' | 'cuisine_type'>
+type StoreMetaRow = Pick<Store, 'id' | 'name' | 'description' | 'area' | 'cuisine_type' | 'cover_url'>
+type StoreHourRow = Pick<StoreHour, 'weekday' | 'open_time' | 'close_time' | 'is_open' | 'last_order'>
 
 // ---------------------------------------------------------------------------
 // 店舗データ（60s TTL）— slug ベースで取得
@@ -33,7 +41,7 @@ export async function getCachedStore(slug: string) {
         )
         .eq('slug', slug)
         .single()
-      return data ?? null
+      return (data as StoreRow | null) ?? null
     },
     [`store:${slug}`],
     {
@@ -55,7 +63,7 @@ export async function getCachedStoreMeta(slug: string) {
         .select('id, name, description, area, cuisine_type, cover_url')
         .eq('slug', slug)
         .single()
-      return data ?? null
+      return (data as StoreMetaRow | null) ?? null
     },
     [`store-meta:${slug}`],
     {
@@ -103,7 +111,7 @@ export async function getCachedStoreHours(storeId: string) {
         .select('weekday, open_time, close_time, is_open, last_order')
         .eq('store_id', storeId)
         .order('weekday')
-      return data ?? []
+      return (data as StoreHourRow[] | null) ?? []
     },
     [`store-hours:${storeId}`],
     {

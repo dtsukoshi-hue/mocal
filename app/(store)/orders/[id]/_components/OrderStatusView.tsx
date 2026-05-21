@@ -4,7 +4,8 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
-import type { Database, OrderStatus } from '@/lib/database.types'
+import type { Database } from '@/lib/database.types'
+import type { OrderStatus } from '@/lib/database.aliases'
 import PushSubscribeButton from './PushSubscribeButton'
 
 /** Realtime が機能しない環境向けのポーリング間隔（ミリ秒）*/

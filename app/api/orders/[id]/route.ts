@@ -6,7 +6,7 @@ import { notifyOrder } from '@/lib/webpush'
 import { sendOrderStatusEmail } from '@/lib/email'
 import { getStripe } from '@/lib/stripe'
 import { isValidOrderStatusTransition, isValidWaitMinutes, VALID_WAIT_MINUTES } from '@/lib/validation'
-import type { Order, OrderStatus, WaitMinutes } from '@/lib/database.types'
+import type { Order, OrderStatus, WaitMinutes } from '@/lib/database.aliases'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mocal.jp'
 

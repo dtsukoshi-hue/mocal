@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import { createBrowserClient } from '@supabase/ssr'
-import type { Database, MenuItem, Store, StoreHour } from '@/lib/database.types'
+import type { Database } from '@/lib/database.types'
+import type { MenuItem, Store, StoreHour } from '@/lib/database.aliases'
 import Cart from './Cart'
 import StoreStatusBanner from './StoreStatusBanner'
 

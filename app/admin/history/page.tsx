@@ -3,7 +3,7 @@ import { verifyStoreSession } from '@/lib/dal'
 import { createSupabaseServerClient } from '@/lib/supabase-ssr'
 import AdminNav from '../_components/AdminNav'
 import HistoryFilter from './_components/HistoryFilter'
-import type { OrderStatus } from '@/lib/database.types'
+import type { OrderStatus } from '@/lib/database.aliases'
 
 export const metadata: Metadata = { title: '注文履歴 | mocal' }
 
