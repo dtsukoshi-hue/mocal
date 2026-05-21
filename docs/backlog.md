@@ -63,7 +63,7 @@
   `npx supabase db lint --linked` 実行可能、構文エラーは検出するが RLS のセマンティクス（`USING(true)` 等）は検出しない。F-18 同類は #26 の security regression test で検出するのが正解。pre-push 組み込みは見送り（ネットワーク依存・効用限定的）。将来 CI の補助 job として追加可。
 - [x] **30. 旧 .archive 内 migrations の整合確認** (2026-05-21 完了)  
   `.archive/supabase-migrations-legacy/20260509020000_rls_fixes.sql` に F-18 を導入した RLS 設定の**原典コードと意図**を確認。コメント「UUID は 128bit ランダムで推測不可能なため、ID を知っていれば参照を許可」が RLS セマンティクス誤解の証拠。**学習用に保持**、supabase/migrations/README.md で archive の意義を明文化。
-- [ ] **31. 顧客 JWT 認証設計ドキュメント作成（A+ Step 1）**  
+- [~] **31. 顧客 JWT 認証設計ドキュメント作成（A+ Step 1）**  
   `docs/customer-jwt-design.md`。claim 構造 / TTL / 署名鍵 / 発行 endpoint / URL 形式（fragment vs query）/ 既存注文の backfill / rollback 計画 / Realtime 連携 / 漏洩時 rotation 手順。Opus が書く → ユーザー承認 → #32 へ。1〜2時間。
 - [ ] **32. 顧客 JWT 認証の実装（A+ Step 2 / #25 修正本体）**  
   `orders.access_token` 列追加、JWT 発行 endpoint、RLS 書き換え、URL 構造変更、email/push の URL 更新、テスト追加。#26 の test を unskip して PASS 確認、本番 smoke。1〜2日。
