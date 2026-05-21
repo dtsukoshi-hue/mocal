@@ -49,8 +49,24 @@
   next 16.2.6 + overrides で postcss ^8.5.15 / brace-expansion ^5.0.6。`npm audit` 3 → 0、180 tests pass、本番 smoke 全 200、CSP nonce / security headers / cron 認証も regression なし。
 - [x] **23. Supabase migrations を repo に取り込む（F-01）** (2026-05-21 完了)  
   supabase CLI を dev dep として導入、`db pull` で `20260521013317_remote_schema.sql` 生成 (1208 行)。auto-gen `database.types.ts` の helper エイリアスを `database.aliases.ts` に分離、11 ファイルの import を切替、`store-cache.ts` で narrow cast 追加（DB の CHECK 制約と整合）。RLS レビューで重大 finding → 新規 #25 として追加。
-- [ ] **25. RLS の `orders` / `order_items` anon SELECT 漏洩（F-18 / 🔴 出荷ブロッカー）**  
-  `CREATE POLICY orders_public_select_by_uuid ON orders FOR SELECT USING (true)` + `GRANT ALL ... TO anon` により、anon キーで全 orders / order_items を SELECT 可能（UUID 列挙攻撃可能・PII 漏洩）。本番実証済み。修正案: A) `access_token` 列追加 + RLS で UUID+token 検証 / B) 顧客 Realtime を server-side polling へ変更 / C) 即 REVOKE。設計判断要、Phase 2.5 として独立対応。半日〜1日。
+- [~] **25. RLS の `orders` / `order_items` anon SELECT 漏洩（F-18 / 🔴 出荷ブロッカー）**  
+  `CREATE POLICY orders_public_select_by_uuid ON orders FOR SELECT USING (true)` + `GRANT ALL ... TO anon` により、anon キーで全 orders / order_items を SELECT 可能（UUID 列挙攻撃可能・PII 漏洩）。本番実証済み。  
+  **採択方針**: A+ (注文ごと専用 JWT 発行 + RLS で `auth.jwt() ->> 'order_id'` 検証)。  
+  Step 0 (#26〜#30 再発防止策) → Step 1 (#31 設計ドキュメント) → Step 2 (#32 実装) の順で進める。
+- [ ] **26. anon REST アクセスのセキュリティ regression test 追加（P1）**  
+  `tests/security/anon-rest-access.test.ts` で「anon は orders/order_items を SELECT できない」「stores/menu_items は公開」「INSERT は pending+user_id=null のみ」を verify。F-18 修正前は skip、修正後に unskip して CI で恒久監視。半日。
+- [ ] **27. RLS policy レビューチェックリスト作成（P2）**  
+  `docs/rls-review-checklist.md`。`USING (true)` 禁止原則、`GRANT ALL ... TO anon` 禁止、公開テーブル明示リスト等。30分。
+- [ ] **28. workflow.md / AGENTS.md の bearer-token 表現整備（P3+P4）**  
+  workflow.md「UUID = bearer token」を JWT proof-of-access ベースに改訂、AGENTS.md に「Supabase RLS の罠」セクション追加（`USING (true)` の誤解を明記）。30分。
+- [ ] **29. `supabase db lint` 等の自動 RLS 検査（P5 / 調査タスク）**  
+  pre-push に組み込めるか調査。導入可能なら次タスク化。1時間（調査）。
+- [ ] **30. 旧 .archive 内 migrations の整合確認**  
+  `.archive/supabase-migrations-legacy/` と現実 DB の差分を読み、参考価値があるか判断。無価値なら削除提案。30分。
+- [ ] **31. 顧客 JWT 認証設計ドキュメント作成（A+ Step 1）**  
+  `docs/customer-jwt-design.md`。claim 構造 / TTL / 署名鍵 / 発行 endpoint / URL 形式（fragment vs query）/ 既存注文の backfill / rollback 計画 / Realtime 連携 / 漏洩時 rotation 手順。Opus が書く → ユーザー承認 → #32 へ。1〜2時間。
+- [ ] **32. 顧客 JWT 認証の実装（A+ Step 2 / #25 修正本体）**  
+  `orders.access_token` 列追加、JWT 発行 endpoint、RLS 書き換え、URL 構造変更、email/push の URL 更新、テスト追加。#26 の test を unskip して PASS 確認、本番 smoke。1〜2日。
 
 ## 🟠 直近の品質改善
 
