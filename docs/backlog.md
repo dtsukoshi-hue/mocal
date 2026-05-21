@@ -102,7 +102,7 @@
   `paid` 状態の注文を顧客自身がキャンセル可能にする `POST /api/orders/[id]/cancel`（UUID をアクセストークン扱い）。半日
 - [ ] **21. `.env.local` ノイズ変数の cleanup**  
   `NX_DAEMON` / `TURBO_*` / `VERCEL_*` / `VERCEL_OIDC_TOKEN` などが過去の `vercel env pull` 由来で混入。`.env.local.example` に無い変数を整理。15分
-- [ ] **24. Stripe Webhook 冪等性レコード挿入順の修正（F-05）**  
+- [~] **24. Stripe Webhook 冪等性レコード挿入順の修正（F-05）**  
   `processed_webhook_events` INSERT が処理前に行われ、処理失敗時に 200 を返して Stripe retry を止めてしまう。注文 pending 永久放置のリスク。修正案 A/B/C を提示してユーザー判断。テスト追加必須。1時間。
 
 ## 🟡 中期の機能拡張（Phase 2）
