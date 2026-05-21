@@ -47,7 +47,7 @@
   `STRIPE_CLIENT_ID` が Vercel env に無く `/api/onboarding/stripe/connect` が 500 になる。新規店舗追加時に必須。1時間
 - [x] **22. Next.js 16.2.4 → 16.2.6 セキュリティ更新（F-02）** (2026-05-21 完了)  
   next 16.2.6 + overrides で postcss ^8.5.15 / brace-expansion ^5.0.6。`npm audit` 3 → 0、180 tests pass、本番 smoke 全 200、CSP nonce / security headers / cron 認証も regression なし。
-- [ ] **23. Supabase migrations を repo に取り込む（F-01）**  
+- [~] **23. Supabase migrations を repo に取り込む（F-01）**  
   `supabase/migrations/` が空で、実 DB の RLS / トリガー / 関数が不可視。disaster recovery 不能。`supabase link` → `npm run db:pull` → `npm run types:gen`。生成 SQL をレビューして RLS 不備があれば追加 finding 化。1〜2時間。
 
 ## 🟠 直近の品質改善
