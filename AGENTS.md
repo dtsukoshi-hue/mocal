@@ -67,13 +67,37 @@ npm run db:check
 ### DB スキーマ
 
 - 実 DB（production Supabase）が **唯一の真実**。
+- supabase CLI は **dev dependency** として `package.json` に pin（`npx supabase ...` で呼ぶ）。グローバルインストールはしない。
 - 変更手順:
-  1. `npm i -g supabase`（未導入時）
-  2. `supabase link --project-ref <PROJECT_REF>`
-  3. `npm run db:check`（変更前の現状確認）
-  4. 本番 DB 変更後 → `npm run db:pull`（migration 生成）
-  5. `npm run types:gen`（types.ts 自動生成）
-  6. **手書きで `lib/database.types.ts` を編集しない**
+  1. `npx supabase link --project-ref <PROJECT_REF>`（初回のみ）
+  2. `npm run db:check`（変更前の現状確認）
+  3. 本番 DB 変更後 → `npm run db:pull`（migration 生成）
+  4. `npm run types:gen`（types.ts 自動生成）
+  5. **手書きで `lib/database.types.ts` を編集しない**。アプリ側の helper エイリアスは `lib/database.aliases.ts` に書く
+
+### Supabase RLS の罠（必読・F-18 同類事故防止）
+
+過去事故 F-18（`orders_public_select_by_uuid USING (true)` で全顧客データが anon 漏洩）の根本原因は **RLS セマンティクスの誤解**。**RLS ポリシーを書く・変更するときは必ず `docs/rls-review-checklist.md` を見ること**。
+
+特に間違えやすいポイント:
+
+1. **`CREATE POLICY ... FOR SELECT USING (true)` は「すべての行を anon に SELECT 許可」を意味する**  
+   「クライアントが WHERE 句で id 指定するから安全」は**間違い**。`/rest/v1/<table>?select=*` で全件返却される。`USING (true)` を SELECT に書くのは**そのテーブルが 100% 公開で良い場合のみ**。
+
+2. **`GRANT ALL ... TO anon` は禁止**  
+   必要なものだけ列挙する（例: `GRANT INSERT ON ... TO anon`）。
+
+3. **RLS の挙動は REST API と Realtime で異なる**  
+   - REST: `current_setting('request.headers')` などで HTTP ヘッダー読める  
+   - Realtime: **JWT claim のみ**参照。HTTP ヘッダーは見えない  
+   → bearer-token モデルを RLS だけで実装する場合は **JWT claim** ベースが必須。
+
+4. **新規 / 変更ポリシーは必ず `tests/security/anon-rest-access.test.ts` にケース追加**  
+   anon 視点で「拒否されるべき SELECT」「許可されるべき SELECT」を verify。  
+   `npm run test:security` で実行。修正前は FAIL、修正後に PASS する形で書く。
+
+5. **migration を repo に含めない期間を作らない**  
+   `.archive/` 退避は最終手段。RLS は repo 上でレビュー可能でなければならない。
 
 ### Push 前のチェック（自動化済み）
 

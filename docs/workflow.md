@@ -139,9 +139,14 @@ flowchart TB
 - `processed_webhook_events` テーブルで idempotent 保証（`stripe_event_id` PK）
 - 処理イベント: `payment_intent.succeeded` / `payment_intent.payment_failed` / `charge.refunded`
 
-### 3. 注文 UUID = 顧客のアクセストークン
-- 顧客側は認証なし。URL を知っている人だけ注文を見られる（122 bit）
-- 顧客向け注文取得は `createServiceClient()` （service role）。anon は RLS で弾かれる
+### 3. 顧客側のアクセス制御（移行中：A+ 設計へ）
+- 顧客側は明示的なログインなし。注文 URL を知っている人だけ注文を見られる**設計意図**（122 bit UUID）
+- 現状の実装:
+  - Server Component / API route: `createServiceClient()` で RLS bypass → URL 知識のみで照合
+  - Client (Realtime / ステータス画面のリアルタイム更新): **anon role で直接 SELECT している**
+- **既知の課題（F-18 / backlog #25）**: 現在 anon SELECT が広く許可されており、UUID 知識を強制していない。  
+  `docs/security-review-2026-05-21.md` の F-18 参照。修正方針: **A+ — 注文ごとに JWT を発行し、RLS で `auth.jwt() ->> 'order_id'` を検証**。詳細は `docs/customer-jwt-design.md`（作成予定）。
+- 修正完了後の真実: 「注文 UUID + 注文専用 JWT」の組合せが proof-of-access。両方を持つ client のみアクセス可能。
 
 ### 4. 顧客キャンセル機能は無い
 - `PATCH /api/orders/[id]` は店舗スタッフ専用（`cancelled_reason_type = 'store_cancel'` ハードコード）

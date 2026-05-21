@@ -57,8 +57,8 @@
   `tests/security/anon-rest-access.test.ts` (11 ケース) + `npm run test:security` script。`.env.local` を直接読んで `process.env` 汚染なし、`RUN_SECURITY_TESTS=1` flag で意図実行。現状 F-18 を正しく検出（orders / order_items / processed_webhook_events で 3 FAIL）。default `npm test` には影響なし (180 pass / 11 skipped)。**A+ 実装後にガードを外して default 実行に組み込み、CI で恒久監視**する。
 - [x] **27. RLS policy レビューチェックリスト作成（P2）** (2026-05-21 完了)  
   `docs/rls-review-checklist.md` 作成。大原則 5 つ、新規ポリシー追加時の A〜D チェックリスト、`USING (true)` を書く前の 4 条件、良い / 悪いパターン例、A+ 用 JWT claim パターンの先行記述。
-- [ ] **28. workflow.md / AGENTS.md の bearer-token 表現整備（P3+P4）**  
-  workflow.md「UUID = bearer token」を JWT proof-of-access ベースに改訂、AGENTS.md に「Supabase RLS の罠」セクション追加（`USING (true)` の誤解を明記）。30分。
+- [x] **28. workflow.md / AGENTS.md の bearer-token 表現整備（P3+P4）** (2026-05-21 完了)  
+  workflow.md §3 を「移行中：A+ 設計へ」に改訂、F-18 既知課題と修正方針を明記。AGENTS.md に「Supabase RLS の罠」セクション (5 項目) を追加、`docs/rls-review-checklist.md` への導線を整備。supabase CLI 説明も dev dep に更新。
 - [ ] **29. `supabase db lint` 等の自動 RLS 検査（P5 / 調査タスク）**  
   pre-push に組み込めるか調査。導入可能なら次タスク化。1時間（調査）。
 - [ ] **30. 旧 .archive 内 migrations の整合確認**  
