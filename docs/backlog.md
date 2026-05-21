@@ -45,7 +45,7 @@
   生成 → `.env.local` 追記 → Vercel (Prod/Preview/Dev) 登録 → Redeploy → 本番 curl で 401/200 を実証確認。F-03 解消。
 - [ ] **4. 新規店舗 onboarding の Stripe Connect 動作確認**  
   `STRIPE_CLIENT_ID` が Vercel env に無く `/api/onboarding/stripe/connect` が 500 になる。新規店舗追加時に必須。1時間
-- [ ] **22. Next.js 16.2.4 → 16.2.6 セキュリティ更新（F-02）**  
+- [~] **22. Next.js 16.2.4 → 16.2.6 セキュリティ更新（F-02）**  
   `npm audit` で next high 1 + postcss/brace-expansion moderate 2。**CSP nonce XSS (GHSA-ffhc-5mcf-pf4q) が本アプリ直撃**。`npm install next@16.2.6` で 3 → 0 件、semver patch 非破壊。30〜45分。
 - [ ] **23. Supabase migrations を repo に取り込む（F-01）**  
   `supabase/migrations/` が空で、実 DB の RLS / トリガー / 関数が不可視。disaster recovery 不能。`supabase link` → `npm run db:pull` → `npm run types:gen`。生成 SQL をレビューして RLS 不備があれば追加 finding 化。1〜2時間。
