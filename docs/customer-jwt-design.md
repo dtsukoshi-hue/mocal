@@ -1,4 +1,19 @@
-# 顧客 JWT 認証 — A+ 実装設計
+# ⚠️ SUPERSEDED — 旧設計 (A+ JWT 自前 signing)
+
+> **このドキュメントは破棄された案です**。実装には使いません。
+> 後継: `docs/customer-auth-design.md` (P3 Anonymous Sign-Ins)
+>
+> ## なぜ破棄したか
+> 1. Supabase Dashboard 確認の結果、Current Key は ECC (P-256) 管理型で **private key が exposed されない** → 自前 signing 経路がない
+> 2. Legacy HS256 secret は "Used only to verify JWTs" と Supabase 自身が明示、deprecation 路線
+> 3. 自前 ES256 鍵ペア + Third-Party Auth 路線も検討したが、Supabase canonical な **Anonymous Sign-Ins** が同等以上の機能を提供することが判明
+> 4. P3 採用で実装が **約 1/3 に simplify**、新規 env / JWT signing infra も不要、既存 RLS が活きる
+>
+> 教材として残す。詳細経緯は backlog #31 と `docs/security-review-2026-05-21.md` F-18 参照。
+>
+> ---
+
+# 顧客 JWT 認証 — A+ 実装設計 (破棄案)
 
 > **status**: 設計フェーズ / ユーザーレビュー待ち  
 > **対応**: backlog #25 (F-18) / #32 (実装)  

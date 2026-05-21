@@ -63,10 +63,18 @@
   `npx supabase db lint --linked` 実行可能、構文エラーは検出するが RLS のセマンティクス（`USING(true)` 等）は検出しない。F-18 同類は #26 の security regression test で検出するのが正解。pre-push 組み込みは見送り（ネットワーク依存・効用限定的）。将来 CI の補助 job として追加可。
 - [x] **30. 旧 .archive 内 migrations の整合確認** (2026-05-21 完了)  
   `.archive/supabase-migrations-legacy/20260509020000_rls_fixes.sql` に F-18 を導入した RLS 設定の**原典コードと意図**を確認。コメント「UUID は 128bit ランダムで推測不可能なため、ID を知っていれば参照を許可」が RLS セマンティクス誤解の証拠。**学習用に保持**、supabase/migrations/README.md で archive の意義を明文化。
-- [x] **31. 顧客 JWT 認証設計ドキュメント作成（A+ Step 1）** (2026-05-21 完了)  
-  `docs/customer-jwt-design.md` (14 セクション・487 行) 作成、ユーザー承認済み。Q1-Q5 推奨で確定: TTL 7 日 fixed / order_items anon INSERT も REVOKE / 既存 invalidate は passive / メールは JWT なし URL / `jose` ライブラリ採用。
-- [ ] **32. 顧客 JWT 認証の実装（A+ Step 2 / #25 修正本体）**  
-  `orders.access_token` 列追加、JWT 発行 endpoint、RLS 書き換え、URL 構造変更、email/push の URL 更新、テスト追加。#26 の test を unskip して PASS 確認、本番 smoke。1〜2日。
+- [x] **31. 顧客認証 (#25) 設計ドキュメント作成（旧 A+ → P3 への再設計含む）** (2026-05-21 完了)  
+  当初 A+ (自前 JWT signing) で `docs/customer-jwt-design.md` 作成 → 設計レビューで複数の妥協点発覚 → Supabase Dashboard 確認の結果、自前 JWT signing は新方式 (managed ES256) と整合しないことが判明 → **P3 (Anonymous Sign-Ins) に方針変更**。旧 doc は superseded として保持、新 `docs/customer-auth-design.md` を作成。
+- [ ] **32. 顧客認証 (P3 Anonymous Sign-Ins) 実装（#25 修正本体）**  
+  Cart submit 時に `signInAnonymously()`、`createOrderAction` を session 必須化、RLS 変更（漏洩 policy DROP + anon GRANT REVOKE）、polling interval 30s → 10s。既存 `orders_user_own_select` を流用、新規 JWT 署名 infra 不要。詳細は `docs/customer-auth-design.md`。#26 の security test を unskip → PASS で完了。半日〜1 日。
+- [ ] **33. 顧客 anonymous sign-in に CAPTCHA 導入（本格運用前）**  
+  Supabase Auth ネイティブの hCaptcha / Cloudflare Turnstile 対応で MAU 浪費攻撃 / DB 肥大攻撃を防ぐ。pilot 期は省略可、本格運用前に必須。1 日。
+- [ ] **34. anonymous user cleanup cron（90 日無活動）**  
+  `last_sign_in_at > 90 days` AND 関連 active 注文なしの auth.users を削除（注文は user_id を null に更新して保持）。DB 使用率 > 50% を trigger、当面 monitoring のみ。半日。
+- [ ] **35. `docs/deploy-runbook.md` 新規作成**  
+  Deploy 前の active 注文カウント確認、低トラフィック時間帯選定、migration と code の同期手順、smoke test 項目、rollback トリガー条件。1 時間。
+- [ ] **36. Server Action へのレート制限拡張**  
+  `proxy.ts` の rate limit を Server Action (POST 経由) にも適用。特に `createOrderAction` 5 回/分/IP 等。anon sign-in spam の第二層防御。2 時間。
 
 ## 🟠 直近の品質改善
 
@@ -100,7 +108,7 @@
 - [ ] **14. キュー補正の調整**  
   accepted 時に +3分/件で受取予想を後ろ倒し。実装の有無確認 + 精度改善。1時間（確認）+半日（改善）
 - [ ] **15. 監視・アラート整備**  
-  Sentry 導入、Webhook 失敗監視、cron 失敗監視。`lib/logger.ts` にも「将来 Sentry に差し替え」コメント。半日
+  Sentry 導入、Webhook 失敗監視、cron 失敗監視、**anonymous sign-in rate の異常検知 (#25/#32 後)**、DB 使用率監視 (#34 trigger 用)。`lib/logger.ts` にも「将来 Sentry に差し替え」コメント。半日〜1 日
 - [ ] **16. E2E テストを CI で実行**  
   Playwright セットアップ済み。`.github/workflows/ci.yml` の `verify` ジョブで回しているか確認。1〜2時間
 
