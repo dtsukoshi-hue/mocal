@@ -1,7 +1,7 @@
 'use server'
 
 import { createServiceClient } from '@/lib/supabase-server'
-import { createSupabaseServerClient } from '@/lib/supabase-ssr'
+import { ensureCustomerSession } from '@/lib/customer-session'
 import { createPayment } from '@/lib/payment'
 
 export type OrderState =
@@ -69,18 +69,15 @@ export async function createOrderAction(
   if (totalQty > 30) return { error: '1回の注文は最大30点までです。' }
   if (items.some(i => (i.qty ?? 0) > 10)) return { error: '1品目あたり最大10点までです。' }
 
-  // 顧客セッションを取得。Cart.tsx で signInAnonymously 済みのはずだが、
-  // 旧バージョン client や cookie ブロック環境に対する graceful fallback として
-  // server 側でも anonymous sign-in を試みる（design doc §3-A）。
-  const supabaseUser = await createSupabaseServerClient()
-  let { data: { user } } = await supabaseUser.auth.getUser()
-  if (!user) {
-    const { data, error: signInError } = await supabaseUser.auth.signInAnonymously()
-    if (signInError || !data.user) {
-      console.error('[createOrderAction] server-side signInAnonymously 失敗:', signInError)
-      return { error: 'セッションを開始できませんでした。時間をおいて再試行してください。' }
-    }
-    user = data.user
+  // 顧客セッションを確保（既存があれば再利用、無ければ anonymous sign-in）。
+  // 認証ロジックは lib/customer-session.ts に集約 — Server Action は
+  // 「user は必ず存在する」を前提に書ける。
+  let user
+  try {
+    user = await ensureCustomerSession()
+  } catch (err) {
+    console.error('[createOrderAction] ensureCustomerSession failed:', err)
+    return { error: 'セッションを開始できませんでした。時間をおいて再試行してください。' }
   }
   const userId = user.id
 

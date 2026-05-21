@@ -15,8 +15,16 @@ import PushSubscribeButton from './PushSubscribeButton'
  *  (2) URL 共有された別端末で Realtime RLS が deny した場合のフォールバック
  *      (F-18 修正後の P3 Anonymous Sign-Ins モデル：別 anonymous UID では Realtime 不可)
  *  (3) 自分自身の端末でも追加の保険として
+ *
+ * 値は `NEXT_PUBLIC_ORDER_POLLING_MS` で上書き可能。
+ * 用途: deploy 直後のトランジション期間に 5000 (5s) へ短縮、運用安定後に 10000 (10s) など。
+ * Default: 10000 (10 秒)。最小: 1000 (1 秒、誤設定対策)。
  */
-const POLLING_INTERVAL_MS = 10_000
+const POLLING_INTERVAL_MS = (() => {
+  const raw = Number(process.env.NEXT_PUBLIC_ORDER_POLLING_MS)
+  if (Number.isFinite(raw) && raw >= 1000) return raw
+  return 10_000
+})()
 
 type Order = {
   id: string

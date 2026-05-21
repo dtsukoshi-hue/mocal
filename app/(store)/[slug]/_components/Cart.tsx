@@ -3,11 +3,9 @@
 import { useActionState, useState, useEffect, useRef } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements } from '@stripe/react-stripe-js'
-import { createBrowserClient } from '@supabase/ssr'
 import { createOrderAction, type OrderState } from '@/app/actions/orders'
 import PaymentForm from './PaymentForm'
 import type { CartItem } from './MenuView'
-import type { Database } from '@/lib/database.types'
 import type { Store } from '@/lib/database.aliases'
 
 const stripePromise = loadStripe(
@@ -46,42 +44,13 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
   const [pickupType, setPickupType] = useState<'standard' | 'scheduled'>('standard')
   const [scheduledAt, setScheduledAt] = useState<string>('')
   const [customerNote, setCustomerNote] = useState<string>('')
-  const [signingIn, setSigningIn] = useState(false)
-  const [signInError, setSignInError] = useState<string | null>(null)
   const timeSlots = generateTimeSlots(store.wait_minutes)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const paymentHeadingRef = useRef<HTMLHeadingElement>(null)
 
-  // Submit 時に anonymous session を確保 → そのうえで createOrderAction を呼ぶ。
-  // ページ閲覧時には sign-in しないため MAU 浪費を防げる（design doc §3-A）。
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setSignInError(null)
-    const form = e.currentTarget
-    const formData = new FormData(form)
-
-    try {
-      setSigningIn(true)
-      const supabase = createBrowserClient<Database>(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      )
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        const { error } = await supabase.auth.signInAnonymously()
-        if (error) {
-          console.error('[Cart] signInAnonymously failed:', error)
-          setSignInError('セッション開始に失敗しました。時間をおいて再試行してください。')
-          return
-        }
-      }
-    } finally {
-      setSigningIn(false)
-    }
-
-    // セッション cookie が設定された状態で server action 起動
-    action(formData)
-  }
+  // 顧客セッションの確保は createOrderAction (server) 側で
+  // ensureCustomerSession() に集約済み (lib/customer-session.ts)。
+  // Cart は純粋に「form を提出する」だけ。auth ロジックを持たない。
 
   // カート表示時にフォーカスを見出しへ移動（スクリーンリーダー・キーボードユーザー向け）
   useEffect(() => {
@@ -140,8 +109,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
     )
   }
 
-  const canSubmit = !pending && !signingIn && cart.length > 0 && (pickupType === 'standard' || scheduledAt)
-  const buttonPending = pending || signingIn
+  const canSubmit = !pending && cart.length > 0 && (pickupType === 'standard' || scheduledAt)
 
   return (
     <div className="min-h-screen bg-stone-50 pb-40">
@@ -292,17 +260,11 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
             {state.error}
           </div>
         )}
-
-        {signInError && (
-          <div role="alert" className="bg-red-50 rounded-xl px-4 py-3 text-sm text-red-600">
-            {signInError}
-          </div>
-        )}
       </main>
 
       <div className="fixed bottom-6 left-0 right-0 px-4">
         <div className="max-w-lg mx-auto">
-          <form onSubmit={handleSubmit}>
+          <form action={action}>
             <input type="hidden" name="storeId" value={store.id} />
             <input type="hidden" name="pickupType" value={pickupType} />
             {pickupType === 'scheduled' && scheduledAt && (
@@ -326,7 +288,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
               disabled={!canSubmit}
               className="w-full rounded-2xl bg-amber-600 text-white font-bold py-4 shadow-lg disabled:opacity-60 hover:bg-amber-700 transition-colors"
             >
-              {buttonPending ? '準備中...' : `¥${totalAmount.toLocaleString()} でお支払いへ`}
+              {pending ? '準備中...' : `¥${totalAmount.toLocaleString()} でお支払いへ`}
             </button>
           </form>
         </div>

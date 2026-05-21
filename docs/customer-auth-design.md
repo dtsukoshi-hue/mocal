@@ -46,34 +46,45 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  顧客フロー                                                       │
+│  顧客フロー (#37 refactor 後)                                     │
 │                                                                  │
 │  /[slug] (店舗ページ)                                            │
 │   - 通常ブラウズ。sign-in なし（MAU 浪費防止）                    │
 │   - 公開 RLS (USING true) で stores / menu_items 等を読む         │
+│   - Cart コンポーネントは auth ロジックを一切持たない              │
 │                                                                  │
 │  Cart 「お支払い」ボタン                                          │
+│   ↓ form submit (action={action}) — 純粋な form                  │
 │   ↓                                                              │
-│   1. supabase.auth.signInAnonymously() ← ここで初めて sign-in     │
-│      → auth.users 行作成 / session を localStorage 保存          │
-│   2. createOrderAction (Server Action)                           │
-│      - session cookie を読んで auth.uid() 取得                   │
-│      - INSERT orders (user_id = auth.uid())                      │
-│      - INSERT order_items (service_role)                         │
-│      - return { clientSecret, orderId, orderNumber }             │
-│   3. Stripe Elements で決済                                       │
-│   4. 成功 → /orders/{id} へ遷移                                  │
+│  createOrderAction (Server Action)                                │
+│   1. ensureCustomerSession()     ← lib/customer-session.ts        │
+│      - cookies から user を取得、無ければ signInAnonymously       │
+│      - cookies はレスポンスに自動設定（@supabase/ssr）            │
+│      - 戻り値: User（必ず非 null を保証）                          │
+│   2. INSERT orders (user_id = user.id)   ← service_role           │
+│   3. INSERT order_items                                          │
+│   4. PaymentIntent 作成                                          │
+│   5. return { clientSecret, orderId, orderNumber }               │
+│   6. Stripe Elements で決済                                       │
+│   7. 成功 → /orders/{id} へ遷移                                  │
 │                                                                  │
 │  /orders/{id} (注文ステータスページ)                              │
 │   - server: createServiceClient で order を取得（変わらず）       │
-│   - client: 同じセッション (cookies/localStorage) を使用          │
-│   - Realtime channel subscribe → Supabase が JWT 検証            │
+│   - client: 既に cookie に session があるので createBrowserClient │
+│     が自動的に拾う → Realtime auth に使われる                     │
 │   - RLS orders_user_own_select USING (auth.uid() = user_id) で OK│
+│   - polling: NEXT_PUBLIC_ORDER_POLLING_MS (default 10s)          │
 │                                                                  │
 │  /orders (注文履歴ページ)                                        │
 │   - localStorage の UUID 群を /api/orders/lookup へ送信           │
 │   - service_role で取得（変わらず）                                │
 └─────────────────────────────────────────────────────────────────┘
+
+設計の中心: **lib/customer-session.ts** が顧客認証の primitive。
+全ての顧客系 Server Action はこれを呼ぶだけで session 確保を完結できる。
+将来 #11 (email + OTP 顧客ログイン) では、この primitive 内で
+「anonymous か authenticated か」を判別する分岐を追加するだけで、
+呼び出し側のコードは変更不要。
 
 ┌─────────────────────────────────────────────────────────────────┐
 │  Supabase 側 RLS（変更後）                                        │
@@ -103,22 +114,23 @@
 
 ## 3. ユーザーフロー詳細
 
-### A. 通常注文フロー
+### A. 通常注文フロー (#37 refactor 後)
 
 1. 顧客が `/[slug]` を訪問。ログインなし、anon role で menu / stores を読む
 2. カートに追加（ローカル state）
 3. 「お支払い」をタップ
-4. **Cart コンポーネント**が `supabase.auth.signInAnonymously()` を呼ぶ
-   - 既にセッションがあればスキップ（重複作成しない）
-   - localStorage / cookies に session 永続化
-5. `createOrderAction` (Server Action) を呼ぶ
-   - cookies に乗った session で `auth.uid()` を取得
-   - 注文を INSERT (`user_id = auth.uid()`)
-6. Stripe Elements で決済 → success
-7. `/orders/{order_id}` へ遷移
-8. ページ描画は server-side (`createServiceClient`)
-9. クライアント側 `OrderStatusView` が Realtime チャネル subscribe
-10. RLS で `auth.uid() = user_id` 一致 → Realtime UPDATE が届く
+4. **Cart は純粋に form submit するだけ**（auth ロジックなし）
+5. `createOrderAction` (Server Action) で `ensureCustomerSession()` を呼ぶ
+   - 既存 session があればそれを使い、無ければ `signInAnonymously()`
+   - Cookies は Server Action のレスポンスに自動設定される
+6. 注文を INSERT (`user_id = user.id`)
+7. PaymentIntent 作成、`clientSecret` を返す
+8. Stripe Elements で決済 → success
+9. `/orders/{order_id}` へ遷移
+10. ページ描画は server-side (`createServiceClient`)
+11. クライアント側 `OrderStatusView` の `createBrowserClient` が
+    cookies から session を自動取得 → Realtime チャネル subscribe
+12. RLS で `auth.uid() = user_id` 一致 → Realtime UPDATE が届く
 
 ### B. 同一端末でのリピート注文
 
@@ -182,25 +194,34 @@ REVOKE ALL ON public.processed_webhook_events       FROM anon;
 
 ## 5. コード変更箇所
 
+### 5.1 #32 (初回実装) と #37 (refactor) の最終形
+
 | ファイル | 変更内容 |
 |---|---|
-| **`app/(store)/[slug]/_components/Cart.tsx`** | submit ハンドラ冒頭で `signInAnonymously()` を一度呼ぶ。既存 session なら skip |
-| **`app/actions/orders.ts`** | `createOrderAction`: session 必須化（user が null なら error）。`user_id = user.id` で INSERT |
-| **`app/(store)/orders/[id]/_components/OrderStatusView.tsx`** | `POLLING_INTERVAL_MS = 30_000` → `10_000`。**Realtime ロジック自体は変更なし**（session が client にあれば動く） |
-| **`supabase/migrations/<ts>_customer_anon_auth_rls.sql`** | 新規。上記 §4 SQL |
-| **`tests/security/anon-rest-access.test.ts`** | ガード `RUN_SECURITY_TESTS` を撤廃（修正完了後に default で走らせる） |
+| **`lib/customer-session.ts`** (新規) | 顧客認証の primitive。`ensureCustomerSession()` / `getCustomerSession()` を export。Server-only |
+| **`app/actions/orders.ts`** | `createOrderAction` 冒頭で `await ensureCustomerSession()`。`user_id = user.id` で INSERT |
+| **`app/(store)/[slug]/_components/Cart.tsx`** | **変更なし**（auth ロジックを Server Action に集約） |
+| **`app/(store)/orders/[id]/_components/OrderStatusView.tsx`** | `POLLING_INTERVAL_MS` を `NEXT_PUBLIC_ORDER_POLLING_MS` env から読む（default 10s） |
+| **`supabase/migrations/20260521141348_customer_anon_auth_rls.sql`** (新規) | §4 SQL |
+| **`tests/security/anon-rest-access.test.ts`** | 修正完了後ガード撤廃（default で走る） |
+| **`tests/lib/customer-session.test.ts`** (新規) | primitive の unit test（6 ケース） |
+| **`.env.local.example`** | `NEXT_PUBLIC_ORDER_POLLING_MS` 追記 |
 | **`docs/customer-auth-design.md`** | このドキュメント |
-| **`docs/workflow.md`** §3 | 「移行中」表記を P3 完了後のものに更新 |
 
-### 変更**しない** ファイル
+### 5.2 変更**しない** ファイル
 
-- `lib/customer-jwt.ts` — 不要（作成しない）
+- `lib/customer-jwt.ts` — 作らない
 - `lib/env.ts` — JWT 関連 env 追加なし
 - `lib/email.ts` — メール URL に何も追加不要
 - `app/api/orders/[id]/push/route.ts` — service_role で動作、変更不要
 - `app/(store)/[slug]/_components/MenuView.tsx` — stores 公開 RLS は維持
 - `app/api/orders/lookup/route.ts` — service_role、変更不要
 - Stripe webhook、cron、admin 系すべて — 影響なし
+
+### 5.3 拡張ポイント
+
+将来の顧客機能（backlog #9 cancel / #11 顧客ログイン等）は **`ensureCustomerSession()` を呼ぶだけ**で session 取得が完結する。
+auth まわりの変更は `lib/customer-session.ts` 一箇所に閉じる設計。
 
 ---
 
