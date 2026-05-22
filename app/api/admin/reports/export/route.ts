@@ -60,6 +60,21 @@ export async function GET(request: NextRequest) {
     '注文番号,ステータス,合計金額,受取方法,注文日時,受理日時,準備完了日時,キャンセル理由,商品明細',
   ]
 
+  /**
+   * CSV インジェクション対策 (F-07):
+   * Excel / LibreOffice は `=`, `+`, `-`, `@`, `\t`, `\r` で始まるセルを
+   * 数式として実行する。メニュー名等のユーザー入力にこれらが含まれると
+   * 危険なため、先頭に single quote を付ける。
+   * 加えて " は "" にエスケープし、全体を " で囲む（標準 CSV）。
+   */
+  function escapeCsvCell(v: unknown): string {
+    let s = String(v)
+    if (/^[=+\-@\t\r]/.test(s)) {
+      s = "'" + s
+    }
+    return '"' + s.replace(/"/g, '""') + '"'
+  }
+
   for (const order of orders ?? []) {
     const items = (order.order_items ?? [])
       .map((i: { name: string; price: number; qty: number }) => `${i.name}×${i.qty}(¥${i.price * i.qty})`)
@@ -79,7 +94,7 @@ export async function GET(request: NextRequest) {
       order.cancelled_reason_type ?? '',
       items,
     ]
-      .map(v => `"${String(v).replace(/"/g, '""')}"`)
+      .map(escapeCsvCell)
       .join(',')
     rows.push(row)
   }

@@ -23,12 +23,15 @@ export default async function ReportsPage({ searchParams }: Props) {
 
   const { range } = await searchParams
   const days = RANGE_DAYS[range ?? '30d'] ?? 30
+  // Server Component: リクエスト開始時刻を 1 回だけ取得し、以降は純粋な計算に。
+  // (react-hooks/no-impure-functions-in-render を効率的に回避するパターン)
+  const now = new Date()
   // 「今日」は JST 0:00 起点に固定（過去24h ではなくカレンダー上の今日）
   const since = range === '1d'
     ? new Date(
-        `${new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tokyo' }).format(new Date())}T00:00:00+09:00`,
+        `${new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tokyo' }).format(now)}T00:00:00+09:00`,
       )
-    : new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+    : new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
 
   // 完了した注文のみ集計対象（cancelled/refunded/no_show は除外）
   const { data: orders } = await supabase

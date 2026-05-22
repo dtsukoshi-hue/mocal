@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
+import { createHmac } from 'node:crypto'
 import { signState, verifyState, _internal } from '@/lib/oauth-state'
 
 describe('signState / verifyState — round trip', () => {
@@ -65,7 +66,6 @@ describe('verifyState — TTL / iat 検証 (F-11)', () => {
     // STATE_TTL_SEC を上回る過去 iat で sign を再現
     const oldIat = Math.floor(Date.now() / 1000) - _internal.STATE_TTL_SEC - 1
     const payload = { storeId: 'x', nonce: 'n', iat: oldIat }
-    const { createHmac } = require('node:crypto') as typeof import('node:crypto')
     const secret = process.env.SESSION_SECRET!
     const sig = createHmac('sha256', secret).update(JSON.stringify(payload)).digest('hex')
     const expired = Buffer.from(JSON.stringify({ ...payload, sig })).toString('base64url')
@@ -75,7 +75,6 @@ describe('verifyState — TTL / iat 検証 (F-11)', () => {
   it('iat が未来すぎる場合も null（clock skew tolerance 超過）', () => {
     const futureIat = Math.floor(Date.now() / 1000) + _internal.CLOCK_SKEW_TOLERANCE_SEC + 10
     const payload = { storeId: 'x', nonce: 'n', iat: futureIat }
-    const { createHmac } = require('node:crypto') as typeof import('node:crypto')
     const secret = process.env.SESSION_SECRET!
     const sig = createHmac('sha256', secret).update(JSON.stringify(payload)).digest('hex')
     const skewed = Buffer.from(JSON.stringify({ ...payload, sig })).toString('base64url')

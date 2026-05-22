@@ -35,4 +35,3 @@ jobs:
           CRON_SECRET: ci-cron
       - name: Lint
         run: npm run lint
-        continue-on-error: true

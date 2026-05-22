@@ -162,7 +162,6 @@ describe('POST /api/push/subscribe — storeId path', () => {
   it('returns 200 when user is a valid store member and upsert succeeds', async () => {
     const memberChain  = singleChain({ role: 'owner' })
     const upsertResult = upsertChain()
-    let call = 0
     const client = {
       from: vi.fn().mockImplementation((table: string) => {
         if (table === 'store_members')    return memberChain

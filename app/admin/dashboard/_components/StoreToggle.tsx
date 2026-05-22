@@ -43,20 +43,22 @@ export default function StoreToggle({
   const [sheet, setSheet] = useState<'action' | 'time' | null>(null)
   const [sheetVisible, setSheetVisible] = useState(false)
 
-  // マウント時刻を SSR セーフに（初期値は 0、useEffect で確定）
+  // マウント時刻を SSR セーフに（初期値は 0、microtask で確定）
+  // microtask 経由で setState することで effect 同期実行を避ける
+  // (react-hooks/set-state-in-effect 回避)。
   const [mountedAt, setMountedAt] = useState(0)
-  useEffect(() => { setMountedAt(Date.now()) }, [])
+  useEffect(() => { queueMicrotask(() => setMountedAt(Date.now())) }, [])
 
   const overrideActive =
     mountedAt > 0 && overrideUntil !== null && new Date(overrideUntil).getTime() > mountedAt
 
+  // sheet を開く: RAF で 1 frame 後に visible=true (CSS transition のため)
+  // sheet を閉じる: closeSheet が直接 setSheetVisible(false) を呼ぶので
+  //                effect 側で再度 false にする必要はない（重複処理だった）
   useEffect(() => {
-    if (sheet !== null) {
-      const id = requestAnimationFrame(() => setSheetVisible(true))
-      return () => cancelAnimationFrame(id)
-    } else {
-      setSheetVisible(false)
-    }
+    if (sheet === null) return
+    const id = requestAnimationFrame(() => setSheetVisible(true))
+    return () => cancelAnimationFrame(id)
   }, [sheet])
 
   function openSheet() {

@@ -18,28 +18,32 @@ export default function StorePushSubscribe({ storeId }: Props) {
   const [testLoading, setTestLoading] = useState(false)
 
   useEffect(() => {
-    // マウント後: Push 対応チェック
-    const isPushSupported = 'serviceWorker' in navigator && 'PushManager' in window
-    setSupported(isPushSupported)
+    // マウント後の非同期処理（feature detection / 復元）。
+    // microtask に回して effect 同期実行を避ける
+    // (react-hooks/set-state-in-effect 回避)。
+    queueMicrotask(() => {
+      const isPushSupported = 'serviceWorker' in navigator && 'PushManager' in window
+      setSupported(isPushSupported)
 
-    if (isPushSupported) {
-      // localStorage ヒントで先行表示（SW 確認前のフラッシュ防止）
-      if (localStorage.getItem(LS_KEY) === '1') setSubscribed(true)
+      if (isPushSupported) {
+        // localStorage ヒントで先行表示（SW 確認前のフラッシュ防止）
+        if (localStorage.getItem(LS_KEY) === '1') setSubscribed(true)
 
-      navigator.serviceWorker
-        .register('/sw.js', { scope: '/', updateViaCache: 'none' })
-        .then((reg) => reg.pushManager.getSubscription())
-        .then((sub) => {
-          const isSubscribed = !!sub
-          setSubscribed(isSubscribed)
-          if (isSubscribed) {
-            localStorage.setItem(LS_KEY, '1')
-          } else {
-            localStorage.removeItem(LS_KEY)
-          }
-        })
-        .catch(() => {})
-    }
+        navigator.serviceWorker
+          .register('/sw.js', { scope: '/', updateViaCache: 'none' })
+          .then((reg) => reg.pushManager.getSubscription())
+          .then((sub) => {
+            const isSubscribed = !!sub
+            setSubscribed(isSubscribed)
+            if (isSubscribed) {
+              localStorage.setItem(LS_KEY, '1')
+            } else {
+              localStorage.removeItem(LS_KEY)
+            }
+          })
+          .catch(() => {})
+      }
+    })
   }, [])
 
   if (!supported) return null

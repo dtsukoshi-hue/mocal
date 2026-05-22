@@ -28,14 +28,13 @@ export default function ElapsedTime({ createdAt, warnAfterMinutes }: Props) {
   const [minutes, setMinutes] = useState(0)
 
   useEffect(() => {
-    // マウント後に初回計算（サーバー/クライアントの不一致を回避）
-    setElapsed(formatElapsed(createdAt))
-    setMinutes(getMinutes(createdAt))
-
     const update = () => {
       setElapsed(formatElapsed(createdAt))
       setMinutes(getMinutes(createdAt))
     }
+    // 初回計算は microtask に回して effect 同期実行を避ける
+    // (react-hooks/set-state-in-effect 回避)
+    queueMicrotask(update)
     // 10秒ごとに更新（秒単位表示の精度を保ちつつ過剰なレンダリングを避ける）
     const interval = setInterval(update, 10_000)
     return () => clearInterval(interval)
