@@ -81,8 +81,8 @@
   Supabase Auth ネイティブの hCaptcha / Cloudflare Turnstile 対応で MAU 浪費攻撃 / DB 肥大攻撃を防ぐ。pilot 期は省略可、本格運用前に必須。1 日。
 - [ ] **34. anonymous user cleanup cron（90 日無活動）**  
   `last_sign_in_at > 90 days` AND 関連 active 注文なしの auth.users を削除（注文は user_id を null に更新して保持）。DB 使用率 > 50% を trigger、当面 monitoring のみ。半日。
-- [ ] **35. `docs/deploy-runbook.md` 新規作成**  
-  Deploy 前の active 注文カウント確認、低トラフィック時間帯選定、migration と code の同期手順、smoke test 項目、rollback トリガー条件。1 時間。
+- [x] **35. `docs/deploy-runbook.md` 新規作成** (2026-05-22 完了)  
+  8 セクション (種類別 checklist / pre-deploy active 注文確認 / smoke / security regression / rollback / 監視 / 落とし穴 / deploy 記録)。AGENTS.md / customer-auth-design.md / security-review / rls-review-checklist と相互参照。
 - [x] **36. Server Action へのレート制限拡張** (2026-05-22 完了)  
   `proxy.ts` に `isServerActionRequest` 検出 (POST + next-action ヘッダー) と `checkServerActionRateLimit` を追加。30 req/min/IP の generic 制限。createOrderAction (anonymous sign-in spam) / loginAction (brute-force) 等の第二層防御に。新規 5 ケース proxy test 追加。
 
