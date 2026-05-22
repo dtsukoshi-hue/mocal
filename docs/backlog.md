@@ -83,8 +83,8 @@
   `last_sign_in_at > 90 days` AND 関連 active 注文なしの auth.users を削除（注文は user_id を null に更新して保持）。DB 使用率 > 50% を trigger、当面 monitoring のみ。半日。
 - [ ] **35. `docs/deploy-runbook.md` 新規作成**  
   Deploy 前の active 注文カウント確認、低トラフィック時間帯選定、migration と code の同期手順、smoke test 項目、rollback トリガー条件。1 時間。
-- [~] **36. Server Action へのレート制限拡張**  
-  `proxy.ts` の rate limit を Server Action (POST 経由) にも適用。特に `createOrderAction` 5 回/分/IP 等。anon sign-in spam の第二層防御。2 時間。
+- [x] **36. Server Action へのレート制限拡張** (2026-05-22 完了)  
+  `proxy.ts` に `isServerActionRequest` 検出 (POST + next-action ヘッダー) と `checkServerActionRateLimit` を追加。30 req/min/IP の generic 制限。createOrderAction (anonymous sign-in spam) / loginAction (brute-force) 等の第二層防御に。新規 5 ケース proxy test 追加。
 
 ## 🟠 直近の品質改善
 

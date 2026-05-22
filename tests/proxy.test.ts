@@ -19,11 +19,20 @@ import { proxy } from '@/proxy'
 // ---------------------------------------------------------------------------
 // Helper: NextRequest を組み立てる
 // ---------------------------------------------------------------------------
-function makeReq(path: string, opts?: { ip?: string; method?: string }): NextRequest {
+function makeReq(path: string, opts?: { ip?: string; method?: string; headers?: Record<string, string> }): NextRequest {
   const url = `http://localhost${path}`
-  const headers: Record<string, string> = {}
+  const headers: Record<string, string> = { ...(opts?.headers ?? {}) }
   if (opts?.ip) headers['x-forwarded-for'] = opts.ip
   return new NextRequest(url, { method: opts?.method ?? 'GET', headers })
+}
+
+/** Server Action POST request を模擬する (next-action ヘッダーが特徴) */
+function makeServerAction(path: string, ip: string): NextRequest {
+  return makeReq(path, {
+    ip,
+    method: 'POST',
+    headers: { 'next-action': '0123456789abcdef0123456789abcdef01234567' },
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -63,6 +72,60 @@ describe('proxy — rate limiting', () => {
     }
     const res = await proxy(makeReq('/api/push/test', { ip, method: 'POST' }) as never)
     expect(res?.headers.get('Retry-After')).toBe('60')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Server Action rate limit (#36)
+// ---------------------------------------------------------------------------
+describe('proxy — Server Action rate limit (#36)', () => {
+  it('allows up to 30 Server Action POST per minute per IP', async () => {
+    const ip = '10.0.0.1'
+    for (let i = 0; i < 30; i++) {
+      const res = await proxy(makeServerAction('/', ip) as never)
+      expect(res?.status).not.toBe(429)
+    }
+  })
+
+  it('returns 429 on the 31st Server Action POST within window', async () => {
+    const ip = '10.0.0.2'
+    for (let i = 0; i < 30; i++) {
+      await proxy(makeServerAction('/', ip) as never)
+    }
+    const res = await proxy(makeServerAction('/', ip) as never)
+    expect(res?.status).toBe(429)
+    expect(res?.headers.get('Retry-After')).toBe('60')
+  })
+
+  it('rate limit is per IP (different IP is not affected)', async () => {
+    const ipA = '10.0.0.3'
+    const ipB = '10.0.0.4'
+    for (let i = 0; i < 30; i++) {
+      await proxy(makeServerAction('/', ipA) as never)
+    }
+    // A は次の request で 429、B は別 IP なので影響を受けない
+    const resA = await proxy(makeServerAction('/', ipA) as never)
+    expect(resA?.status).toBe(429)
+    const resB = await proxy(makeServerAction('/', ipB) as never)
+    expect(resB?.status).not.toBe(429)
+  })
+
+  it('POST without next-action header is not rate limited as a Server Action', async () => {
+    const ip = '10.0.0.5'
+    // 普通の form POST (next-action ヘッダーなし) を 50 回 → 制限されない
+    // (Server Action 用の rule にマッチしない)
+    for (let i = 0; i < 50; i++) {
+      const res = await proxy(makeReq('/', { ip, method: 'POST' }) as never)
+      expect(res?.status).not.toBe(429)
+    }
+  })
+
+  it('GET request is not rate limited as a Server Action', async () => {
+    const ip = '10.0.0.6'
+    for (let i = 0; i < 50; i++) {
+      const res = await proxy(makeReq('/', { ip, method: 'GET' }) as never)
+      expect(res?.status).not.toBe(429)
+    }
   })
 })
 

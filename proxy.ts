@@ -58,7 +58,8 @@ const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
 const RATE_LIMITS: { path: string; max: number; windowMs: number }[] = [
   // PATCH /api/orders/[id] — 店舗スタッフの注文状態更新: 60回/分/IP
   { path: '/api/orders/', max: 60, windowMs: 60_000 },
-  // 注文作成は Server Action 経由のため /api/orders への直接 POST は存在しない
+  // 注文作成は Server Action 経由 (createOrderAction)。
+  // SERVER_ACTION_LIMIT で IP ベースに別途制限済。
   { path: '/api/push/subscribe', max: 20, windowMs: 60_000 },
   // テスト通知: 5回/分/IP（スパム防止）
   { path: '/api/push/test', max: 5, windowMs: 60_000 },
@@ -69,11 +70,30 @@ const RATE_LIMITS: { path: string; max: number; windowMs: number }[] = [
   { path: '/api/admin/reports/export', max: 10, windowMs: 3_600_000 },
 ]
 
+// Server Action のレート制限 (#36 / 2026-05-22):
+// /api/* に該当しない POST + next-action ヘッダーを Server Action と判定し、
+// IP あたり 30 req/min に制限する。createOrderAction (anonymous sign-in 連投で
+// MAU 浪費攻撃) / loginAction (ブルートフォース) などの第二層防御。
+const SERVER_ACTION_MAX = 30
+const SERVER_ACTION_WINDOW_MS = 60_000
+const SERVER_ACTION_KEY = '__server-action__'
+
+function isServerActionRequest(req: NextRequest): boolean {
+  return req.method === 'POST' && req.headers.has('next-action')
+}
+
 function checkRateLimit(ip: string, pathname: string): boolean {
   const rule = RATE_LIMITS.find(r => pathname.startsWith(r.path))
   if (!rule) return true
 
-  const key = `${ip}:${rule.path}`
+  return applyLimit(`${ip}:${rule.path}`, rule.max, rule.windowMs)
+}
+
+function checkServerActionRateLimit(ip: string): boolean {
+  return applyLimit(`${ip}:${SERVER_ACTION_KEY}`, SERVER_ACTION_MAX, SERVER_ACTION_WINDOW_MS)
+}
+
+function applyLimit(key: string, max: number, windowMs: number): boolean {
   const now = Date.now()
   const entry = rateLimitMap.get(key)
 
@@ -84,11 +104,11 @@ function checkRateLimit(ip: string, pathname: string): boolean {
         if (now > v.resetAt) rateLimitMap.delete(k)
       }
     }
-    rateLimitMap.set(key, { count: 1, resetAt: now + rule.windowMs })
+    rateLimitMap.set(key, { count: 1, resetAt: now + windowMs })
     return true
   }
 
-  if (entry.count >= rule.max) return false
+  if (entry.count >= max) return false
   entry.count++
   return true
 }
@@ -100,6 +120,14 @@ export async function proxy(request: NextRequest) {
 
   // Rate Limit チェック（API エンドポイント）
   if (pathname.startsWith('/api/') && !checkRateLimit(ip, pathname)) {
+    return NextResponse.json(
+      { error: 'リクエストが多すぎます。しばらく経ってから再試行してください。' },
+      { status: 429, headers: { 'Retry-After': '60' } }
+    )
+  }
+
+  // Rate Limit チェック（Server Action / #36）
+  if (isServerActionRequest(request) && !checkServerActionRateLimit(ip)) {
     return NextResponse.json(
       { error: 'リクエストが多すぎます。しばらく経ってから再試行してください。' },
       { status: 429, headers: { 'Retry-After': '60' } }
