@@ -88,8 +88,8 @@
 
 ## 🟠 直近の品質改善
 
-- [ ] **5. GitHub Branch Protection で owner bypass を禁止**  
-  Settings → Branches → "Do not allow bypassing the above settings" を ON。5分
+- [x] **5. GitHub Branch Protection で owner bypass を禁止** (2026-05-22 完了)  
+  「Do not allow bypassing the above settings」を ON + 「Allow force pushes」を OFF。事故 #9 (force reset + 175 commit 並走) の再発を構造的に防ぐ。`Require pull request` は OFF のまま（1 人運用ではオーバーヘッド大、将来スタッフ参加時に ON 候補）。
 - [ ] **6. 管理画面 Push 通知の実環境確認**  
   本番 VAPID キーで `notifyStore()` が届くか。新規注文受付通知が機能するか目視確認。30分
 - [ ] **7. 生成値のバックアップ（暫定: 暗号化 sparsebundle + iCloud Drive）**  
