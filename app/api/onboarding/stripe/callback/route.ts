@@ -1,30 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createHmac } from 'crypto'
 import { getStripe } from '@/lib/stripe'
 import { createServiceClient } from '@/lib/supabase-server'
 import { createSupabaseServerClient } from '@/lib/supabase-ssr'
-
-// state の HMAC 署名を検証（connect/route.ts の signState と対称）
-function verifyState(stateParam: string): { storeId: string } | null {
-  try {
-    const secret = process.env.STRIPE_WEBHOOK_SECRET ?? process.env.NEXTAUTH_SECRET ?? 'dev-secret'
-    const decoded = JSON.parse(Buffer.from(stateParam, 'base64url').toString('utf-8'))
-    const { sig, ...payload } = decoded
-    if (!sig || !payload.storeId) return null
-    const expected = createHmac('sha256', secret).update(JSON.stringify(payload)).digest('hex')
-    // タイミング攻撃耐性のある比較
-    if (sig.length !== expected.length) return null
-    let diff = 0
-    for (let i = 0; i < sig.length; i++) diff |= sig.charCodeAt(i) ^ expected.charCodeAt(i)
-    if (diff !== 0) return null
-    return { storeId: payload.storeId }
-  } catch {
-    return null
-  }
-}
+import { verifyState } from '@/lib/oauth-state'
 
 // Stripe Connect OAuth コールバック
 // GET /api/onboarding/stripe/callback?code=...&state=...
+//
+// state は connect/route.ts と同じ lib/oauth-state.ts の primitive で検証。
+// HMAC キーは SESSION_SECRET、TTL 10 分。
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl
   const code = searchParams.get('code')

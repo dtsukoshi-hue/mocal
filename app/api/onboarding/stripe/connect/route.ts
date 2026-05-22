@@ -1,18 +1,13 @@
 import { NextResponse } from 'next/server'
-import { createHmac, randomBytes } from 'crypto'
+import { randomBytes } from 'crypto'
 import { verifyStoreSession } from '@/lib/dal'
-
-// state を HMAC-SHA256 で署名して CSRF 対策
-// secret は STRIPE_WEBHOOK_SECRET を流用（別途 CONNECT_STATE_SECRET を設けても可）
-function signState(payload: object): string {
-  const secret = process.env.STRIPE_WEBHOOK_SECRET ?? process.env.NEXTAUTH_SECRET ?? 'dev-secret'
-  const json = JSON.stringify(payload)
-  const sig = createHmac('sha256', secret).update(json).digest('hex')
-  return Buffer.from(JSON.stringify({ ...payload, sig })).toString('base64url')
-}
+import { signState } from '@/lib/oauth-state'
 
 // Stripe Connect OAuth 開始
 // GET /api/onboarding/stripe/connect → Stripe の OAuth ページへリダイレクト
+//
+// state は lib/oauth-state.ts で signState / verifyState を共有。
+// HMAC キーは SESSION_SECRET、iat / exp (10 分) で replay 防止。
 export async function GET() {
   const session = await verifyStoreSession()
 
@@ -24,7 +19,7 @@ export async function GET() {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
   const redirectUri = `${appUrl}/api/onboarding/stripe/callback`
 
-  // nonce で replay 攻撃を防ぎ、HMAC 署名で state 改ざんを検出
+  // nonce + HMAC 署名 + iat/exp で CSRF / 改ざん / replay を防ぐ
   const nonce = randomBytes(16).toString('hex')
   const state = signState({ storeId: session.storeId, nonce })
 

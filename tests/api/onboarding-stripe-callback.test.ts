@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { createHmac } from 'crypto'
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -23,6 +22,7 @@ vi.mock('@/lib/stripe', () => ({
 import { GET } from '@/app/api/onboarding/stripe/callback/route'
 import { createServiceClient } from '@/lib/supabase-server'
 import { getStripe } from '@/lib/stripe'
+import { signState } from '@/lib/oauth-state'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -32,12 +32,9 @@ const USER_ID  = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const STORE_ID = '11111111-1111-4111-8111-111111111111'
 const APP_URL  = 'http://localhost:3000'
 
-/** Generate a valid HMAC-signed state matching the route's verifyState() */
+/** Generate a valid HMAC-signed state via lib/oauth-state.ts (F-04 / F-11 修正後の primitive) */
 function makeValidState(storeId: string, nonce = 'test-nonce-abc'): string {
-  const secret  = 'whsec_test_dummy'   // from tests/setup.ts
-  const payload = { storeId, nonce }
-  const sig     = createHmac('sha256', secret).update(JSON.stringify(payload)).digest('hex')
-  return Buffer.from(JSON.stringify({ ...payload, sig })).toString('base64url')
+  return signState({ storeId, nonce })
 }
 
 function makeReq(params: Record<string, string>): NextRequest {
