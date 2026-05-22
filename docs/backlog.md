@@ -79,8 +79,8 @@
   Cart submit 時に `signInAnonymously()`、`createOrderAction` を session 必須化、RLS 変更（漏洩 policy DROP + anon GRANT REVOKE）、polling interval 30s → 10s。既存 `orders_user_own_select` を流用、新規 JWT 署名 infra 不要。詳細は `docs/customer-auth-design.md`。#26 の security test を unskip → PASS で完了。半日〜1 日。
 - [ ] **33. 顧客 anonymous sign-in に CAPTCHA 導入（本格運用前）**  
   Supabase Auth ネイティブの hCaptcha / Cloudflare Turnstile 対応で MAU 浪費攻撃 / DB 肥大攻撃を防ぐ。pilot 期は省略可、本格運用前に必須。1 日。
-- [~] **34. anonymous user cleanup cron（90 日無活動）**  
-  `last_sign_in_at > 90 days` AND 関連 active 注文なしの auth.users を削除（注文は user_id を null に更新して保持）。DB 使用率 > 50% を trigger、当面 monitoring のみ。半日。
+- [x] **34. anonymous user cleanup cron（90 日無活動）** (2026-05-22 完了)  
+  Migration `20260522064802_orders_user_id_set_null.sql` で orders.user_id FK を SET NULL に。`/api/cron/cleanup-anonymous-users` 新規 (バッチ 100/run / `?dry=1` / `CLEANUP_ANON_USERS_ENABLED=1` flag / `is_anonymous=true` 絞り込み)。本番 deploy 完了、現状は flag off で dry-run のみ。スケジューラ登録 (#2) と flag 有効化はユーザー作業。
 - [x] **35. `docs/deploy-runbook.md` 新規作成** (2026-05-22 完了)  
   8 セクション (種類別 checklist / pre-deploy active 注文確認 / smoke / security regression / rollback / 監視 / 落とし穴 / deploy 記録)。AGENTS.md / customer-auth-design.md / security-review / rls-review-checklist と相互参照。
 - [x] **36. Server Action へのレート制限拡張** (2026-05-22 完了)  

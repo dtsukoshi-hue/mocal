@@ -224,6 +224,7 @@ DROP TABLE / DROP COLUMN を含む migration は **データを失う**。
 | 2026-05-21 | `5a92591` | F-01: Supabase migrations を repo 取り込み | types 整合性は db:check で都度確認 |
 | 2026-05-21 | `79c5cb2` | F-18: anon SELECT 漏洩を migration で閉じる | code 先 → migration 後の順守。security test が客観指標 |
 | 2026-05-22 | `ab2c119` | #36: Server Action レート制限 | proxy.ts の変更は proxy.test.ts で恒久 verify |
+| 2026-05-22 | `cf2d35f` | #34: anonymous user cleanup cron + FK SET NULL | code 先 → migration 後の順を踏襲。新 cron 系統は env flag で default off で本番安全 |
 
 ---
 
