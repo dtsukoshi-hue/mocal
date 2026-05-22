@@ -119,8 +119,8 @@
   accepted 時に +3分/件で受取予想を後ろ倒し。実装の有無確認 + 精度改善。1時間（確認）+半日（改善）
 - [ ] **15. 監視・アラート整備**  
   Sentry 導入、Webhook 失敗監視、cron 失敗監視、**anonymous sign-in rate の異常検知 (#25/#32 後)**、DB 使用率監視 (#34 trigger 用)。`lib/logger.ts` にも「将来 Sentry に差し替え」コメント。半日〜1 日
-- [ ] **16. E2E テストを CI で実行**  
-  Playwright セットアップ済み。`.github/workflows/ci.yml` の `verify` ジョブで回しているか確認。1〜2時間
+- [x] **16. E2E テストを CI で実行 (F-09)** (2026-05-22 完了)  
+  `.github/workflows/ci.yml` に Playwright (chromium) ステップを追加。env を job 共通化、`Install Playwright browsers` → `E2E (Playwright)` → 失敗時 `Upload Playwright report` artifact (7日保持)。CI 上では dummy env のため Supabase 依存テストは graceful skip、LP/静的/セキュリティヘッダー等の browser テストが恒久 regression net に。
 
 ## 🟢 長期（Phase 3）
 
