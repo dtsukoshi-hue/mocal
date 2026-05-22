@@ -66,8 +66,10 @@ export async function createPayment(
  */
 export async function refundPayment(
   stripeChargeId: string,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _stripeConnectedAccountId?: string | null
+  // 引数は API 互換のため残してあるが、Destination Charges では使わない。
+  // アンダースコア prefix が eslint の argsIgnorePattern に matchして
+  // 未使用警告は出ない (eslint.config.mjs 参照)。
+  _stripeConnectedAccountId?: string | null,
 ): Promise<RefundPaymentResult> {
   const stripe = getStripe()
 

@@ -65,10 +65,8 @@ function mockServiceClient(
   const memberChain = singleChain(memberData)
   const upChain     = updateChain(updateError)
 
-  let fromCall = 0
   vi.mocked(createServiceClient).mockReturnValue({
     from: vi.fn().mockImplementation((table: string) => {
-      fromCall++
       if (table === 'store_members') return memberChain
       if (table === 'stores')        return upChain
       return memberChain

@@ -30,7 +30,7 @@ export default async function Image({ params }: Props) {
             position: 'relative',
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {/* OG image generator では next/image が使えないため標準 img タグを使用 */}
           <img
             src={store.cover_url}
             alt=""

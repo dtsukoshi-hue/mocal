@@ -3,6 +3,10 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 
+// JST オフセット (+9h)。コンポーネント外定数なので useMemo 依存配列に
+// 入れなくてよい (lint: react-hooks/exhaustive-deps を回避)。
+const JST_OFFSET_MS = 9 * 60 * 60 * 1000
+
 type OrderItem = { name: string; qty: number; price: number }
 type Order = {
   id: string
@@ -43,9 +47,6 @@ export default function SalesView({ orders, currentRange }: Props) {
     return { total, count, avg }
   }, [orders])
 
-  // JST オフセット: +9h
-  const JST_OFFSET_MS = 9 * 60 * 60 * 1000
-
   // 日次売上
   const dailySales = useMemo(() => {
     const map = new Map<string, { date: string; total: number; count: number }>()
@@ -59,7 +60,6 @@ export default function SalesView({ orders, currentRange }: Props) {
       map.set(day, existing)
     }
     return Array.from(map.values()).sort((a, b) => a.date.localeCompare(b.date))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orders])
 
   // 時間帯別注文数（0〜23時、JST）

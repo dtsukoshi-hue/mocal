@@ -21,7 +21,6 @@ import { GET } from '@/app/api/cron/store-hours/route'
 
 const STORE_ID_A = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const STORE_ID_B = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
-const STORE_ID_C = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
 
 // Tuesday 10:00 JST = Tuesday 01:00 UTC (JST = UTC+9)
 // day_of_week = 2 (Tuesday), currentTimeStr = "10:00"

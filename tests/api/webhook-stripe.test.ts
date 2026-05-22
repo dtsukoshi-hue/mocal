@@ -369,8 +369,7 @@ describe('POST /api/webhook/stripe — payment_intent.payment_failed', () => {
     const updateChain: Record<string, unknown> = {}
     updateChain.update = vi.fn().mockReturnValue(updateChain)
     updateChain.eq     = vi.fn().mockReturnValue(updateChain)
-    ;(updateChain as unknown as { _resolve: () => void })
-    // make the last call resolve
+    // 最後の eq() 呼び出しだけ resolve するように
     let eqCount = 0
     ;(updateChain.eq as ReturnType<typeof vi.fn>).mockImplementation(() => {
       eqCount++
