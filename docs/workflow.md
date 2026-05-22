@@ -60,6 +60,7 @@ flowchart TB
         direction TB
         CronHours["GET /api/cron/store-hours<br/>5分毎<br/>store_hours → is_open 自動切替"]
         CronNoShow["GET /api/cron/no-show<br/>1分毎<br/>ready→no_show (15分超過)"]
+        CronCleanup["GET /api/cron/cleanup-anonymous-users<br/>日次<br/>90日無活動 anon user 削除<br/>CLEANUP_ANON_USERS_ENABLED=1 で発火"]
     end
 
     subgraph Externals["☁️ 外部サービス"]
