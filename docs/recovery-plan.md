@@ -42,7 +42,7 @@ npm install
 
 | 項目 | タグ `local-main-2026-05-19` | 現 `origin/main` |
 |---|---|---|
-| Commit 数 | 176 | 162 |
+| Commit 数 | 176 | 164 |
 | カテゴリ | プロトタイプ反映 + 機能拡張 (コンボ / お問い合わせ / FAQ / 顧客キャンセル / スタッフ管理 / スタンダード予約 UI 等) | セキュリティ強化 + CI + RLS 修正 + Anonymous Sign-Ins 等 |
 
 両者で**お互いに独自の進歩**があり、reset によって**タグ側の機能進歩が消えた**。
@@ -50,6 +50,8 @@ npm install
 ---
 
 ## 2. 失われたものの最終確認（実機 audit 済）
+
+> **2026-05-23 再 audit 追記**: 初版 audit に 2 件の誤りが見つかった。L7 / L11 は実際には main に存在する。詳細は §2.5。
 
 ### 2.1 customer-facing の機能損失（高確度・確認済）
 
@@ -61,7 +63,7 @@ npm install
 | **L4** | **内税表示** in cart | お支払い欄に「うち消費税」が出ない | 一部 commit に内包 |
 | **L5** | **アップセル提案** ("ご一緒にいかが？") | サイド・ドリンクの追加売上機会喪失 | 915c089 |
 | **L6** | **2-step UI** (カート → 注文確認) | 現状 1 ページに混在、確認 step なし | 42dc6d5 |
-| **L7** | **コンボのレシート行グループ化** | 領収書でコンボがバラ表示 | 0946fd9 |
+| **L7** | ~~**コンボのレシート行グループ化**~~ | ⚠ **誤判定（2026-05-23 訂正）**: 現 main の `ReceiptView.tsx` に `combo_id` ベースのグループ化が実装済み（L11-54 で `comboMap` 構築）。**復元不要** | 0946fd9 |
 | **L8** | **FAQ ページ** (`/faq`) | 404 | 6c85b97 |
 | **L9** | **お問い合わせフォーム** + 管理画面 + 通知 | `/for-stores` から問い合わせ送信できない | ba97699, 80dbdb4, 23efe26 |
 
@@ -70,7 +72,7 @@ npm install
 | # | 損失 | 状態 |
 |---|---|---|
 | **L10** | **店舗キャンセル時の理由選択 UI** (在庫切れ / 店舗都合) | 主機能の有無は未確認、UI レベルで差がありそう |
-| **L11** | **コンボ管理** (`CombosManager`) | API は main にある (`/api/admin/combos`) が UI 未確認 |
+| **L11** | ~~**コンボ管理** (`CombosManager`)~~ | ⚠ **誤判定（2026-05-23 訂正）**: `app/admin/menu/_components/CombosManager.tsx` が main に存在。API・UI とも揃っている。**復元不要** |
 | **L12** | **店舗オンボーディングフロー** (`/admin/onboarding`) | main にも `/onboarding` あるが内容差は要 audit |
 
 ### 2.3 main 側に**ある**ことを確認済（タグ commit が main で再実装されている）
@@ -91,10 +93,22 @@ npm install
 
 ### 2.4 未 audit / さらに調査が必要
 
-- **DB スキーマ**: タグの migrations と現 production schema (`20260521013317_remote_schema.sql`) の整合性は表面的には OK だが、`combo_offers` / `combo_offer_items` テーブルの**実データに依存する仕様**（割引額の計算ロジック）は再検証要
+- **DB スキーマ**: 現 production schema (`20260521013317_remote_schema.sql`) に `combo_offers` / `combo_offer_items` が定義済み（30 箇所参照）、`database.types.ts` にも反映済。**DB レイヤは整合済**。`store_inquiries` は未存在（R-4 で追加要）。`combo_offers` の割引額計算ロジックは UI 移植時に再検証
 - **Stripe 連携**: タグ側に `/api/admin/stripe/connect` (admin 経路) があった。main は `/api/onboarding/stripe/connect`。仕様の差は要確認
 - **メール送信** (Resend ベース): タグに `23efe26 feat(email): Resend ベースのメール送信基盤` あり。main の `lib/email.ts` は注文確認メールのみ実装。お問い合わせ通知や onboarding メール等は未実装の可能性
 - **タグの tests**: `tests/actions/*` (auth, inquiries, onboarding, orders) が main では欠落しているか縮小。テストカバレッジが下がっている可能性
+
+### 2.5 2026-05-23 再 audit による訂正サマリ
+
+| 項目 | 初版主張 | 実機確認 | 影響 |
+|---|---|---|---|
+| L7 レシート combo グループ化 | 損失 | **既に main にある**（`ReceiptView.tsx`） | R2-5 不要 |
+| L11 CombosManager UI | 「UI 未確認」 | **既に main にある** | 復元 PR 不要 |
+| 1.3 main commit 数 | 162 | **164** | 軽微 |
+| 1.1「Initial commit でしか繋がっていない」 | 表現 | 共通祖先 `882dc88` は Initial commit 自体。技術的には正しいが「merge 不能」は誇張 | 判断には影響しない |
+| 2.4 combo_offers schema 整合 | 「要再検証」 | 既に DB / types に定義済み | 確認コストのみ |
+
+→ 実質的な復元対象は **L1〜L6, L8, L9, (L10) の 8 項目**。L7 / L11 は対象外。
 
 ---
 
@@ -209,13 +223,15 @@ npm install
 
 #### Phase R-2: コンボ機能のフル復元
 
+> **2026-05-23 訂正**: R2-5（ReceiptView grouping）は不要（既に main に実装済み）。CombosManager 移植も不要（main に存在）。
+
 | PR | 内容 | 工数 |
 |---|---|---|
 | R2-1 | `app/actions/orders.ts` に combo 受領 + 計算ロジック追加 | 30 分 |
 | R2-2 | `lib/store-cache.ts` に `getCachedCombos` 追加、`page.tsx` で fetch | 30 分 |
 | R2-3 | `MenuView.tsx` にコンボセクション追加 (タグの実装を slug 路線に移植) | 1 時間 |
 | R2-4 | `Cart.tsx` にコンボ表示 + 数量変更 UI 追加 | 1 時間 |
-| R2-5 | `ReceiptView` でコンボのアイテム groupィング | 30 分 |
+| ~~R2-5~~ | ~~`ReceiptView` でコンボのアイテム grouping~~ | **不要（既に main に実装済み）** |
 | R2-6 | tests/api/admin-combos.test.ts 復元、tests/actions/orders.test.ts に combo case 追加 | 1 時間 |
 
 #### Phase R-3: 顧客キャンセル機能 (#9)
@@ -251,11 +267,11 @@ npm install
 | Phase | 工数概算 |
 |---|---|
 | R-1 | 30 分 |
-| R-2 | 4 時間 |
+| R-2 | 3.5 時間（R2-5 削除により -30 分） |
 | R-3 | 2.5 時間 |
 | R-4 | 4.5 時間 |
 | R-5 | 4 時間 |
-| **合計** | **約 15 時間** |
+| **合計** | **約 14.5 時間** |
 
 ---
 
