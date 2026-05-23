@@ -224,13 +224,15 @@ npm install
 #### Phase R-2: コンボ機能のフル復元
 
 > **2026-05-23 訂正**: R2-5（ReceiptView grouping）は不要（既に main に実装済み）。CombosManager 移植も不要（main に存在）。
+>
+> **2026-05-23 追加訂正**: R2-3 / R2-4 を**統合して 1 PR で実装**する。理由: 元の R2-3 (MenuView) / R2-4 (Cart) はファイル単位の分割で、コンボ機能は両ファイルにまたがる 1 機能のため、ファイル単位で割ると中間状態が必ず壊れる（addCombo した combo が Cart に表示されず合計金額がズレる）。§6.4.1「1 PR = 1 機能」原則に合わせて統合する。
 
 | PR | 内容 | 工数 |
 |---|---|---|
 | R2-1 | `app/actions/orders.ts` に combo 受領 + 計算ロジック追加 | 30 分 |
 | R2-2 | `lib/store-cache.ts` に `getCachedCombos` 追加、`page.tsx` で fetch | 30 分 |
-| R2-3 | `MenuView.tsx` にコンボセクション追加 (タグの実装を slug 路線に移植) | 1 時間 |
-| R2-4 | `Cart.tsx` にコンボ表示 + 数量変更 UI 追加 | 1 時間 |
+| R2-3 (統合) | `MenuView.tsx` コンボセクション + `Cart.tsx` 表示・数量変更・送信を 1 PR で | 1.5 時間 |
+| ~~R2-4~~ | ~~`Cart.tsx` にコンボ表示 + 数量変更 UI 追加~~ | **R2-3 に統合** |
 | ~~R2-5~~ | ~~`ReceiptView` でコンボのアイテム grouping~~ | **不要（既に main に実装済み）** |
 | R2-6 | tests/api/admin-combos.test.ts 復元、tests/actions/orders.test.ts に combo case 追加 | 1 時間 |
 

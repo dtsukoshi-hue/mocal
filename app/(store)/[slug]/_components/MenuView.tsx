@@ -28,6 +28,17 @@ interface Props {
   combos: ComboOffer[]
 }
 
+export interface CartCombo {
+  comboId: string
+  name: string
+  emoji: string | null
+  /** 含まれるメニュー（数量込み・スナップショット）*/
+  items: { menuItemId: string; name: string; price: number; qty: number; emoji: string | null }[]
+  /** コンボ価格差分（負で割引・正で追加料金）*/
+  priceDelta: number
+  qty: number
+}
+
 export interface CartItem {
   menuItemId: string
   name: string
@@ -40,6 +51,7 @@ const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
 
 export default function MenuView({ store, menuItems, storeHours, combos }: Props) {
   const [cart, setCart] = useState<CartItem[]>([])
+  const [cartCombos, setCartCombos] = useState<CartCombo[]>([])
   const [showCart, setShowCart] = useState(false)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const sectionRefs = useRef<Map<string, HTMLElement>>(new Map())
@@ -129,9 +141,46 @@ export default function MenuView({ store, menuItems, storeHours, combos }: Props
     })
   }
 
-  const totalItems = cart.reduce((sum, c) => sum + c.qty, 0)
-  const totalAmount = cart.reduce((sum, c) => sum + c.price * c.qty, 0)
-  const atCartMax = totalItems >= MAX_QTY_TOTAL
+  // コンボを追加（個別アイテムには展開せず、コンボのまま保持）
+  const MAX_COMBO_QTY = 99
+  const addCombo = (combo: ComboOffer) => {
+    setCartCombos(prev => {
+      const existing = prev.find(c => c.comboId === combo.id)
+      if (existing) {
+        if (existing.qty >= MAX_COMBO_QTY) return prev
+        return prev.map(c =>
+          c.comboId === combo.id ? { ...c, qty: c.qty + 1 } : c
+        )
+      }
+      const items = combo.items
+        .map(ci => {
+          const m = menuItems.find(x => x.id === ci.menu_item_id)
+          return m
+            ? { menuItemId: m.id, name: m.name, price: m.price, qty: ci.qty, emoji: m.emoji }
+            : null
+        })
+        .filter((x): x is NonNullable<typeof x> => x !== null)
+      return [...prev, {
+        comboId: combo.id,
+        name: combo.name,
+        emoji: combo.emoji,
+        items,
+        priceDelta: combo.price_delta,
+        qty: 1,
+      }]
+    })
+  }
+
+  const itemsTotal = cart.reduce((sum, c) => sum + c.price * c.qty, 0)
+  const combosTotal = cartCombos.reduce((sum, cc) => {
+    const baseSum = cc.items.reduce((s, ci) => s + ci.price * ci.qty, 0)
+    return sum + (baseSum + cc.priceDelta) * cc.qty
+  }, 0)
+  const totalAmount = itemsTotal + combosTotal
+  const totalItems =
+    cart.reduce((sum, c) => sum + c.qty, 0) +
+    cartCombos.reduce((sum, cc) => sum + cc.qty, 0)
+  const atCartMax = cart.reduce((sum, c) => sum + c.qty, 0) >= MAX_QTY_TOTAL
 
   if (showCart) {
     return (
@@ -139,7 +188,8 @@ export default function MenuView({ store, menuItems, storeHours, combos }: Props
         store={{ ...store, is_open: isOpen, wait_minutes: waitMinutes }}
         cart={cart}
         setCart={setCart}
-        combos={combos}
+        cartCombos={cartCombos}
+        setCartCombos={setCartCombos}
         onBack={() => setShowCart(false)}
       />
     )
@@ -244,6 +294,66 @@ export default function MenuView({ store, menuItems, storeHours, combos }: Props
               ))}
             </div>
           </details>
+        )}
+
+        {/* お得なセット */}
+        {combos.length > 0 && combos.some(c => c.is_available) && (
+          <section>
+            <h2 className="text-sm font-bold text-amber-800 mb-3 px-1">🎁 お得なセット</h2>
+            <div className="space-y-2">
+              {combos.filter(c => c.is_available).map(combo => {
+                const baseSum = combo.items.reduce((s, ci) => {
+                  const m = menuItems.find(x => x.id === ci.menu_item_id)
+                  return s + (m ? m.price * ci.qty : 0)
+                }, 0)
+                const totalPrice = baseSum + combo.price_delta
+                const inCart = cartCombos.find(cc => cc.comboId === combo.id)
+                return (
+                  <button
+                    key={combo.id}
+                    type="button"
+                    onClick={() => isOpen && addCombo(combo)}
+                    disabled={!isOpen}
+                    className="w-full flex items-center justify-between bg-amber-50 rounded-xl px-3 py-3 shadow-sm text-left disabled:opacity-50 disabled:cursor-not-allowed hover:bg-amber-100 transition-colors border border-amber-200"
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      {combo.emoji && (
+                        <span className="text-2xl w-14 h-14 flex items-center justify-center bg-white rounded-lg shrink-0" aria-hidden="true">
+                          {combo.emoji}
+                        </span>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-amber-900 truncate">{combo.name}</p>
+                        {combo.description && (
+                          <p className="text-xs text-amber-700/80 truncate mt-0.5">{combo.description}</p>
+                        )}
+                        {combo.price_delta !== 0 && (
+                          <p className="text-[10px] text-amber-600 mt-0.5">
+                            {combo.price_delta < 0
+                              ? `通常 ¥${baseSum.toLocaleString()} のところ ¥${Math.abs(combo.price_delta).toLocaleString()} お得`
+                              : `+¥${combo.price_delta.toLocaleString()}`}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 ml-2">
+                      {inCart && (
+                        <span
+                          className="bg-amber-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center"
+                          aria-label={`カート内${inCart.qty}セット`}
+                        >
+                          <span aria-hidden="true">{inCart.qty}</span>
+                        </span>
+                      )}
+                      <span className="text-sm font-bold text-amber-900">
+                        ¥{totalPrice.toLocaleString()}
+                      </span>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </section>
         )}
 
         {categories.length === 0 && (
