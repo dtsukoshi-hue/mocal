@@ -471,6 +471,33 @@ export type Database = {
           },
         ]
       }
+      store_inquiries: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string | null
+          name: string
+          store_name: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message?: string | null
+          name: string
+          store_name: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string | null
+          name?: string
+          store_name?: string
+        }
+        Relationships: []
+      }
       store_members: {
         Row: {
           id: string
