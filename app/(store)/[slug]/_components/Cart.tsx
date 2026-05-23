@@ -184,25 +184,31 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
               type="button"
               onClick={() => setPickupType('standard')}
               aria-pressed={pickupType === 'standard'}
-              className={`flex-1 text-sm rounded-lg py-2 border transition-colors ${
+              className={`flex-1 text-left rounded-xl px-4 py-3 transition-colors ${
                 pickupType === 'standard'
-                  ? 'border-amber-600 bg-amber-50 text-amber-800 font-medium'
-                  : 'border-gray-200 text-gray-600'
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-gray-50 text-gray-700 border border-gray-200'
               }`}
             >
-              すぐに受け取る
+              <p className="text-sm font-bold">スタンダード</p>
+              <p className={`text-[11px] mt-0.5 ${pickupType === 'standard' ? 'text-white/80' : 'text-gray-500'}`}>
+                注文後すぐに準備<br />約{store.wait_minutes}分で受取
+              </p>
             </button>
             <button
               type="button"
               onClick={() => { setPickupType('scheduled'); if (!scheduledAt) setScheduledAt(timeSlots[0]?.iso ?? '') }}
               aria-pressed={pickupType === 'scheduled'}
-              className={`flex-1 text-sm rounded-lg py-2 border transition-colors ${
+              className={`flex-1 text-left rounded-xl px-4 py-3 transition-colors ${
                 pickupType === 'scheduled'
-                  ? 'border-amber-600 bg-amber-50 text-amber-800 font-medium'
-                  : 'border-gray-200 text-gray-600'
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-gray-50 text-gray-700 border border-gray-200'
               }`}
             >
-              時間を指定
+              <p className="text-sm font-bold">日時指定</p>
+              <p className={`text-[11px] mt-0.5 ${pickupType === 'scheduled' ? 'text-white/80' : 'text-gray-500'}`}>
+                受取日時を<br />予約する
+              </p>
             </button>
           </div>
 
@@ -229,7 +235,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
                 </div>
               ) : (
                 <p role="alert" className="text-xs text-red-600">
-                  現在、時間指定での受取枠がありません。「すぐに受け取る」をご利用ください。
+                  現在、日時指定での受取枠がありません。「スタンダード」をご利用ください。
                 </p>
               )}
             </div>
