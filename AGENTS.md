@@ -23,8 +23,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | 7 | 「正常」と何度も誤判定 | spec と本流との比較を最初にやらなかった |
 | 8 | 顧客 push / cron / webhook の動作未確認のまま deploy | E2E が回っておらず、エンドポイントを手動疎通もしていなかった |
 | 9 | ローカル main を `git reset --hard <タグ>` で旧 main backup へ巻き戻し、origin/main を pull せず開発を 175 commit 継続。Initial commit でしか origin と繋がらない並走状態が 24h+（2026-05-18〜19） | reset 後と各セッション冒頭で `git fetch && git log HEAD..origin/main` を確認せず開発続行。origin/main にある再発防止策（.husky・scripts・AGENTS.md 拡張）が手元から消えたまま気付かなかった |
+| 10 | 2026-05-19 `git reset --hard origin/main` で 175 commit ぶんの機能（コンボ / 顧客キャンセル / FAQ / お問い合わせ / pickup type デザイン等）を消失。4 日後（2026-05-23）の指摘まで気付かず | reset 前に feature-level audit を行わず、「deploy 済み = feature-complete」と暗黙仮定。`docs/recovery-plan.md` §4 で詳細記録、§6.1 で再発防止ルール |
 
 ## ルール（厳守）
+
+### destructive な git / DB 操作の前
+
+`git reset --hard` / `git push --force` / branch 削除 / production DB への直接 write 等の前には、必ず `docs/recovery-plan.md` §6.1 を参照。feature-level audit + ユーザー承認が必須。「deploy 済み = feature-complete」「revert したから OK」等の暗黙仮定は禁止。
 
 ### 作業開始時に必ずやること
 

@@ -45,6 +45,10 @@
   生成 → `.env.local` 追記 → Vercel (Prod/Preview/Dev) 登録 → Redeploy → 本番 curl で 401/200 を実証確認。F-03 解消。
 - [ ] **4. 新規店舗 onboarding の Stripe Connect 動作確認**  
   `STRIPE_CLIENT_ID` が Vercel env に無く `/api/onboarding/stripe/connect` が 500 になる。新規店舗追加時に必須。1時間
+- [ ] **38. コンボ商品復元 (recovery Phase R-2 / L1)**  
+  2026-05-19 reset で失われたコンボ表示 (cart + menu) を current main 構造に移植。`app/actions/orders.ts` に combo 受領 + 計算ロジック、`lib/store-cache.ts` に `getCachedCombos`、`MenuView.tsx` / `Cart.tsx` に UI。DB の `combo_offers` / `combo_offer_items` は既存。テスト復元含む。約 3.5 時間
+- [~] **39. pickup type ラベル + デザイン復元 (recovery Phase R-1 R1-2 / L2)**  
+  cart の pickup type を「スタンダード / 日時指定」+ subtitle + gray 系デザインに復元。[mocal#6](https://github.com/dtsukoshi-hue/mocal/pull/6) で進行中
 - [x] **22. Next.js 16.2.4 → 16.2.6 セキュリティ更新（F-02）** (2026-05-21 完了)  
   next 16.2.6 + overrides で postcss ^8.5.15 / brace-expansion ^5.0.6。`npm audit` 3 → 0、180 tests pass、本番 smoke 全 200、CSP nonce / security headers / cron 認証も regression なし。
 - [x] **23. Supabase migrations を repo に取り込む（F-01）** (2026-05-21 完了)  
@@ -99,16 +103,18 @@
 - [ ] **8. `README.md` の env 記述を最新化**  
   `.env.local.example` を一次情報にして `README.md` はそこへの参照に簡素化。15分
 - [ ] **9. 顧客キャンセル機能の実装**  
-  `paid` 状態の注文を顧客自身がキャンセル可能にする `POST /api/orders/[id]/cancel`（UUID をアクセストークン扱い）。半日
+  `paid` 状態の注文を顧客自身がキャンセル可能にする `POST /api/orders/[id]/cancel`（UUID をアクセストークン扱い）。半日。recovery-plan Phase R-3 由来 (L3)
 - [x] **21. `.env.local` ノイズ変数の cleanup** (2026-05-22 完了)  
   9 変数 (NX_DAEMON / TURBO_CACHE / TURBO_DOWNLOAD_LOCAL_ENABLED / TURBO_REMOTE_ONLY / TURBO_RUN_SUMMARY / VERCEL / VERCEL_ENV / VERCEL_OIDC_TOKEN / VERCEL_TARGET_ENV) を削除。`.env.local` と `.env.local.example` の key が完全一致（optional 系 4 つの未設定を除く）。
 - [x] **24. Stripe Webhook 冪等性レコード挿入順の修正（F-05）** (2026-05-22 完了)  
   `processed_webhook_events` INSERT が処理前に行われ、処理失敗時に 200 を返して Stripe retry を止めてしまう。注文 pending 永久放置のリスク。修正案 A/B/C を提示してユーザー判断。テスト追加必須。1時間。
+- [ ] **40. お問い合わせフォーム + 管理画面 + 通知 (recovery Phase R-4 / L9)**  
+  `/for-stores` の問い合わせ送信が断たれている。`actions/inquiries.ts` + `InquiryForm.tsx` + `/admin/inquiries` 一覧 + `lib/email.ts` 拡張（Resend 管理者通知）。`store_inquiries` migration 新規追加（current main schema には未存在）。約 4.5 時間
 
 ## 🟡 中期の機能拡張（Phase 2）
 
 - [ ] **10. マイページ「準備中」3項目**  
-  FAQ / プロフィール編集 / 支払い方法。FAQ は `local-main-2026-05-19` タグから cherry-pick 候補。FAQ: 1時間、他: 各半日〜1日
+  FAQ / プロフィール編集 / 支払い方法。FAQ は `local-main-2026-05-19` タグから cherry-pick 候補。FAQ: 1時間、他: 各半日〜1日。FAQ は recovery-plan Phase R-5 / L8
 - [ ] **11. 顧客向けログイン機能**  
   Supabase Auth ベース。クロス端末で注文履歴を参照可能に。1〜2日
 - [x] **12. ADMIN_* dead code 削除** (2026-05-22 完了)  
@@ -121,6 +127,16 @@
   Sentry 導入、Webhook 失敗監視、cron 失敗監視、**anonymous sign-in rate の異常検知 (#25/#32 後)**、DB 使用率監視 (#34 trigger 用)。`lib/logger.ts` にも「将来 Sentry に差し替え」コメント。半日〜1 日
 - [x] **16. E2E テストを CI で実行 (F-09)** (2026-05-22 完了)  
   `.github/workflows/ci.yml` に Playwright (chromium) ステップを追加。env を job 共通化、`Install Playwright browsers` → `E2E (Playwright)` → 失敗時 `Upload Playwright report` artifact (7日保持)。CI 上では dummy env のため Supabase 依存テストは graceful skip、LP/静的/セキュリティヘッダー等の browser テストが恒久 regression net に。
+- [ ] **41. cart 内税表示 (recovery Phase R-5 / L4)**  
+  cart 画面の「お支払い」欄に「うち消費税」を表示。タグの実装を参考に移植。15 分
+- [ ] **42. アップセル提案 (recovery Phase R-5 / L5)**  
+  cart で「ご一緒にいかが？」サイド・ドリンク提案。1 時間
+- [ ] **43. 2-step UI: 注文確認 step (recovery Phase R-5 / L6)**  
+  カート → 注文確認の 2-step 化。pickup type の datetime-local 自由入力もここで一体復元（#39 と連動）。1〜2 時間
+- [ ] **44. 店舗キャンセル理由選択 UI audit + 必要なら復元 (recovery Phase R-5 / L10)**  
+  admin の店舗キャンセル時、在庫切れ / 店舗都合等の理由選択 UI。タグとの差分を audit。1 時間
+- [ ] **45. 店舗オンボーディングフロー UI 差分 audit (recovery Phase R-5 / L12)**  
+  main にも `/onboarding` あり、タグの `/admin/onboarding` との内容差を確認。1 時間
 
 ## 🟢 長期（Phase 3）
 
@@ -139,5 +155,6 @@
 
 - `AGENTS.md` — 運用ルール・過去事故
 - `docs/workflow.md` — アーキテクチャ全体図
+- `docs/recovery-plan.md` — 2026-05-19 reset で失われた機能の復元計画 (#38 / #39 / #40 / #41〜45 の起点)
 - `.env.local.example` — 必須環境変数と取得手順
 - `lib/validation.ts` — 注文ステータス遷移定義
