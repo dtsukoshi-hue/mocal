@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Suspense } from 'react'
+import InquiryForm from './_components/InquiryForm'
 
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mocal.jp'
@@ -193,20 +194,26 @@ export default function ForStoresPage() {
             </div>
           </section>
 
-          {/* CTA */}
+          {/* CTA: お問い合わせフォーム */}
           <section className="bg-amber-600">
-            <div className="max-w-3xl mx-auto px-4 py-12 text-center space-y-4">
+            <div className="max-w-xl mx-auto px-4 py-12 text-center space-y-4">
               <h2 className="text-xl font-bold text-white">まずはお気軽にご相談ください</h2>
               <p className="text-sm text-amber-100">
-                デモのご要望・ご質問はメールにてお受けしています。<br />
+                デモのご要望・ご質問は下記フォームよりお送りください。<br />
                 お返事まで 1〜2 営業日いただく場合があります。
               </p>
-              <Link
-                href="mailto:support@mocal.jp?subject=mocal 導入のお問い合わせ"
-                className="inline-flex items-center gap-2 bg-white text-amber-600 font-bold text-sm px-6 py-3 rounded-xl hover:bg-amber-50 transition-colors"
-              >
-                support@mocal.jp へメールする<span aria-hidden="true"> →</span>
-              </Link>
+              <div className="bg-amber-700/30 rounded-2xl p-5 mt-6">
+                <InquiryForm />
+              </div>
+              <p className="text-xs text-amber-100 pt-2">
+                またはメールでも:{' '}
+                <a
+                  href="mailto:support@mocal.jp?subject=mocal 導入のお問い合わせ"
+                  className="underline hover:text-white"
+                >
+                  support@mocal.jp
+                </a>
+              </p>
             </div>
           </section>
 

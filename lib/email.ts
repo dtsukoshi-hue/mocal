@@ -23,13 +23,39 @@ export interface OrderConfirmEmailData {
   orderStatusUrl: string
 }
 
-function escapeHtml(str: string): string {
+export function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;')
+}
+
+/**
+ * 汎用メール送信。RESEND_API_KEY 未設定環境では log のみで早期 return。
+ * 注文確認以外の通知 (お問い合わせ通知等) で使用。
+ */
+export async function sendEmail(opts: {
+  to: string
+  subject: string
+  html: string
+  text?: string
+  replyTo?: string
+}): Promise<void> {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('[sendEmail] RESEND_API_KEY 未設定のため送信をスキップしました', { to: opts.to, subject: opts.subject })
+    return
+  }
+  const resend = getResend()
+  await resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL ?? 'mocal <noreply@mocal.jp>',
+    to: opts.to,
+    subject: opts.subject,
+    html: opts.html,
+    text: opts.text,
+    replyTo: opts.replyTo,
+  })
 }
 
 export async function sendOrderConfirmEmail(data: OrderConfirmEmailData): Promise<void> {
