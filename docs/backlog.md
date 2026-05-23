@@ -102,8 +102,8 @@
   法人化（〜1年後想定）のタイミングで Teams 版へ。それまでは #7 の暫定運用。CLI `op inject` で `.env.local` を git に置かず都度展開する運用も検討。
 - [ ] **8. `README.md` の env 記述を最新化**  
   `.env.local.example` を一次情報にして `README.md` はそこへの参照に簡素化。15分
-- [ ] **9. 顧客キャンセル機能の実装**  
-  `paid` 状態の注文を顧客自身がキャンセル可能にする `POST /api/orders/[id]/cancel`（UUID をアクセストークン扱い）。半日。recovery-plan Phase R-3 由来 (L3)
+- [~] **9. 顧客キャンセル機能の実装**  
+  `paid` 状態の注文を顧客自身がキャンセル可能にする `POST /api/orders/[id]/cancel`。recovery-plan Phase R-3 (L3) で実装中。タグの UUID-as-token は F-18 後は危険なため、anonymous sign-in (`auth.uid() === order.user_id`) ベースに方針変更
 - [x] **21. `.env.local` ノイズ変数の cleanup** (2026-05-22 完了)  
   9 変数 (NX_DAEMON / TURBO_CACHE / TURBO_DOWNLOAD_LOCAL_ENABLED / TURBO_REMOTE_ONLY / TURBO_RUN_SUMMARY / VERCEL / VERCEL_ENV / VERCEL_OIDC_TOKEN / VERCEL_TARGET_ENV) を削除。`.env.local` と `.env.local.example` の key が完全一致（optional 系 4 つの未設定を除く）。
 - [x] **24. Stripe Webhook 冪等性レコード挿入順の修正（F-05）** (2026-05-22 完了)  
