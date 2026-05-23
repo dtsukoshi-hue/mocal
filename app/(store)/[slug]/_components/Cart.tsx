@@ -5,7 +5,7 @@ import { loadStripe } from '@stripe/stripe-js'
 import { Elements } from '@stripe/react-stripe-js'
 import { createOrderAction, type OrderState } from '@/app/actions/orders'
 import PaymentForm from './PaymentForm'
-import type { CartItem, ComboOffer } from './MenuView'
+import type { CartItem, CartCombo } from './MenuView'
 import type { Store } from '@/lib/database.aliases'
 
 const stripePromise = loadStripe(
@@ -33,13 +33,12 @@ interface Props {
   store: Pick<Store, 'id' | 'name' | 'is_open' | 'wait_minutes'>
   cart: CartItem[]
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>
-  combos: ComboOffer[]
+  cartCombos: CartCombo[]
+  setCartCombos: React.Dispatch<React.SetStateAction<CartCombo[]>>
   onBack: () => void
 }
 
-export default function Cart({ store, cart, setCart, combos, onBack }: Props) {
-  // combos は R2-4 で UI 化予定（R2-2 では受領のみ）
-  void combos
+export default function Cart({ store, cart, setCart, cartCombos, setCartCombos, onBack }: Props) {
   const [state, action, pending] = useActionState<OrderState, FormData>(
     createOrderAction,
     undefined
@@ -67,10 +66,18 @@ export default function Cart({ store, cart, setCart, combos, onBack }: Props) {
     }
   }, [state])
 
-  const totalAmount = cart.reduce((sum, c) => sum + c.price * c.qty, 0)
-  const totalQty = cart.reduce((sum, c) => sum + c.qty, 0)
+  const itemsTotal = cart.reduce((sum, c) => sum + c.price * c.qty, 0)
+  const combosTotal = cartCombos.reduce((sum, cc) => {
+    const baseSum = cc.items.reduce((s, ci) => s + ci.price * ci.qty, 0)
+    return sum + (baseSum + cc.priceDelta) * cc.qty
+  }, 0)
+  const totalAmount = itemsTotal + combosTotal
+  const itemsQty = cart.reduce((sum, c) => sum + c.qty, 0)
+  const combosQty = cartCombos.reduce((sum, cc) => sum + cc.qty, 0)
+  const totalQty = itemsQty + combosQty
   const MAX_QTY_PER_ITEM = 10
   const MAX_QTY_TOTAL = 30
+  const MAX_COMBO_QTY = 99
 
   const updateQty = (menuItemId: string, delta: number) => {
     setCart(prev => {
@@ -85,6 +92,17 @@ export default function Cart({ store, cart, setCart, combos, onBack }: Props) {
       if (delta > 0 && nextTotal > MAX_QTY_TOTAL) return prev
       return next
     })
+  }
+
+  const updateComboQty = (comboId: string, delta: number) => {
+    setCartCombos(prev =>
+      prev
+        .map(c => {
+          if (c.comboId !== comboId) return c
+          return { ...c, qty: Math.min(c.qty + delta, MAX_COMBO_QTY) }
+        })
+        .filter(c => c.qty > 0)
+    )
   }
 
   // PaymentIntent 作成完了 → Stripe Elements を表示
@@ -112,7 +130,7 @@ export default function Cart({ store, cart, setCart, combos, onBack }: Props) {
     )
   }
 
-  const canSubmit = !pending && cart.length > 0 && (pickupType === 'standard' || scheduledAt)
+  const canSubmit = !pending && (cart.length > 0 || cartCombos.length > 0) && (pickupType === 'standard' || scheduledAt)
 
   return (
     <div className="min-h-screen bg-stone-50 pb-40">
@@ -127,41 +145,88 @@ export default function Cart({ store, cart, setCart, combos, onBack }: Props) {
 
       <main id="main-content" className="max-w-lg mx-auto px-4 py-4 space-y-4">
         {/* 注文内容 */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 divide-y">
-          {cart.map(item => {
-            const atItemMax = item.qty >= MAX_QTY_PER_ITEM
-            const atTotalMax = totalQty >= MAX_QTY_TOTAL
-            return (
-              <div key={item.menuItemId} className="flex items-center justify-between px-4 py-3">
-                <div className="flex items-center gap-2">
-                  {item.emoji && <span aria-hidden="true">{item.emoji}</span>}
-                  <span className="text-sm text-gray-900">{item.name}</span>
+        {cart.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 divide-y">
+            {cart.map(item => {
+              const atItemMax = item.qty >= MAX_QTY_PER_ITEM
+              const atTotalMax = itemsQty >= MAX_QTY_TOTAL
+              return (
+                <div key={item.menuItemId} className="flex items-center justify-between px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    {item.emoji && <span aria-hidden="true">{item.emoji}</span>}
+                    <span className="text-sm text-gray-900">{item.name}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => updateQty(item.menuItemId, -1)}
+                      aria-label={`${item.name}の数量を1つ減らす`}
+                      className="w-7 h-7 rounded-full border text-gray-600 flex items-center justify-center"
+                    >
+                      −
+                    </button>
+                    <span className="text-sm font-semibold w-4 text-center" aria-label={`${item.qty}点`}>{item.qty}</span>
+                    <button
+                      onClick={() => updateQty(item.menuItemId, +1)}
+                      disabled={atItemMax || atTotalMax}
+                      aria-label={`${item.name}の数量を1つ増やす`}
+                      className="w-7 h-7 rounded-full border text-gray-600 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      ＋
+                    </button>
+                    <span className="text-sm text-gray-600 w-20 text-right">
+                      ¥{(item.price * item.qty).toLocaleString()}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => updateQty(item.menuItemId, -1)}
-                    aria-label={`${item.name}の数量を1つ減らす`}
-                    className="w-7 h-7 rounded-full border text-gray-600 flex items-center justify-center"
-                  >
-                    −
-                  </button>
-                  <span className="text-sm font-semibold w-4 text-center" aria-label={`${item.qty}点`}>{item.qty}</span>
-                  <button
-                    onClick={() => updateQty(item.menuItemId, +1)}
-                    disabled={atItemMax || atTotalMax}
-                    aria-label={`${item.name}の数量を1つ増やす`}
-                    className="w-7 h-7 rounded-full border text-gray-600 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    ＋
-                  </button>
-                  <span className="text-sm text-gray-600 w-20 text-right">
-                    ¥{(item.price * item.qty).toLocaleString()}
-                  </span>
+              )
+            })}
+          </div>
+        )}
+
+        {/* コンボセット */}
+        {cartCombos.length > 0 && (
+          <div className="bg-amber-50/50 rounded-2xl shadow-sm border border-amber-200 divide-y divide-amber-100">
+            {cartCombos.map(cc => {
+              const baseSum = cc.items.reduce((s, ci) => s + ci.price * ci.qty, 0)
+              const unitPrice = baseSum + cc.priceDelta
+              const atComboMax = cc.qty >= MAX_COMBO_QTY
+              return (
+                <div key={cc.comboId} className="px-4 py-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      {cc.emoji && <span aria-hidden="true">{cc.emoji}</span>}
+                      <span className="text-sm font-bold text-amber-900 truncate">{cc.name}</span>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <button
+                        onClick={() => updateComboQty(cc.comboId, -1)}
+                        aria-label={`${cc.name}の数量を1つ減らす`}
+                        className="w-7 h-7 rounded-full border border-amber-300 text-amber-700 flex items-center justify-center"
+                      >
+                        −
+                      </button>
+                      <span className="text-sm font-semibold w-4 text-center text-amber-900" aria-label={`${cc.qty}セット`}>{cc.qty}</span>
+                      <button
+                        onClick={() => updateComboQty(cc.comboId, +1)}
+                        disabled={atComboMax}
+                        aria-label={`${cc.name}の数量を1つ増やす`}
+                        className="w-7 h-7 rounded-full border border-amber-300 text-amber-700 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        ＋
+                      </button>
+                      <span className="text-sm text-amber-900 w-20 text-right">
+                        ¥{(unitPrice * cc.qty).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-amber-700/80 pl-1">
+                    {cc.items.map(ci => `${ci.name}×${ci.qty}`).join('・')}
+                  </p>
                 </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        )}
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-4 py-3 flex justify-between items-center">
           <span className="text-sm font-medium text-gray-700">
@@ -173,7 +238,7 @@ export default function Cart({ store, cart, setCart, combos, onBack }: Props) {
           </span>
         </div>
 
-        {totalQty >= MAX_QTY_TOTAL && (
+        {itemsQty >= MAX_QTY_TOTAL && (
           <div role="status" className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 text-xs text-amber-700">
             1回の注文は最大{MAX_QTY_TOTAL}点までです
           </div>
@@ -290,6 +355,14 @@ export default function Cart({ store, cart, setCart, combos, onBack }: Props) {
                 name: c.name,
                 price: c.price,
                 qty: c.qty,
+              })))}
+            />
+            <input
+              type="hidden"
+              name="combos"
+              value={JSON.stringify(cartCombos.map(cc => ({
+                comboId: cc.comboId,
+                qty: cc.qty,
               })))}
             />
             <button
