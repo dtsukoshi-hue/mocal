@@ -149,6 +149,28 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
   const router = useRouter()
   const realtimeActiveRef = useRef(false)
   const isTerminalRef = useRef(false)
+  const [cancelling, setCancelling] = useState(false)
+  const [cancelError, setCancelError] = useState<string | null>(null)
+
+  const handleCancel = async () => {
+    if (!window.confirm('注文をキャンセルしますか？返金処理が行われます。')) return
+    setCancelling(true)
+    setCancelError(null)
+    try {
+      const res = await fetch(`/api/orders/${order.id}/cancel`, { method: 'POST' })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        setCancelError(body.error ?? 'キャンセルに失敗しました。')
+        return
+      }
+      // Realtime が status を反映する。フォールバックで router.refresh も呼ぶ。
+      router.refresh()
+    } catch {
+      setCancelError('通信エラーが発生しました。時間をおいて再度お試しください。')
+    } finally {
+      setCancelling(false)
+    }
+  }
 
   // 注文履歴を localStorage に保存（初回のみ）
   useEffect(() => {
@@ -258,6 +280,23 @@ export default function OrderStatusView({ order: initialOrder }: Props) {
         {/* 通知購読ボタン（完了・キャンセル系以外） */}
         {!isTerminal && (
           <PushSubscribeButton orderId={order.id} />
+        )}
+
+        {/* 顧客キャンセル（paid のみ・店舗が受理する前） */}
+        {order.status === 'paid' && (
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={cancelling}
+              className="w-full rounded-xl border border-red-200 text-red-700 text-sm font-medium py-3 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {cancelling ? 'キャンセル処理中...' : '注文をキャンセルする'}
+            </button>
+            {cancelError && (
+              <p role="alert" className="text-xs text-red-600 text-center">{cancelError}</p>
+            )}
+          </div>
         )}
 
         {/* 領収書リンク（完了・返金済） */}
