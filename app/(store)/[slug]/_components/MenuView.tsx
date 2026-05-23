@@ -10,10 +10,22 @@ import StoreStatusBanner from './StoreStatusBanner'
 
 type HourRow = Pick<StoreHour, 'weekday' | 'open_time' | 'close_time' | 'is_open' | 'last_order'>
 
+export interface ComboOffer {
+  id: string
+  name: string
+  description: string | null
+  price_delta: number
+  emoji: string | null
+  is_available: boolean
+  sort_order: number
+  items: { menu_item_id: string; qty: number }[]
+}
+
 interface Props {
   store: Pick<Store, 'id' | 'name' | 'description' | 'is_open' | 'wait_minutes' | 'logo_url' | 'cover_url'>
   menuItems: Pick<MenuItem, 'id' | 'name' | 'description' | 'price' | 'category' | 'emoji' | 'image_url' | 'is_available' | 'sort_order'>[]
   storeHours: HourRow[]
+  combos: ComboOffer[]
 }
 
 export interface CartItem {
@@ -26,7 +38,7 @@ export interface CartItem {
 
 const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
 
-export default function MenuView({ store, menuItems, storeHours }: Props) {
+export default function MenuView({ store, menuItems, storeHours, combos }: Props) {
   const [cart, setCart] = useState<CartItem[]>([])
   const [showCart, setShowCart] = useState(false)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
@@ -127,6 +139,7 @@ export default function MenuView({ store, menuItems, storeHours }: Props) {
         store={{ ...store, is_open: isOpen, wait_minutes: waitMinutes }}
         cart={cart}
         setCart={setCart}
+        combos={combos}
         onBack={() => setShowCart(false)}
       />
     )

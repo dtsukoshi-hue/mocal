@@ -100,6 +100,44 @@ export async function getCachedMenuItems(storeId: string) {
 }
 
 // ---------------------------------------------------------------------------
+// コンボセット（60s TTL）— storeId ベースで取得
+// recovery-plan Phase R-2 / R2-2 で復元
+// ---------------------------------------------------------------------------
+export async function getCachedCombos(storeId: string) {
+  return unstable_cache(
+    async () => {
+      const supabase = createServiceClient()
+      const { data: offers } = await supabase
+        .from('combo_offers')
+        .select('id, name, description, price_delta, emoji, is_available, sort_order')
+        .eq('store_id', storeId)
+        .eq('is_available', true)
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true })
+      if (!offers || offers.length === 0) return []
+
+      const { data: items } = await supabase
+        .from('combo_offer_items')
+        .select('combo_id, menu_item_id, qty')
+        .in('combo_id', offers.map(o => o.id))
+
+      const itemsByCombo = new Map<string, { menu_item_id: string; qty: number }[]>()
+      for (const i of items ?? []) {
+        const arr = itemsByCombo.get(i.combo_id) ?? []
+        arr.push({ menu_item_id: i.menu_item_id, qty: i.qty })
+        itemsByCombo.set(i.combo_id, arr)
+      }
+      return offers.map(o => ({ ...o, items: itemsByCombo.get(o.id) ?? [] }))
+    },
+    [`combos:${storeId}`],
+    {
+      revalidate: 60,
+      tags: [`store:${storeId}`],
+    },
+  )()
+}
+
+// ---------------------------------------------------------------------------
 // 営業時間（3600s TTL）— storeId ベースで取得
 // ---------------------------------------------------------------------------
 export async function getCachedStoreHours(storeId: string) {
