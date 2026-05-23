@@ -6,6 +6,7 @@ import {
   getCachedStoreMeta,
   getCachedMenuItems,
   getCachedStoreHours,
+  getCachedCombos,
 } from '@/lib/store-cache'
 import MenuView from './_components/MenuView'
 
@@ -137,10 +138,11 @@ async function CachedMenuContent({
 }: {
   store: NonNullable<Awaited<ReturnType<typeof getCachedStore>>>
 }) {
-  const [menuItems, storeHours] = await Promise.all([
+  const [menuItems, storeHours, combos] = await Promise.all([
     getCachedMenuItems(store.id),
     getCachedStoreHours(store.id),
+    getCachedCombos(store.id),
   ])
 
-  return <MenuView store={store} menuItems={menuItems} storeHours={storeHours} />
+  return <MenuView store={store} menuItems={menuItems} storeHours={storeHours} combos={combos} />
 }

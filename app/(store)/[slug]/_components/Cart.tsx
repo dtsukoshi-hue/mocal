@@ -5,7 +5,7 @@ import { loadStripe } from '@stripe/stripe-js'
 import { Elements } from '@stripe/react-stripe-js'
 import { createOrderAction, type OrderState } from '@/app/actions/orders'
 import PaymentForm from './PaymentForm'
-import type { CartItem } from './MenuView'
+import type { CartItem, ComboOffer } from './MenuView'
 import type { Store } from '@/lib/database.aliases'
 
 const stripePromise = loadStripe(
@@ -33,10 +33,13 @@ interface Props {
   store: Pick<Store, 'id' | 'name' | 'is_open' | 'wait_minutes'>
   cart: CartItem[]
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>
+  combos: ComboOffer[]
   onBack: () => void
 }
 
-export default function Cart({ store, cart, setCart, onBack }: Props) {
+export default function Cart({ store, cart, setCart, combos, onBack }: Props) {
+  // combos は R2-4 で UI 化予定（R2-2 では受領のみ）
+  void combos
   const [state, action, pending] = useActionState<OrderState, FormData>(
     createOrderAction,
     undefined
