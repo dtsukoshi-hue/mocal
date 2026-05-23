@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { verifyStoreSession } from '@/lib/dal'
 import { createSupabaseServerClient } from '@/lib/supabase-ssr'
 import { logoutAction } from '@/app/actions/auth'
@@ -134,6 +135,22 @@ export default async function SettingsPage({ searchParams }: Props) {
             >
               {store?.stripe_account_id ? 'Stripe を再接続' : <>Stripe に接続する<span aria-hidden="true"> →</span></>}
             </a>
+          </div>
+        )}
+
+        {/* 店舗導入お問い合わせ（owner のみ） */}
+        {isOwner && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <p className="text-sm font-semibold text-gray-900 mb-1">店舗導入お問い合わせ</p>
+            <p className="text-xs text-gray-500 mb-3">
+              <code>/for-stores</code> から届いた問い合わせを一覧で確認できます。
+            </p>
+            <Link
+              href="/admin/inquiries"
+              className="inline-flex items-center gap-1.5 text-sm text-amber-700 hover:text-amber-800 font-medium"
+            >
+              一覧を見る<span aria-hidden="true"> →</span>
+            </Link>
           </div>
         )}
 

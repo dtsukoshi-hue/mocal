@@ -108,8 +108,8 @@
   9 変数 (NX_DAEMON / TURBO_CACHE / TURBO_DOWNLOAD_LOCAL_ENABLED / TURBO_REMOTE_ONLY / TURBO_RUN_SUMMARY / VERCEL / VERCEL_ENV / VERCEL_OIDC_TOKEN / VERCEL_TARGET_ENV) を削除。`.env.local` と `.env.local.example` の key が完全一致（optional 系 4 つの未設定を除く）。
 - [x] **24. Stripe Webhook 冪等性レコード挿入順の修正（F-05）** (2026-05-22 完了)  
   `processed_webhook_events` INSERT が処理前に行われ、処理失敗時に 200 を返して Stripe retry を止めてしまう。注文 pending 永久放置のリスク。修正案 A/B/C を提示してユーザー判断。テスト追加必須。1時間。
-- [~] **40. お問い合わせフォーム + 管理画面 + 通知 (recovery Phase R-4 / L9)**  
-  `/for-stores` の問い合わせ送信が断たれている。`actions/inquiries.ts` + `InquiryForm.tsx` + `/admin/inquiries` 一覧 + `lib/email.ts` 拡張（Resend 管理者通知）。`store_inquiries` migration 新規追加（current main schema には未存在）。約 4.5 時間。**PR-A** (顧客送信フロー: migration + form + email) 実装中。PR-B (admin 一覧) は別 PR で後続。`INQUIRY_NOTIFICATION_EMAIL` env を Vercel に登録すれば email 通知有効。**ADMIN_STORE_ID / ADMIN_EMAIL は削除済 (#12)** なので Push 通知は省略
+- [x] **40. お問い合わせフォーム + 管理画面 + 通知 (recovery Phase R-4 / L9)** (2026-05-24 完了)  
+  PR-A ([mocal#12](https://github.com/dtsukoshi-hue/mocal/pull/12)) で顧客送信フロー (migration + form + email)、PR-B で `/admin/inquiries` owner 限定一覧画面と settings からの導線を追加。`INQUIRY_NOTIFICATION_EMAIL` env を Vercel に登録すれば email 通知有効。ADMIN_STORE_ID / ADMIN_EMAIL は削除済 (#12) なので Push 通知は省略
 
 ## 🟡 中期の機能拡張（Phase 2）
 
