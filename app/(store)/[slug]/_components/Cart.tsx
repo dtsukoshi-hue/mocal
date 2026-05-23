@@ -190,7 +190,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
                   : 'border-gray-200 text-gray-600'
               }`}
             >
-              すぐに受け取る
+              スタンダード
             </button>
             <button
               type="button"
@@ -202,7 +202,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
                   : 'border-gray-200 text-gray-600'
               }`}
             >
-              時間を指定
+              日時指定
             </button>
           </div>
 
@@ -229,7 +229,7 @@ export default function Cart({ store, cart, setCart, onBack }: Props) {
                 </div>
               ) : (
                 <p role="alert" className="text-xs text-red-600">
-                  現在、時間指定での受取枠がありません。「すぐに受け取る」をご利用ください。
+                  現在、日時指定での受取枠がありません。「スタンダード」をご利用ください。
                 </p>
               )}
             </div>
