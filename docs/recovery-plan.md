@@ -234,7 +234,7 @@ npm install
 | R2-3 (統合) | `MenuView.tsx` コンボセクション + `Cart.tsx` 表示・数量変更・送信を 1 PR で | 1.5 時間 | mocal#10 ✅ |
 | ~~R2-4~~ | ~~`Cart.tsx` にコンボ表示 + 数量変更 UI 追加~~ | **R2-3 に統合** | — |
 | ~~R2-5~~ | ~~`ReceiptView` でコンボのアイテム grouping~~ | **不要（既に main に実装済み）** | — |
-| R2-6 | tests/api/admin-combos.test.ts 復元 (admin API tests のみ) | 1 時間 | **deferred**: 🟡 低優先・後日別 issue。tests/actions/orders.test.ts は R2-1 で対応済み |
+| R2-6 | tests/api/admin-combos.test.ts + admin-combos-id.test.ts 復元 | 1 時間 | mocal#20 ✅ (32 ケース)。tests/actions/orders.test.ts は R2-1 で対応済み |
 
 #### Phase R-3: 顧客キャンセル機能 (#9)
 
@@ -268,7 +268,7 @@ npm install
 | Phase | 当初見積 | 実績 |
 |---|---|---|
 | R-1 | 30 分 | ~1.5 時間（R1-2 が design 復元含むため超過） |
-| R-2 | 3.5 時間 | ~3 時間（R2-6 deferred） |
+| R-2 | 3.5 時間 | ~3.5 時間 (R2-1/R2-2/R2-3/R2-6 完了) |
 | R-3 | 2.5 時間 | ~1.5 時間（PR 統合により短縮） |
 | R-4 | 4.5 時間 | ~3.5 時間（Push 通知省略・PR 2 本に集約） |
 | R-5 | 4 時間 | L4/L5/L8/L10 完了 + L12 廃案、L6 のみ残り |
@@ -280,7 +280,7 @@ npm install
 🚫 廃案/不要: L7 (main 既存), L11 (main 既存), L12 (誤認・代替済)  
 🟡 残り: L6 (2-step UI)
 
-deferred (低優先): R2-6 admin-combos.test.ts
+deferred: なし (R2-6 も完了)
 
 ---
 
