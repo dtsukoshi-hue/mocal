@@ -215,11 +215,11 @@ npm install
 
 #### Phase R-1: 表示ラベル + ドキュメント整備（最小・即効）
 
-| PR | 内容 | 工数 |
-|---|---|---|
-| R1-1 | このドキュメント (recovery-plan.md) を merge | 5 分 |
-| R1-2 | Cart.tsx の「スタンダード / 日時指定」ラベル修正のみ | 15 分 |
-| R1-3 | `docs/backlog.md` を update（L1〜L12 をバックログ化、過去事故 #10 として記録）| 15 分 |
+| PR | 内容 | 工数 | 実装 |
+|---|---|---|---|
+| R1-1 | このドキュメント (recovery-plan.md) を merge | 5 分 | mocal#3 ✅ |
+| R1-2 | Cart.tsx pickup type ラベル + デザイン復元（スコープ拡大: ラベルだけでなく subtitle + gray 系デザインも一体で） | 15 分 → 1h | mocal#6 ✅ |
+| R1-3 | `docs/backlog.md` + `AGENTS.md` 事故 #10 記録 | 15 分 | mocal#7 ✅ |
 
 #### Phase R-2: コンボ機能のフル復元
 
@@ -227,53 +227,60 @@ npm install
 >
 > **2026-05-23 追加訂正**: R2-3 / R2-4 を**統合して 1 PR で実装**する。理由: 元の R2-3 (MenuView) / R2-4 (Cart) はファイル単位の分割で、コンボ機能は両ファイルにまたがる 1 機能のため、ファイル単位で割ると中間状態が必ず壊れる（addCombo した combo が Cart に表示されず合計金額がズレる）。§6.4.1「1 PR = 1 機能」原則に合わせて統合する。
 
-| PR | 内容 | 工数 |
-|---|---|---|
-| R2-1 | `app/actions/orders.ts` に combo 受領 + 計算ロジック追加 | 30 分 |
-| R2-2 | `lib/store-cache.ts` に `getCachedCombos` 追加、`page.tsx` で fetch | 30 分 |
-| R2-3 (統合) | `MenuView.tsx` コンボセクション + `Cart.tsx` 表示・数量変更・送信を 1 PR で | 1.5 時間 |
-| ~~R2-4~~ | ~~`Cart.tsx` にコンボ表示 + 数量変更 UI 追加~~ | **R2-3 に統合** |
-| ~~R2-5~~ | ~~`ReceiptView` でコンボのアイテム grouping~~ | **不要（既に main に実装済み）** |
-| R2-6 | tests/api/admin-combos.test.ts 復元、tests/actions/orders.test.ts に combo case 追加 | 1 時間 |
+| PR | 内容 | 工数 | 実装 |
+|---|---|---|---|
+| R2-1 | `app/actions/orders.ts` に combo 受領 + 計算ロジック追加 (+ tests/actions/orders.test.ts に combo case 追加) | 30 分 | mocal#8 ✅ |
+| R2-2 | `lib/store-cache.ts` に `getCachedCombos` 追加、`page.tsx` で fetch | 30 分 | mocal#9 ✅ |
+| R2-3 (統合) | `MenuView.tsx` コンボセクション + `Cart.tsx` 表示・数量変更・送信を 1 PR で | 1.5 時間 | mocal#10 ✅ |
+| ~~R2-4~~ | ~~`Cart.tsx` にコンボ表示 + 数量変更 UI 追加~~ | **R2-3 に統合** | — |
+| ~~R2-5~~ | ~~`ReceiptView` でコンボのアイテム grouping~~ | **不要（既に main に実装済み）** | — |
+| R2-6 | tests/api/admin-combos.test.ts 復元 (admin API tests のみ) | 1 時間 | **deferred**: 🟡 低優先・後日別 issue。tests/actions/orders.test.ts は R2-1 で対応済み |
 
 #### Phase R-3: 顧客キャンセル機能 (#9)
 
-| PR | 内容 | 工数 |
-|---|---|---|
-| R3-1 | `/api/orders/[id]/cancel/route.ts` 新規 + RLS policy | 1 時間 |
-| R3-2 | `OrderStatusView` にキャンセルボタン (paid 状態のみ表示) | 30 分 |
-| R3-3 | テスト | 1 時間 |
+> **2026-05-24 訂正**: R3-1 / R3-2 / R3-3 を**統合して 1 PR で実装**。理由: R-2 と同じ判断で、API + UI + tests を機能単位でまとめる方が cohesion 高い。タグの UUID-as-token を F-18 後は危険として **anonymous sign-in (`auth.uid() === order.user_id`)** ベースに方針変更。
+
+| PR | 内容 | 工数 | 実装 |
+|---|---|---|---|
+| R-3 (統合) | `/api/orders/[id]/cancel/route.ts` 新規 + `OrderStatusView` キャンセルボタン + 10 unit tests | 1.5 時間 | mocal#11 ✅ |
 
 #### Phase R-4: お問い合わせ機能
 
-| PR | 内容 | 工数 |
-|---|---|---|
-| R4-1 | `actions/inquiries.ts` 新規、`/for-stores/_components/InquiryForm.tsx` 復元 | 1 時間 |
-| R4-2 | DB schema (store_inquiries table) — 既存 migration 確認、無ければ追加 | 30 分 |
-| R4-3 | admin 側の `/admin/inquiries` 一覧画面 | 1 時間 |
-| R4-4 | `lib/email.ts` を拡張し管理者通知 (Resend) を実装 | 1 時間 |
-| R4-5 | テスト | 1 時間 |
+> **2026-05-24 訂正**: R4-1〜R4-5 のファイル単位分割は再構成。「顧客送信フロー (PR-A)」と「admin 一覧 (PR-B)」の縦軸 2 PR に再編。Push 通知は ADMIN_STORE_ID / ADMIN_EMAIL が削除済 (#12) のため省略、env を `INQUIRY_NOTIFICATION_EMAIL` に統一。
+
+| PR | 内容 | 工数 | 実装 |
+|---|---|---|---|
+| R-4 PR-A | migration + actions/inquiries.ts + InquiryForm + lib/email.ts 拡張 + tests (9 ケース) | 2.5 時間 | mocal#12 ✅ |
+| R-4 PR-B | `/admin/inquiries` 一覧 (owner 限定) + settings からの導線 | 1 時間 | mocal#13 ✅ |
 
 #### Phase R-5: 残り（UX 品質向上）
 
-| PR | 内容 | 工数 |
-|---|---|---|
-| R5-1 | 2-step UI (カート → 注文確認) | 1 時間 |
-| R5-2 | アップセル ("ご一緒にいかが？") | 1 時間 |
-| R5-3 | Cart の内税表示 | 15 分 |
-| R5-4 | `/faq` ページ復元 | 30 分 |
-| R5-5 | 店舗キャンセル理由選択 UI (admin) audit + 必要なら復元 | 1 時間 |
+| PR | 内容 | 工数 | 実装 |
+|---|---|---|---|
+| R5-3 (L4) | Cart の内税表示 | 15 分 | mocal#14 ✅ |
+| R5-4 (L8) | `/faq` ページ復元 | 30 分 | mocal#15 ✅ |
+| R5-2 (L5) | アップセル ("ご一緒にいかが？") | 1 時間 | mocal#16 ✅ |
+| R5-5 (L10) + L12 廃案 | 店舗キャンセル理由選択 UI (admin) 復元 + L12 audit 結果廃案 | 1 時間 | mocal#17 ✅ |
+| R5-1 (L6) | 2-step UI (カート → 注文確認) | 1-2 時間 | **残り** |
 
 #### 全体工数試算
 
-| Phase | 工数概算 |
-|---|---|
-| R-1 | 30 分 |
-| R-2 | 3.5 時間（R2-5 削除により -30 分） |
-| R-3 | 2.5 時間 |
-| R-4 | 4.5 時間 |
-| R-5 | 4 時間 |
-| **合計** | **約 14.5 時間** |
+| Phase | 当初見積 | 実績 |
+|---|---|---|
+| R-1 | 30 分 | ~1.5 時間（R1-2 が design 復元含むため超過） |
+| R-2 | 3.5 時間 | ~3 時間（R2-6 deferred） |
+| R-3 | 2.5 時間 | ~1.5 時間（PR 統合により短縮） |
+| R-4 | 4.5 時間 | ~3.5 時間（Push 通知省略・PR 2 本に集約） |
+| R-5 | 4 時間 | L4/L5/L8/L10 完了 + L12 廃案、L6 のみ残り |
+| **合計** | **約 14.5 時間** | **R-1〜R-4 完了、R-5 は L6 のみ残り** |
+
+#### 進捗サマリ (2026-05-24)
+
+✅ 完了: L1, L2, L3, L4, L5, L8, L9, L10  
+🚫 廃案/不要: L7 (main 既存), L11 (main 既存), L12 (誤認・代替済)  
+🟡 残り: L6 (2-step UI)
+
+deferred (低優先): R2-6 admin-combos.test.ts
 
 ---
 
