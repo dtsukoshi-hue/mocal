@@ -129,8 +129,8 @@
   `.github/workflows/ci.yml` に Playwright (chromium) ステップを追加。env を job 共通化、`Install Playwright browsers` → `E2E (Playwright)` → 失敗時 `Upload Playwright report` artifact (7日保持)。CI 上では dummy env のため Supabase 依存テストは graceful skip、LP/静的/セキュリティヘッダー等の browser テストが恒久 regression net に。
 - [x] **41. cart 内税表示 (recovery Phase R-5 / L4)** (2026-05-24 完了)  
   cart 「合計」セクションに「うち消費税（10%）」行を追加。10% 内税前提で `Math.round(totalAmount - totalAmount / 1.1)` 計算
-- [ ] **42. アップセル提案 (recovery Phase R-5 / L5)**  
-  cart で「ご一緒にいかが？」サイド・ドリンク提案。1 時間
+- [x] **42. アップセル提案 (recovery Phase R-5 / L5)** (2026-05-24 完了)  
+  cart に「🎁 ご一緒にいかが？」セクション追加。カテゴリー判定 (`サイド`/`ドリンク`/`drink`等) で各 3 件まで suggest、カートに既にあるカテゴリーは表示しない。+ ボタンで cart に追加。MAX_QTY_TOTAL 到達時は section 自体を隠す
 - [ ] **43. 2-step UI: 注文確認 step (recovery Phase R-5 / L6)**  
   カート → 注文確認の 2-step 化。pickup type の datetime-local 自由入力もここで一体復元（#39 と連動）。1〜2 時間
 - [ ] **44. 店舗キャンセル理由選択 UI audit + 必要なら復元 (recovery Phase R-5 / L10)**  

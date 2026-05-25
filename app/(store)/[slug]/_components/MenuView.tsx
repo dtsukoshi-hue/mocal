@@ -190,6 +190,7 @@ export default function MenuView({ store, menuItems, storeHours, combos }: Props
         setCart={setCart}
         cartCombos={cartCombos}
         setCartCombos={setCartCombos}
+        menuItems={menuItems}
         onBack={() => setShowCart(false)}
       />
     )

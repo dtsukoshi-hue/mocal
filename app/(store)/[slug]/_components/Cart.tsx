@@ -1,12 +1,64 @@
 'use client'
 
-import { useActionState, useState, useEffect, useRef } from 'react'
+import { useActionState, useState, useEffect, useRef, useMemo } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements } from '@stripe/react-stripe-js'
 import { createOrderAction, type OrderState } from '@/app/actions/orders'
 import PaymentForm from './PaymentForm'
 import type { CartItem, CartCombo } from './MenuView'
-import type { Store } from '@/lib/database.aliases'
+import type { MenuItem, Store } from '@/lib/database.aliases'
+
+// アップセル候補のカテゴリーキーワード判定
+const SIDE_KEYWORDS = ['サイド', 'side']
+const DRINK_KEYWORDS = ['ドリンク', '飲み物', 'drink']
+
+function matchesAny(category: string | null | undefined, keywords: string[]): boolean {
+  if (!category) return false
+  const c = category.toLowerCase()
+  return keywords.some(k => c.includes(k.toLowerCase()))
+}
+
+type MenuItemForUpsell = Pick<MenuItem, 'id' | 'name' | 'description' | 'price' | 'category' | 'emoji' | 'is_available'>
+
+function UpsellGroup({
+  title,
+  items,
+  onAdd,
+}: {
+  title: string
+  items: MenuItemForUpsell[]
+  onAdd: (item: MenuItemForUpsell) => void
+}) {
+  return (
+    <div>
+      <p className="text-xs font-semibold text-amber-700 mb-1.5">{title}</p>
+      <div className="space-y-1.5">
+        {items.map(item => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => onAdd(item)}
+            className="w-full flex items-center justify-between bg-white rounded-lg px-3 py-2 hover:bg-amber-100 transition-colors text-left border border-transparent hover:border-amber-300"
+          >
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              {item.emoji && <span aria-hidden="true">{item.emoji}</span>}
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
+                {item.description && (
+                  <p className="text-[10px] text-gray-400 truncate">{item.description}</p>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 ml-2">
+              <span className="text-xs text-gray-700">¥{item.price.toLocaleString()}</span>
+              <span aria-hidden="true" className="w-6 h-6 rounded-full bg-amber-700 text-white flex items-center justify-center text-sm font-bold">＋</span>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
@@ -35,10 +87,11 @@ interface Props {
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>
   cartCombos: CartCombo[]
   setCartCombos: React.Dispatch<React.SetStateAction<CartCombo[]>>
+  menuItems: MenuItemForUpsell[]
   onBack: () => void
 }
 
-export default function Cart({ store, cart, setCart, cartCombos, setCartCombos, onBack }: Props) {
+export default function Cart({ store, cart, setCart, cartCombos, setCartCombos, menuItems, onBack }: Props) {
   const [state, action, pending] = useActionState<OrderState, FormData>(
     createOrderAction,
     undefined
@@ -105,6 +158,51 @@ export default function Cart({ store, cart, setCart, cartCombos, setCartCombos, 
         })
         .filter(c => c.qty > 0)
     )
+  }
+
+  // アップセル候補（ご一緒にいかが？）
+  // カートに既にあるサイド/ドリンクは「もう買った」扱いで suggest しない。
+  // カートに無いカテゴリーから sort_order 順で最大 3 件ずつ表示。
+  const upsellSuggestions = useMemo(() => {
+    const cartIds = new Set(cart.map(c => c.menuItemId))
+    const hasSide = cart.some(c => {
+      const m = menuItems.find(x => x.id === c.menuItemId)
+      return m && matchesAny(m.category, SIDE_KEYWORDS)
+    })
+    const hasDrink = cart.some(c => {
+      const m = menuItems.find(x => x.id === c.menuItemId)
+      return m && matchesAny(m.category, DRINK_KEYWORDS)
+    })
+
+    const sides: MenuItemForUpsell[] = []
+    const drinks: MenuItemForUpsell[] = []
+    for (const m of menuItems) {
+      if (!m.is_available || cartIds.has(m.id)) continue
+      if (!hasSide && matchesAny(m.category, SIDE_KEYWORDS)) sides.push(m)
+      else if (!hasDrink && matchesAny(m.category, DRINK_KEYWORDS)) drinks.push(m)
+    }
+    return { sides: sides.slice(0, 3), drinks: drinks.slice(0, 3) }
+  }, [cart, menuItems])
+
+  const addToCartFromUpsell = (item: MenuItemForUpsell) => {
+    setCart(prev => {
+      const totalQ = prev.reduce((sum, c) => sum + c.qty, 0)
+      if (totalQ >= MAX_QTY_TOTAL) return prev
+      const existing = prev.find(c => c.menuItemId === item.id)
+      if (existing) {
+        if (existing.qty >= MAX_QTY_PER_ITEM) return prev
+        return prev.map(c =>
+          c.menuItemId === item.id ? { ...c, qty: c.qty + 1 } : c
+        )
+      }
+      return [...prev, {
+        menuItemId: item.id,
+        name: item.name,
+        price: item.price,
+        qty: 1,
+        emoji: item.emoji,
+      }]
+    })
   }
 
   // PaymentIntent 作成完了 → Stripe Elements を表示
@@ -251,6 +349,19 @@ export default function Cart({ store, cart, setCart, cartCombos, setCartCombos, 
         {itemsQty >= MAX_QTY_TOTAL && (
           <div role="status" className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 text-xs text-amber-700">
             1回の注文は最大{MAX_QTY_TOTAL}点までです
+          </div>
+        )}
+
+        {/* ご一緒にいかが？（アップセル候補・カートが空でないときのみ） */}
+        {(cart.length > 0 || cartCombos.length > 0) && itemsQty < MAX_QTY_TOTAL && (upsellSuggestions.sides.length > 0 || upsellSuggestions.drinks.length > 0) && (
+          <div className="bg-amber-50 rounded-2xl border border-amber-200 p-4 space-y-3">
+            <p className="text-sm font-bold text-amber-800">🎁 ご一緒にいかが？</p>
+            {upsellSuggestions.sides.length > 0 && (
+              <UpsellGroup title="サイド" items={upsellSuggestions.sides} onAdd={addToCartFromUpsell} />
+            )}
+            {upsellSuggestions.drinks.length > 0 && (
+              <UpsellGroup title="ドリンク" items={upsellSuggestions.drinks} onAdd={addToCartFromUpsell} />
+            )}
           </div>
         )}
 
