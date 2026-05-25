@@ -137,6 +137,15 @@
   audit 結果: タグでは admin OrderCard に「在庫切れ / 店舗都合」ラジオが存在し PATCH `cancelledReasonType` を送信していたが、現 main では全て `store_cancel` 固定で送信していた。復元: `OrderActions.tsx` のキャンセル確認ダイアログに radio 追加、PATCH route で `cancelledReasonType` を accept、3 tests 追加 (out_of_stock / fallback / 不正値 400)
 - [-] **45. 店舗オンボーディングフロー UI 差分 audit (recovery Phase R-5 / L12)** (2026-05-24 廃案)  
   audit 結果: タグの `/admin/onboarding` は **admin 向け「やることチェックリスト」** で、現 main の `/onboarding` は**新規店舗登録 form** と別機能。recovery-plan の L12 は誤認していた。タグ checklist の役割は現 main の `/admin/settings` の welcome ヒントで部分代替済み。新規復元の必要なし
+- [ ] **46. コンボの variant / オプション選択 (popup) 機能** (新規発見・recovery 範囲外)  
+  プロトタイプ (recovery 対象の `local-main-2026-05-19` タグより前) には「ポテトセット / ドリンクセット / ポテドリセット」など variant を持つ combo があり、ドリンクなど含まれる品目は popup から複数候補 (例: コーラ / ジンジャーエール / アイスティー…) を選択できる UI だった。現 schema (`combo_offers` + `combo_offer_items`) は **固定組み合わせのみ**で、variant / option_group / 選択肢の概念がない。**recovery 完了後**に対応。  
+  **設計が必要なこと**:  
+  (a) DB schema: `combo_option_groups (combo_id, name, label, min_select, max_select)` + `combo_option_choices (group_id, menu_item_id, sort_order)` 等  
+  (b) admin UI: combo 作成時に「変更可能な品目グループ」を定義できる UI  
+  (c) 顧客 UI: combo 選択時に未確定 variant があれば popup / sheet を出して選ばせる  
+  (d) order_items 反映: 選択結果を combo_id + combo_label + 実 menu_item_id 込みで保存  
+  (e) cart の qty 増減で variant 再選択させるか・初回固定にするかの仕様判断  
+  プロトタイプ実装は失われている。設計から起こす必要あり。約 1〜2 日
 
 ## 🟢 長期（Phase 3）
 
