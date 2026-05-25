@@ -57,14 +57,19 @@ export async function PATCH(
     return NextResponse.json({ error: '認証が必要です。' }, { status: 401 })
   }
 
-  let body: { status: OrderStatus; waitMinutes?: number }
+  let body: { status: OrderStatus; waitMinutes?: number; cancelledReasonType?: 'out_of_stock' | 'store_cancel' }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'リクエストが不正です。' }, { status: 400 })
   }
 
-  const { status, waitMinutes } = body
+  const { status, waitMinutes, cancelledReasonType } = body
+
+  // 店舗キャンセルの理由は in stock / store_cancel の 2 択のみ受理
+  if (cancelledReasonType !== undefined && !['out_of_stock', 'store_cancel'].includes(cancelledReasonType)) {
+    return NextResponse.json({ error: 'キャンセル理由が不正です。' }, { status: 400 })
+  }
 
   // waitMinutes は店舗設定の許可値のみ受け付ける（仕様書 8.1）
   if (waitMinutes !== undefined && !isValidWaitMinutes(waitMinutes)) {
@@ -119,8 +124,9 @@ export async function PATCH(
   const updateData: Partial<Order> = { status }
 
   // 店舗スタッフによる手動キャンセルは cancelled_reason_type を明示
+  // body で out_of_stock を指定された場合はそれを優先、未指定なら store_cancel
   if (status === 'cancelled') {
-    updateData.cancelled_reason_type = 'store_cancel'
+    updateData.cancelled_reason_type = cancelledReasonType ?? 'store_cancel'
   }
 
   if (status === 'accepted') {
