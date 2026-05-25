@@ -100,8 +100,8 @@
   `SESSION_SECRET` / VAPID 3 値 / `CRON_SECRET` / Stripe・Supabase secret を二重バックアップ。`hdiutil create -encryption AES-256 -type SPARSEBUNDLE` で iCloud Drive に保存、パスフレーズは紙メモ + 物理金庫。30分。
 - [ ] **7b. 1Password への移行（法人化を見据えて）**  
   法人化（〜1年後想定）のタイミングで Teams 版へ。それまでは #7 の暫定運用。CLI `op inject` で `.env.local` を git に置かず都度展開する運用も検討。
-- [ ] **8. `README.md` の env 記述を最新化**  
-  `.env.local.example` を一次情報にして `README.md` はそこへの参照に簡素化。15分
+- [x] **8. `README.md` の env 記述を最新化** (2026-05-24 完了)  
+  README の env ブロック (削除済 ADMIN_* / 未記載の SESSION_SECRET, CRON_SECRET, STRIPE_CLIENT_ID, INQUIRY_NOTIFICATION_EMAIL, NEXT_PUBLIC_ORDER_POLLING_MS, CLEANUP_ANON_USERS_ENABLED, UPSTASH_* 等を含む) を `.env.local.example` 参照に置換。生成必要な値 (SESSION_SECRET / VAPID / CRON_SECRET) のコマンドのみ残す。deploy 節は `docs/deploy-runbook.md` への参照を追加
 - [x] **9. 顧客キャンセル機能の実装** (2026-05-23 完了)  
   `paid` 状態の注文を顧客自身がキャンセル可能にする `POST /api/orders/[id]/cancel` を実装 ([mocal#11](https://github.com/dtsukoshi-hue/mocal/pull/11))。タグの UUID-as-token は F-18 後は危険なため、anonymous sign-in (`auth.uid() === order.user_id`) ベースに方針変更。10 unit tests、OrderStatusView にキャンセルボタン (paid 状態のみ)
 - [x] **21. `.env.local` ノイズ変数の cleanup** (2026-05-22 完了)  
