@@ -133,10 +133,10 @@
   cart で「ご一緒にいかが？」サイド・ドリンク提案。1 時間
 - [ ] **43. 2-step UI: 注文確認 step (recovery Phase R-5 / L6)**  
   カート → 注文確認の 2-step 化。pickup type の datetime-local 自由入力もここで一体復元（#39 と連動）。1〜2 時間
-- [ ] **44. 店舗キャンセル理由選択 UI audit + 必要なら復元 (recovery Phase R-5 / L10)**  
-  admin の店舗キャンセル時、在庫切れ / 店舗都合等の理由選択 UI。タグとの差分を audit。1 時間
-- [ ] **45. 店舗オンボーディングフロー UI 差分 audit (recovery Phase R-5 / L12)**  
-  main にも `/onboarding` あり、タグの `/admin/onboarding` との内容差を確認。1 時間
+- [x] **44. 店舗キャンセル理由選択 UI audit + 復元 (recovery Phase R-5 / L10)** (2026-05-24 完了)  
+  audit 結果: タグでは admin OrderCard に「在庫切れ / 店舗都合」ラジオが存在し PATCH `cancelledReasonType` を送信していたが、現 main では全て `store_cancel` 固定で送信していた。復元: `OrderActions.tsx` のキャンセル確認ダイアログに radio 追加、PATCH route で `cancelledReasonType` を accept、3 tests 追加 (out_of_stock / fallback / 不正値 400)
+- [-] **45. 店舗オンボーディングフロー UI 差分 audit (recovery Phase R-5 / L12)** (2026-05-24 廃案)  
+  audit 結果: タグの `/admin/onboarding` は **admin 向け「やることチェックリスト」** で、現 main の `/onboarding` は**新規店舗登録 form** と別機能。recovery-plan の L12 は誤認していた。タグ checklist の役割は現 main の `/admin/settings` の welcome ヒントで部分代替済み。新規復元の必要なし
 
 ## 🟢 長期（Phase 3）
 

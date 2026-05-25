@@ -202,6 +202,49 @@ describe('PATCH /api/orders/[id] — status transitions', () => {
     const res = await PATCH(makeRequest({ status: 'cancelled' }), makeCtx())
     expect(res.status).toBe(200)
   })
+
+  it('cancelledReasonType: out_of_stock を受理 (R-5 L10)', async () => {
+    const client = mockServiceClient({
+      order:      { id: ORDER_ID, status: 'accepted', store_id: STORE_ID, stripe_charge_id: null },
+      member:     { role: 'staff' },
+      updateData: { id: ORDER_ID, status: 'cancelled' },
+    })
+    const res = await PATCH(
+      makeRequest({ status: 'cancelled', cancelledReasonType: 'out_of_stock' }),
+      makeCtx()
+    )
+    expect(res.status).toBe(200)
+    // 3 番目の from('orders') が update chain
+    const upCall = client.from.mock.results[2].value
+    expect(upCall.update).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'cancelled', cancelled_reason_type: 'out_of_stock' })
+    )
+  })
+
+  it('cancelledReasonType 未指定の場合は store_cancel にフォールバック', async () => {
+    const client = mockServiceClient({
+      order:      { id: ORDER_ID, status: 'accepted', store_id: STORE_ID, stripe_charge_id: null },
+      member:     { role: 'staff' },
+      updateData: { id: ORDER_ID, status: 'cancelled' },
+    })
+    await PATCH(makeRequest({ status: 'cancelled' }), makeCtx())
+    const upCall = client.from.mock.results[2].value
+    expect(upCall.update).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'cancelled', cancelled_reason_type: 'store_cancel' })
+    )
+  })
+
+  it('cancelledReasonType: 不正値で 400', async () => {
+    mockServiceClient({
+      order:      { id: ORDER_ID, status: 'accepted', store_id: STORE_ID, stripe_charge_id: null },
+      member:     { role: 'staff' },
+    })
+    const res = await PATCH(
+      makeRequest({ status: 'cancelled', cancelledReasonType: 'invalid' }),
+      makeCtx()
+    )
+    expect(res.status).toBe(400)
+  })
 })
 
 describe('PATCH /api/orders/[id] — refund flow', () => {
