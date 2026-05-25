@@ -45,10 +45,10 @@
   生成 → `.env.local` 追記 → Vercel (Prod/Preview/Dev) 登録 → Redeploy → 本番 curl で 401/200 を実証確認。F-03 解消。
 - [ ] **4. 新規店舗 onboarding の Stripe Connect 動作確認**  
   `STRIPE_CLIENT_ID` が Vercel env に無く `/api/onboarding/stripe/connect` が 500 になる。新規店舗追加時に必須。1時間
-- [ ] **38. コンボ商品復元 (recovery Phase R-2 / L1)**  
-  2026-05-19 reset で失われたコンボ表示 (cart + menu) を current main 構造に移植。`app/actions/orders.ts` に combo 受領 + 計算ロジック、`lib/store-cache.ts` に `getCachedCombos`、`MenuView.tsx` / `Cart.tsx` に UI。DB の `combo_offers` / `combo_offer_items` は既存。テスト復元含む。約 3.5 時間
-- [~] **39. pickup type ラベル + デザイン復元 (recovery Phase R-1 R1-2 / L2)**  
-  cart の pickup type を「スタンダード / 日時指定」+ subtitle + gray 系デザインに復元。[mocal#6](https://github.com/dtsukoshi-hue/mocal/pull/6) で進行中
+- [x] **38. コンボ商品復元 (recovery Phase R-2 / L1)** (2026-05-23 完了)  
+  R2-1 ([mocal#8](https://github.com/dtsukoshi-hue/mocal/pull/8)) で server action + tests、R2-2 ([mocal#9](https://github.com/dtsukoshi-hue/mocal/pull/9)) で cache + page.tsx、R2-3 統合 ([mocal#10](https://github.com/dtsukoshi-hue/mocal/pull/10)) で MenuView + Cart UI。実機 verify 済 (テスト combo `テストセット` で 2,360円 → qty 変更まで動作)
+- [x] **39. pickup type ラベル + デザイン復元 (recovery Phase R-1 R1-2 / L2)** (2026-05-23 完了)  
+  cart の pickup type を「スタンダード / 日時指定」+ subtitle + gray 系デザインに復元。[mocal#6](https://github.com/dtsukoshi-hue/mocal/pull/6)
 - [x] **22. Next.js 16.2.4 → 16.2.6 セキュリティ更新（F-02）** (2026-05-21 完了)  
   next 16.2.6 + overrides で postcss ^8.5.15 / brace-expansion ^5.0.6。`npm audit` 3 → 0、180 tests pass、本番 smoke 全 200、CSP nonce / security headers / cron 認証も regression なし。
 - [x] **23. Supabase migrations を repo に取り込む（F-01）** (2026-05-21 完了)  
@@ -102,8 +102,8 @@
   法人化（〜1年後想定）のタイミングで Teams 版へ。それまでは #7 の暫定運用。CLI `op inject` で `.env.local` を git に置かず都度展開する運用も検討。
 - [ ] **8. `README.md` の env 記述を最新化**  
   `.env.local.example` を一次情報にして `README.md` はそこへの参照に簡素化。15分
-- [~] **9. 顧客キャンセル機能の実装**  
-  `paid` 状態の注文を顧客自身がキャンセル可能にする `POST /api/orders/[id]/cancel`。recovery-plan Phase R-3 (L3) で実装中。タグの UUID-as-token は F-18 後は危険なため、anonymous sign-in (`auth.uid() === order.user_id`) ベースに方針変更
+- [x] **9. 顧客キャンセル機能の実装** (2026-05-23 完了)  
+  `paid` 状態の注文を顧客自身がキャンセル可能にする `POST /api/orders/[id]/cancel` を実装 ([mocal#11](https://github.com/dtsukoshi-hue/mocal/pull/11))。タグの UUID-as-token は F-18 後は危険なため、anonymous sign-in (`auth.uid() === order.user_id`) ベースに方針変更。10 unit tests、OrderStatusView にキャンセルボタン (paid 状態のみ)
 - [x] **21. `.env.local` ノイズ変数の cleanup** (2026-05-22 完了)  
   9 変数 (NX_DAEMON / TURBO_CACHE / TURBO_DOWNLOAD_LOCAL_ENABLED / TURBO_REMOTE_ONLY / TURBO_RUN_SUMMARY / VERCEL / VERCEL_ENV / VERCEL_OIDC_TOKEN / VERCEL_TARGET_ENV) を削除。`.env.local` と `.env.local.example` の key が完全一致（optional 系 4 つの未設定を除く）。
 - [x] **24. Stripe Webhook 冪等性レコード挿入順の修正（F-05）** (2026-05-22 完了)  
