@@ -127,8 +127,8 @@
   Sentry 導入、Webhook 失敗監視、cron 失敗監視、**anonymous sign-in rate の異常検知 (#25/#32 後)**、DB 使用率監視 (#34 trigger 用)。`lib/logger.ts` にも「将来 Sentry に差し替え」コメント。半日〜1 日
 - [x] **16. E2E テストを CI で実行 (F-09)** (2026-05-22 完了)  
   `.github/workflows/ci.yml` に Playwright (chromium) ステップを追加。env を job 共通化、`Install Playwright browsers` → `E2E (Playwright)` → 失敗時 `Upload Playwright report` artifact (7日保持)。CI 上では dummy env のため Supabase 依存テストは graceful skip、LP/静的/セキュリティヘッダー等の browser テストが恒久 regression net に。
-- [ ] **41. cart 内税表示 (recovery Phase R-5 / L4)**  
-  cart 画面の「お支払い」欄に「うち消費税」を表示。タグの実装を参考に移植。15 分
+- [x] **41. cart 内税表示 (recovery Phase R-5 / L4)** (2026-05-24 完了)  
+  cart 「合計」セクションに「うち消費税（10%）」行を追加。10% 内税前提で `Math.round(totalAmount - totalAmount / 1.1)` 計算
 - [ ] **42. アップセル提案 (recovery Phase R-5 / L5)**  
   cart で「ご一緒にいかが？」サイド・ドリンク提案。1 時間
 - [ ] **43. 2-step UI: 注文確認 step (recovery Phase R-5 / L6)**  

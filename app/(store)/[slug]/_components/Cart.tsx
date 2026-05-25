@@ -72,6 +72,8 @@ export default function Cart({ store, cart, setCart, cartCombos, setCartCombos, 
     return sum + (baseSum + cc.priceDelta) * cc.qty
   }, 0)
   const totalAmount = itemsTotal + combosTotal
+  // 商品価格は税込前提（飲食店標準）。消費税 10% を内税で表示。
+  const taxIncluded = Math.round(totalAmount - totalAmount / 1.1)
   const itemsQty = cart.reduce((sum, c) => sum + c.qty, 0)
   const combosQty = cartCombos.reduce((sum, cc) => sum + cc.qty, 0)
   const totalQty = itemsQty + combosQty
@@ -228,14 +230,22 @@ export default function Cart({ store, cart, setCart, cartCombos, setCartCombos, 
           </div>
         )}
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-4 py-3 flex justify-between items-center">
-          <span className="text-sm font-medium text-gray-700">
-            合計
-            <span className="text-xs text-gray-400 ml-2">({totalQty}点)</span>
-          </span>
-          <span className="text-base font-bold text-gray-900">
-            ¥{totalAmount.toLocaleString()}
-          </span>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-4 py-3 space-y-1.5">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-gray-700">
+              合計
+              <span className="text-xs text-gray-400 ml-2">({totalQty}点)</span>
+            </span>
+            <span className="text-base font-bold text-gray-900">
+              ¥{totalAmount.toLocaleString()}
+            </span>
+          </div>
+          {totalAmount > 0 && (
+            <div className="flex justify-between text-xs text-gray-400">
+              <span>うち消費税（10%）</span>
+              <span>¥{taxIncluded.toLocaleString()}</span>
+            </div>
+          )}
         </div>
 
         {itemsQty >= MAX_QTY_TOTAL && (
