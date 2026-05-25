@@ -131,8 +131,8 @@
   cart 「合計」セクションに「うち消費税（10%）」行を追加。10% 内税前提で `Math.round(totalAmount - totalAmount / 1.1)` 計算
 - [x] **42. アップセル提案 (recovery Phase R-5 / L5)** (2026-05-24 完了)  
   cart に「🎁 ご一緒にいかが？」セクション追加。カテゴリー判定 (`サイド`/`ドリンク`/`drink`等) で各 3 件まで suggest、カートに既にあるカテゴリーは表示しない。+ ボタンで cart に追加。MAX_QTY_TOTAL 到達時は section 自体を隠す
-- [ ] **43. 2-step UI: 注文確認 step (recovery Phase R-5 / L6)**  
-  カート → 注文確認の 2-step 化。pickup type の datetime-local 自由入力もここで一体復元（#39 と連動）。1〜2 時間
+- [x] **43. 2-step UI: 注文確認 step (recovery Phase R-5 / L6)** (2026-05-24 完了)  
+  Cart.tsx を `step: 'cart' | 'confirm'` で 2-step 化。Step 1 = カート編集 + アップセル、Step 2 = 受取方法 + 注文内容 (read-only + 編集リンク) + 備考 + お支払い内訳 + submit。pickup type の datetime-local 自由入力に切替、JST 補正の min/max 制約 (10分後〜3時間以内・server action と整合)
 - [x] **44. 店舗キャンセル理由選択 UI audit + 復元 (recovery Phase R-5 / L10)** (2026-05-24 完了)  
   audit 結果: タグでは admin OrderCard に「在庫切れ / 店舗都合」ラジオが存在し PATCH `cancelledReasonType` を送信していたが、現 main では全て `store_cancel` 固定で送信していた。復元: `OrderActions.tsx` のキャンセル確認ダイアログに radio 追加、PATCH route で `cancelledReasonType` を accept、3 tests 追加 (out_of_stock / fallback / 不正値 400)
 - [-] **45. 店舗オンボーディングフロー UI 差分 audit (recovery Phase R-5 / L12)** (2026-05-24 廃案)  
