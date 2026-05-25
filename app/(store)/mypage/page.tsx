@@ -44,7 +44,7 @@ export default function MyPage() {
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 pt-3 pb-1">
             サポート
           </p>
-          <RowDisabled label="よくある質問" icon="❓" hint="準備中" />
+          <RowLink href="/faq" label="よくある質問" icon="❓" />
           <RowLink href="/privacy"   label="プライバシーポリシー"     icon="🔒" />
           <RowLink href="/terms"     label="利用規約"                 icon="📋" />
           <RowLink href="/tokushoho" label="特定商取引法に基づく表記" icon="📜" />

@@ -114,7 +114,7 @@
 ## 🟡 中期の機能拡張（Phase 2）
 
 - [ ] **10. マイページ「準備中」3項目**  
-  FAQ / プロフィール編集 / 支払い方法。FAQ は `local-main-2026-05-19` タグから cherry-pick 候補。FAQ: 1時間、他: 各半日〜1日。FAQ は recovery-plan Phase R-5 / L8
+  FAQ / プロフィール編集 / 支払い方法。FAQ は 2026-05-24 完了 (recovery R-5 L8 で `app/(store)/faq/page.tsx` 復元、mypage の RowDisabled を RowLink に変更)。残るプロフィール編集 / 支払い方法は各半日〜1日
 - [ ] **11. 顧客向けログイン機能**  
   Supabase Auth ベース。クロス端末で注文履歴を参照可能に。1〜2日
 - [x] **12. ADMIN_* dead code 削除** (2026-05-22 完了)  
