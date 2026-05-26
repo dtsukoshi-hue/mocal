@@ -228,6 +228,97 @@ DROP TABLE / DROP COLUMN を含む migration は **データを失う**。
 
 ---
 
+## 9. 初回セットアップ (one-time)
+
+本番環境を一から立ち上げる、または新しい外部サービスを繋ぐ際の手順。**一度だけ実行**して `[x]` 化する性質のものをまとめる。
+
+### 9.1 外部 cron スケジューラ設定 (backlog #2 / Hobby plan 暫定)
+
+**前提**: Vercel **Hobby plan** は cron が「1日2回・daily 限定」なので、`/api/cron/no-show` (1分) と `/api/cron/store-hours` (5分) は **Vercel Cron では実行不可**。Pro plan ($20/月) 移行までは外部スケジューラで叩く。実証実験開始時に Pro 化して `vercel.json` の `crons` に移行する。
+
+**採択スケジューラ**: [cron-job.org](https://cron-job.org) (無料・上限なし・Bearer ヘッダー設定可能)
+
+#### 設定する 3 ジョブ
+
+| Job 名 | URL | 間隔 | 備考 |
+|---|---|---|---|
+| `mocal-store-hours` | `https://mocal-iota.vercel.app/api/cron/store-hours` | 5 分 | 営業時間に応じて店舗の `is_open` を自動切替 |
+| `mocal-no-show` | `https://mocal-iota.vercel.app/api/cron/no-show` | 1 分 | 受取期限を過ぎた注文を `no_show` 化 |
+| `mocal-cleanup-anon` | `https://mocal-iota.vercel.app/api/cron/cleanup-anonymous-users` | daily 03:00 JST | `CLEANUP_ANON_USERS_ENABLED=1` 設定後に有効。それまでは dry-run のみ |
+
+#### 手順
+
+1. cron-job.org にサインアップ → ダッシュボード
+2. **Create cronjob** → 各ジョブを以下で設定:
+   - **Title**: 上記 Job 名
+   - **URL**: 上記 URL
+   - **Execution schedule**: 5 分間隔 / 1 分間隔 / 毎日 03:00 (Asia/Tokyo)
+   - **Advanced → Request method**: GET
+   - **Advanced → Request headers**: `Authorization: Bearer <CRON_SECRET の実値>`
+     - `CRON_SECRET` は Vercel env と `.env.local` で同一値（Sensitive）。値そのものを cron-job.org に貼り付け
+   - **Notifications**: 失敗時メール通知 ON 推奨
+3. 各 Job を save → **Test run** ボタンで初回手動実行
+4. レスポンスが `HTTP 200` + JSON `{ok: true, ...}` であることを確認
+
+#### 動作確認
+
+```bash
+# 認証なし → 401
+curl -s -o /dev/null -w "HTTP %{http_code}\n" \
+  https://mocal-iota.vercel.app/api/cron/store-hours
+# → HTTP 401
+
+# 認証あり → 200
+curl -s -o /dev/null -w "HTTP %{http_code}\n" \
+  -H "Authorization: Bearer $CRON_SECRET" \
+  https://mocal-iota.vercel.app/api/cron/store-hours
+# → HTTP 200
+```
+
+cron-job.org の **History** タブで定期的に 200 が並んでいることを翌日確認。
+
+#### Pro 移行時の手順 (将来)
+
+1. `vercel.json` の `crons` に 3 ジョブ追加（path + schedule）
+2. Vercel Cron は自動的に Bearer ヘッダーを付与（`x-vercel-cron-signature` 検証に切替も可）
+3. cron-job.org の 3 Job を pause → 動作確認 → delete
+
+### 9.2 Stripe Connect 設定 (backlog #4)
+
+新規店舗 onboarding で `/api/onboarding/stripe/connect` から Stripe OAuth が開始される。`STRIPE_CLIENT_ID` 未設定だと 500 を返す ([app/api/onboarding/stripe/connect/route.ts:14-17](../app/api/onboarding/stripe/connect/route.ts))。
+
+#### 手順
+
+1. **Stripe Dashboard を開く**: https://dashboard.stripe.com/settings/connect
+2. **Platform settings** → **Production keys** セクションで **OAuth settings** を有効化（Standard を選択）
+3. **Client ID** (`ca_xxxxx`) をコピー — これが `STRIPE_CLIENT_ID`
+4. 同ページの **Redirect URIs** に追加:
+   - `https://mocal-iota.vercel.app/api/onboarding/stripe/callback`
+   - （開発時のみ）`http://localhost:3000/api/onboarding/stripe/callback`
+5. **Vercel env 登録** (Production / Preview / Development 全環境):
+   - https://vercel.com/dtsukoshi-hues-projects/mocal/settings/environment-variables
+   - Key: `STRIPE_CLIENT_ID`、Value: 上記 `ca_xxxxx`、**Sensitive: ON**
+6. **Redeploy** (env 変更は再デプロイ必須):
+   ```bash
+   npx vercel --prod
+   ```
+7. **`.env.local` を更新**: Sensitive のため `vercel env pull` では空文字。Dashboard から「Show value」で手動コピーして貼り付け
+8. **疎通確認**:
+   - 本番に店舗ログイン状態でアクセス → `/admin/settings` の Stripe 連携ボタン
+   - Stripe OAuth ページにリダイレクトされれば成功（実際に connect するかは任意）
+
+#### 動作確認 (未ログイン状態でも 500 でないことだけ確認)
+
+ログインしていない状態だと 401 や redirect になるので、500 (`STRIPE_CLIENT_ID が設定されていません。`) が出ないことのみ確認:
+
+```bash
+curl -s -o /dev/null -w "HTTP %{http_code}\n" \
+  https://mocal-iota.vercel.app/api/onboarding/stripe/connect
+# → HTTP 401 もしくは 3xx（500 でなければ OK）
+```
+
+---
+
 ## 関連ドキュメント
 
 - `AGENTS.md` — 運用全般、過去事故記録

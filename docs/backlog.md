@@ -39,12 +39,12 @@
 
 - [ ] **1. 法人設立後の `/tokushoho` 更新**  
   「販売業者: Entrust合同会社（設立準備中）」「メールアドレス: support@mocal.jp（準備中）」を実値に。15分
-- [ ] **2. cron 外部スケジューラを実稼働化**  
-  `vercel.json` の `crons` は空。cron-job.org 等から `Authorization: Bearer ${CRON_SECRET}` で `/api/cron/store-hours`（5分）と `/api/cron/no-show`（1分）を叩く。1〜2時間
+- [~] **2. cron 外部スケジューラを実稼働化**  
+  Hobby plan 制約のため Vercel Cron は不可、cron-job.org で暫定運用。実証実験開始時に Pro 化して `vercel.json` の `crons` に移行する方針。設定手順は `docs/deploy-runbook.md` §9.1 に明文化済。ユーザーが cron-job.org に 3 ジョブ登録 (store-hours / no-show / cleanup-anon) すれば完了。
 - [x] **3. `CRON_SECRET` を Vercel に登録** (2026-05-21 完了)  
   生成 → `.env.local` 追記 → Vercel (Prod/Preview/Dev) 登録 → Redeploy → 本番 curl で 401/200 を実証確認。F-03 解消。
-- [ ] **4. 新規店舗 onboarding の Stripe Connect 動作確認**  
-  `STRIPE_CLIENT_ID` が Vercel env に無く `/api/onboarding/stripe/connect` が 500 になる。新規店舗追加時に必須。1時間
+- [~] **4. 新規店舗 onboarding の Stripe Connect 動作確認**  
+  `STRIPE_CLIENT_ID` が Vercel env に無く `/api/onboarding/stripe/connect` が 500 になる。設定手順は `docs/deploy-runbook.md` §9.2 に明文化済。ユーザーが Stripe Dashboard → Connect で client_id 取得 + Vercel env 登録 + redirect URI 追加 + redeploy + .env.local 更新で完了。
 - [x] **38. コンボ商品復元 (recovery Phase R-2 / L1)** (2026-05-23 完了)  
   R2-1 ([mocal#8](https://github.com/dtsukoshi-hue/mocal/pull/8)) で server action + tests、R2-2 ([mocal#9](https://github.com/dtsukoshi-hue/mocal/pull/9)) で cache + page.tsx、R2-3 統合 ([mocal#10](https://github.com/dtsukoshi-hue/mocal/pull/10)) で MenuView + Cart UI。実機 verify 済 (テスト combo `テストセット` で 2,360円 → qty 変更まで動作)
 - [x] **39. pickup type ラベル + デザイン復元 (recovery Phase R-1 R1-2 / L2)** (2026-05-23 完了)  
