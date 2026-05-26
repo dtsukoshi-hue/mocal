@@ -109,7 +109,7 @@ npm run db:check
 `.husky/pre-push` で以下を自動実行:
 - DETACHED HEAD 拒否
 - main 以外への direct push は警告（PR 必須）
-- `.next/types/` が無ければ `npx next build --no-lint` で typegen
+- `.next/types/` が無ければ `npx next build` で typegen (Next.js 16 で `--no-lint` 廃止)
 - `npx tsc --noEmit` 必須
 - `npx vitest run` 必須
 

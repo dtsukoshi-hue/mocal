@@ -52,8 +52,9 @@ fi
 # tsc --noEmit 単体だと Next.js 16 の RouteContext などの動的型が未生成で誤検知する
 # .next/types/ が無い場合は事前に next build typegen を走らせる
 if [ ! -f ".next/types/routes.d.ts" ]; then
-  echo "→ .next/types を生成 (npx next build の typegen のみ)..."
-  npx next build --no-lint 2>&1 | tail -3 || true
+  echo "→ .next/types を生成 (npx next build の typegen)..."
+  # Next.js 16 で --no-lint は廃止。lint も含めて build を 1 回通す
+  npx next build 2>&1 | tail -3 || true
 fi
 
 echo "→ typecheck..."
