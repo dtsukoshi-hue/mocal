@@ -58,7 +58,7 @@
   **採択方針**: A+ (注文ごと専用 JWT 発行 + RLS で `auth.jwt() ->> 'order_id'` 検証)。  
   Step 0 (#26〜#30 再発防止策) → Step 1 (#31 設計ドキュメント) → Step 2 (#32 実装) の順で進める。
 - [x] **26. anon REST アクセスのセキュリティ regression test 追加（P1）** (2026-05-21 完了)  
-  `tests/security/anon-rest-access.test.ts` (11 ケース) + `npm run test:security` script。`.env.local` を直接読んで `process.env` 汚染なし、`RUN_SECURITY_TESTS=1` flag で意図実行。現状 F-18 を正しく検出（orders / order_items / processed_webhook_events で 3 FAIL）。default `npm test` には影響なし (180 pass / 11 skipped)。**A+ 実装後にガードを外して default 実行に組み込み、CI で恒久監視**する。
+  `tests/security/anon-rest-access.test.ts` (11 ケース) + `npm run test:security` script。`.env.local` を直接読んで `process.env` 汚染なし。F-18 修正完了 (2026-05-21) 時点で `RUN_SECURITY_TESTS=1` ガードを撤廃、`describe.skipIf(!isRealSupabase)` のみで実 Supabase に向いているときだけ走る形に。default `npm test` / pre-push でも常時実行 = 恒久 regression net。CI (dummy env) では graceful skip。
 - [x] **27. RLS policy レビューチェックリスト作成（P2）** (2026-05-21 完了)  
   `docs/rls-review-checklist.md` 作成。大原則 5 つ、新規ポリシー追加時の A〜D チェックリスト、`USING (true)` を書く前の 4 条件、良い / 悪いパターン例、A+ 用 JWT claim パターンの先行記述。
 - [x] **28. workflow.md / AGENTS.md の bearer-token 表現整備（P3+P4）** (2026-05-21 完了)  
