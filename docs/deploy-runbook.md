@@ -43,28 +43,20 @@
 
 ## 2. Pre-deploy: 本番 active 注文の確認
 
-DB 変更を伴う deploy / Stripe live mode 切替 / 大きな env 変更では、影響を受ける可能性のある active 注文 (pending / paid / accepted / preparing / ready) を確認する。
+DB 変更を伴う deploy では、影響を受ける可能性のある active 注文がいる場合は完了を待つ。
 
 ```bash
-npm run db:active-orders
-```
-
-出力:
-- **0 件**: `✅ active な注文なし` + exit 0 → 進めて OK
-- **1 件以上**: 件数 + 最新サンプル + exit 1
-
-判断 (active 1 件以上のとき):
-- **数件 (1〜3)**: 完了を待つ or 顧客への影響範囲を見極めて進める
-- **多数 (5+)**: 完了を待つか、deploy 戦略を見直す
-
-スクリプトは読み取り専用 ([scripts/check-active-orders.mjs](../scripts/check-active-orders.mjs))。手動 SQL でも可:
-
-```sql
+# Supabase Dashboard SQL Editor or psql で:
 SELECT id, order_number, status, store_id, created_at
 FROM public.orders
-WHERE status IN ('pending', 'paid', 'accepted', 'preparing', 'ready')
+WHERE status IN ('paid', 'accepted', 'preparing', 'ready')
 ORDER BY created_at DESC;
 ```
+
+判断:
+- **0 件**: 進めて OK
+- **数件 (1〜3)**: 完了を待つ or 顧客への影響範囲を見極めて進める
+- **多数 (5+)**: 完了を待つか、deploy 戦略を見直す
 
 ---
 
