@@ -82,7 +82,7 @@
   1.5〜2 時間。
   Cart submit 時に `signInAnonymously()`、`createOrderAction` を session 必須化、RLS 変更（漏洩 policy DROP + anon GRANT REVOKE）、polling interval 30s → 10s。既存 `orders_user_own_select` を流用、新規 JWT 署名 infra 不要。詳細は `docs/customer-auth-design.md`。#26 の security test を unskip → PASS で完了。半日〜1 日。
 - [ ] **33. 顧客 anonymous sign-in に CAPTCHA 導入（本格運用前）**  
-  Supabase Auth ネイティブの hCaptcha / Cloudflare Turnstile 対応で MAU 浪費攻撃 / DB 肥大攻撃を防ぐ。pilot 期は省略可、本格運用前に必須。1 日。
+  設計ドキュメント `docs/captcha-design.md` 作成済 (2026-05-26)。Cloudflare Turnstile 採択、Supabase Auth ネイティブ統合、Cart submit + お問い合わせ form 両方に適用。pilot 完走後に着手、約 1 日。
 - [x] **34. anonymous user cleanup cron（90 日無活動）** (2026-05-22 完了)  
   Migration `20260522064802_orders_user_id_set_null.sql` で orders.user_id FK を SET NULL に。`/api/cron/cleanup-anonymous-users` 新規 (バッチ 100/run / `?dry=1` / `CLEANUP_ANON_USERS_ENABLED=1` flag / `is_anonymous=true` 絞り込み)。本番 deploy 完了、現状は flag off で dry-run のみ。スケジューラ登録 (#2) と flag 有効化はユーザー作業。
 - [x] **35. `docs/deploy-runbook.md` 新規作成** (2026-05-22 完了)  
@@ -119,10 +119,15 @@
   Supabase Auth ベース。クロス端末で注文履歴を参照可能に。1〜2日
 - [x] **12. ADMIN_* dead code 削除** (2026-05-22 完了)  
   `lib/env.ts` REQUIRED と `.env.local.example` から削除、`.env.local` からも除去。コード参照ゼロ確認済 (Supabase Auth 移行後の残骸)。Vercel env 側の ADMIN_* も削除推奨（参照されていないので緊急性なし）。
-- [ ] **13. `next build` ローカルハング調査**  
-  本番 build は健全、ローカルで `_not-found` collect 時にハング。Turbopack / Node 24.x 相性？ 半日
+- [x] **13. `next build` ローカルハング調査** (2026-05-26 完了)  
+  Next.js 16.2.6 更新 (#22) 後に再現せず。clean build (`rm -rf .next && npx next build`) が 6 秒で完走、`_not-found` collect の hang も無し。原因は 16.2.4 以前の Turbopack 不具合と推定、現状の依存セットでは解消済み。
 - [ ] **14. キュー補正の調整**  
-  accepted 時に +3分/件で受取予想を後ろ倒し。実装の有無確認 + 精度改善。1時間（確認）+半日（改善）
+  **audit 結果 (2026-05-26)**: キュー補正は**未実装**。`app/api/orders/[id]/route.ts:136` で `estimated_ready_at = Date.now() + waitMinutes × 60s` を計算するだけで、同店舗の先行 `accepted` / `preparing` 注文を考慮していない。waitMinutes はスタッフが選ぶ手動値。  
+  **改善案** (仕様判断必要・ユーザー確認待ち):  
+  (A) accept 時に同店舗 `accepted`+`preparing` 件数を数え、`× N分` を `estimated_ready_at` に加算（最も backlog 文言に近い）  
+  (B) 既存 queue の `estimated_ready_at` 最大値より前にならないよう clamp（直列処理前提・並列調理は反映しづらい）  
+  (C) `estimated_ready_at` を「waitMinutes × 件数係数」で動的算出（係数を店舗設定可）  
+  運用上スタッフが waitMinutes を実情で入力する前提なら不要かも。仕様判断後に実装、半日〜1日。
 - [ ] **15. 監視・アラート整備**  
   Sentry 導入、Webhook 失敗監視、cron 失敗監視、**anonymous sign-in rate の異常検知 (#25/#32 後)**、DB 使用率監視 (#34 trigger 用)。`lib/logger.ts` にも「将来 Sentry に差し替え」コメント。半日〜1 日
 - [x] **16. E2E テストを CI で実行 (F-09)** (2026-05-22 完了)  
