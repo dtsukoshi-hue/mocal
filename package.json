@@ -18,7 +18,6 @@
     "db:pull": "supabase db pull",
     "types:gen": "supabase gen types typescript --linked > lib/database.types.ts && echo '生成完了: lib/database.types.ts'",
     "db:check": "node scripts/check-db-schema.mjs",
-    "db:active-orders": "node scripts/check-active-orders.mjs",
     "prepare": "husky"
   },
   "dependencies": {
