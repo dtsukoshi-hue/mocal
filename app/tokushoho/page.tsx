@@ -6,15 +6,16 @@ export const metadata = {
 
 
 const rows: { label: string; value: string }[] = [
-  { label: '販売業者',       value: 'Entrust合同会社（設立準備中）' },
+  { label: '販売業者',       value: '津越 大輔（屋号：Entrust）' },
   { label: '代表責任者',     value: '津越 大輔' },
-  { label: '所在地',         value: '法人設立後に更新予定' },
-  { label: 'メールアドレス', value: 'support@mocal.jp（準備中）' },
+  { label: '所在地',         value: '埼玉県越谷市瓦曽根1-21-33' },
+  { label: '電話番号',       value: '090-4159-6828' },
+  { label: 'メールアドレス', value: 'd.tsukoshi@gmail.com' },
   { label: '販売価格',       value: '各店舗のメニューに表示の金額（消費税込）' },
   { label: '支払方法',       value: 'クレジットカード（Visa / Mastercard / Amex / JCB）、Apple Pay、Google Pay' },
   { label: '支払時期',       value: '注文確定時に即時決済' },
   { label: '商品の引渡し時期', value: '注文受理後、各店舗が指定する待ち時間内に店頭にてお渡し' },
-  { label: '返品・キャンセル', value: '決済完了後の注文はキャンセル不可。店舗側都合のキャンセル時は全額返金。' },
+  { label: '返品・キャンセル', value: '店舗が注文を受付するまでは、顧客側でキャンセル可能（決済額は全額自動返金）。受付後の顧客側キャンセルは不可ですので、店舗にお問い合わせください。店舗側都合のキャンセル時は全額返金いたします。' },
   { label: '動作環境',       value: 'モダンブラウザ（Chrome / Safari / Firefox 最新版）' },
 ]
 
@@ -29,7 +30,7 @@ export default function TokushohoPage() {
       </header>
 
       <main id="main-content" className="max-w-2xl mx-auto px-4 py-8">
-        <p className="text-xs text-gray-400 mb-6">最終更新日：<time dateTime="2026-05-09">2026年5月9日</time></p>
+        <p className="text-xs text-gray-400 mb-6">最終更新日：<time dateTime="2026-05-27">2026年5月27日</time></p>
 
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <table className="w-full text-sm">
