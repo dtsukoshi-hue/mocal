@@ -96,8 +96,12 @@
   「Do not allow bypassing the above settings」を ON + 「Allow force pushes」を OFF。事故 #9 (force reset + 175 commit 並走) の再発を構造的に防ぐ。`Require pull request` は OFF のまま（1 人運用ではオーバーヘッド大、将来スタッフ参加時に ON 候補）。
 - [ ] **6. 管理画面 Push 通知の実環境確認**  
   本番 VAPID キーで `notifyStore()` が届くか。新規注文受付通知が機能するか目視確認。30分
-- [ ] **7. 生成値のバックアップ（暫定: 暗号化 sparsebundle + iCloud Drive）**  
-  `SESSION_SECRET` / VAPID 3 値 / `CRON_SECRET` / Stripe・Supabase secret を二重バックアップ。`hdiutil create -encryption AES-256 -type SPARSEBUNDLE` で iCloud Drive に保存、パスフレーズは紙メモ + 物理金庫。30分。
+- [x] **7. 生成値のバックアップ** (2026-05-20 / 2026-05-27 完了)  
+  二重 backup 体制:<br>
+  (A) Secure Note「mocal - ローカル env 専用キー（2026-05-20 生成）」: locally-generated な secret 5 つ (`SESSION_SECRET` / VAPID 3 値 / `CRON_SECRET`)。再生成不可な値のみ。<br>
+  (X) iCloud Drive 上の暗号化 sparsebundle `mocal-secrets.sparsebundle` の `secrets.txt`: 全 secret 13 個（Supabase / Stripe 含む全環境変数のスナップショット）。AES-256 暗号化 + パスフレーズは紙メモで物理保管。2026-05-27 にパスフレーズを過去セッション (`1ff03882...jsonl`) に残っていた一時 hex から恒久版に `hdiutil chpass` で変更済（jsonl 漏れリスクを解消）。<br>
+  Vercel Dashboard を含めると **三重保管** (Vercel + (A) + (X))。Stripe live mode 移行時は live key を (X) の secrets.txt に追記、(A) は不変。<br>
+  将来 [[7b]] 1Password 統合で (A)(X) を一本化予定（法人化タイミング）。
 - [ ] **7b. 1Password への移行（法人化を見据えて）**  
   法人化（〜1年後想定）のタイミングで Teams 版へ。それまでは #7 の暫定運用。CLI `op inject` で `.env.local` を git に置かず都度展開する運用も検討。
 - [x] **8. `README.md` の env 記述を最新化** (2026-05-24 完了)  
