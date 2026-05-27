@@ -121,8 +121,8 @@
   FAQ / プロフィール編集 / 支払い方法。FAQ は 2026-05-24 完了 (recovery R-5 L8 で `app/(store)/faq/page.tsx` 復元、mypage の RowDisabled を RowLink に変更)。残るプロフィール編集 / 支払い方法は各半日〜1日
 - [ ] **11. 顧客向けログイン機能**  
   Supabase Auth ベース。クロス端末で注文履歴を参照可能に。1〜2日
-- [x] **12. ADMIN_* dead code 削除** (2026-05-22 完了)  
-  `lib/env.ts` REQUIRED と `.env.local.example` から削除、`.env.local` からも除去。コード参照ゼロ確認済 (Supabase Auth 移行後の残骸)。Vercel env 側の ADMIN_* も削除推奨（参照されていないので緊急性なし）。
+- [x] **12. ADMIN_* dead code 削除** (2026-05-22 / 2026-05-27 完了)  
+  `lib/env.ts` REQUIRED と `.env.local.example` から削除、`.env.local` からも除去。コード参照ゼロ確認済 (Supabase Auth 移行後の残骸)。2026-05-27 に Vercel production / preview env からも `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_STORE_ID` を CLI 削除済 (`npx vercel env rm`)。
 - [x] **13. `next build` ローカルハング調査** (2026-05-26 完了)  
   Next.js 16.2.6 更新 (#22) 後に再現せず。clean build (`rm -rf .next && npx next build`) が 6 秒で完走、`_not-found` collect の hang も無し。原因は 16.2.4 以前の Turbopack 不具合と推定、現状の依存セットでは解消済み。
 - [ ] **14. キュー補正の調整**  
