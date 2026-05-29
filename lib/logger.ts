@@ -1,16 +1,21 @@
 import 'server-only'
+import * as Sentry from '@sentry/nextjs'
 
 // 構造化ログ
 // JSON 1行 = 1イベント。Vercel / 集約ログサービスで grep / parse しやすい形式。
-// TODO(#15 / F-12): Sentry 導入時にこの emit() を Sentry.captureException 等に
-// 差し替える。errorToFields() の error_stack はそのまま渡さず、フルパスを
-// 含まないよう sanitize するかを #15 で検討する。
+//
+// #15 Sentry 統合 (2026-05-28):
+//   - SENTRY_DSN 未設定: 従来通り console.* のみ。Sentry SDK は no-op
+//   - SENTRY_DSN 設定済: 全 level で breadcrumb 追加、error は captureException
+//   - PII sanitize は sentry.server.config.ts の beforeSend で実施
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
 interface LogFields {
   [key: string]: unknown
 }
+
+const SENTRY_ENABLED = Boolean(process.env.SENTRY_DSN)
 
 function emit(level: LogLevel, message: string, fields?: LogFields) {
   const entry = {
@@ -25,6 +30,24 @@ function emit(level: LogLevel, message: string, fields?: LogFields) {
     console.error(JSON.stringify(entry))
   } else {
     console.log(JSON.stringify(entry))
+  }
+
+  if (SENTRY_ENABLED) {
+    // breadcrumb: 全 level で常時追加 (error 発生時のコンテキスト)
+    Sentry.addBreadcrumb({
+      level: level === 'debug' ? 'debug' : level === 'info' ? 'info' : level === 'warn' ? 'warning' : 'error',
+      message,
+      data: fields,
+    })
+    // error level は exception として capture
+    if (level === 'error') {
+      const errCandidate = fields?.error
+      if (errCandidate instanceof Error) {
+        Sentry.captureException(errCandidate, { extra: fields })
+      } else {
+        Sentry.captureMessage(message, { level: 'error', extra: fields })
+      }
+    }
   }
 }
 

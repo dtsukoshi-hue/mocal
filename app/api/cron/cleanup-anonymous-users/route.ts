@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { logger } from '@/lib/logger'
+import { startCronCheckIn } from '@/lib/sentry-cron'
 
 /**
  * Anonymous user cleanup cron (#34)
@@ -48,6 +49,9 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // Sentry Cron Monitor (DSN 未設定なら no-op)
+  const monitor = startCronCheckIn('cleanup-anonymous-users', '0 3 * * *')
+
   const dryRun = request.nextUrl.searchParams.get('dry') === '1'
   const enabled = process.env.CLEANUP_ANON_USERS_ENABLED === '1'
   const effectiveDryRun = dryRun || !enabled
@@ -64,6 +68,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: LIST_PAGE_SIZE })
     if (error) {
       logger.error('cleanup-anonymous-users: listUsers failed', { code: error.code, message: error.message })
+      monitor.error()
       return NextResponse.json({ error: 'listUsers failed', message: error.message }, { status: 500 })
     }
     const users = data?.users ?? []
@@ -81,6 +86,7 @@ export async function GET(request: NextRequest) {
 
   // Step 3: dry-run / feature flag off ならここで終了
   if (effectiveDryRun) {
+    monitor.ok()
     return NextResponse.json({
       ok: true,
       dryRun: true,
@@ -114,6 +120,8 @@ export async function GET(request: NextRequest) {
     totalScanned: allUsers.length,
   })
 
+  // Cron 全体としては成功 (deleteUser の個別 error は logger.error で記録済)
+  monitor.ok()
   return NextResponse.json({
     ok: true,
     dryRun: false,

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
+import { startCronCheckIn } from '@/lib/sentry-cron'
 
-// Vercel Cron から 5 分ごとに呼び出す
+// 外部スケジューラ (cron-job.org 等) から 5 分ごとに呼び出す
 // Authorization: Bearer <CRON_SECRET> で保護
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET
@@ -11,6 +12,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '認証が必要です。' }, { status: 401 })
     }
   }
+
+  // Sentry Cron Monitor (DSN 未設定なら no-op)
+  const monitor = startCronCheckIn('store-hours', '*/5 * * * *')
 
   const supabase = createServiceClient()
   const now = new Date()
@@ -43,6 +47,7 @@ export async function GET(request: NextRequest) {
 
   if (fetchErr) {
     console.error('[cron/store-hours] store_hours 取得失敗:', fetchErr)
+    monitor.error()
     return NextResponse.json({ error: 'サーバーエラー' }, { status: 500 })
   }
 
@@ -70,6 +75,7 @@ export async function GET(request: NextRequest) {
   // manual_override_until が有効な店舗はスキップ
   // → stores を一括取得して除外
   if (toOpen.length === 0 && toClose.length === 0) {
+    monitor.ok()
     return NextResponse.json({ ok: true, opened: 0, closed: 0 })
   }
 
@@ -114,6 +120,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  monitor.ok()
   return NextResponse.json({
     ok: true,
     dow: dowJST,

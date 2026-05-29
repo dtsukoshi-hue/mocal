@@ -46,3 +46,7 @@ tests/e2e/.test-store.json
 # supabase CLI のローカル状態（link 情報・version cache）
 supabase/.temp/
 supabase/.branches/
+
+# sentry
+.sentryclirc
+.env.sentry-build-plugin

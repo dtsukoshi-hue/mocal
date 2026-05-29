@@ -132,8 +132,8 @@
   (B) 既存 queue の `estimated_ready_at` 最大値より前にならないよう clamp（直列処理前提・並列調理は反映しづらい）  
   (C) `estimated_ready_at` を「waitMinutes × 件数係数」で動的算出（係数を店舗設定可）  
   運用上スタッフが waitMinutes を実情で入力する前提なら不要かも。仕様判断後に実装、半日〜1日。
-- [ ] **15. 監視・アラート整備**  
-  設計ドキュメント `docs/monitoring-design.md` 作成済 (2026-05-26)。Sentry を中央集約、Cron Monitor で 3 ジョブ死活、PII sanitize 込みで `lib/logger.ts` を差し替える設計。実装は #2 cron 稼働後 (pilot 1〜2 日前目安)、約 半日〜1 日。
+- [~] **15. 監視・アラート整備**  
+  設計 `docs/monitoring-design.md` (2026-05-26) → scaffold 実装 (2026-05-28、PR 別途)。`@sentry/nextjs` 10.55 install、`sentry.{client,server,edge}.config.ts` + `instrumentation.ts` + `lib/logger.ts` で breadcrumb / captureException 統合、`lib/sentry-cron.ts` で 3 cron に Cron Monitor 統合、PII sanitize (cookie / authorization / email / ip) 込み。**`SENTRY_DSN` 未設定なら全て no-op で本番影響ゼロ**。<br>残: (a) user が Sentry account 作成 → DSN 取得 → Vercel + .env.local に登録 → (b) Sentry Dashboard で alert rule (5xx 急増 / cron failure / anonymous sign-in spike) 設定 → (c) Cron Monitor の slug 登録。
 - [x] **16. E2E テストを CI で実行 (F-09)** (2026-05-22 完了)  
   `.github/workflows/ci.yml` に Playwright (chromium) ステップを追加。env を job 共通化、`Install Playwright browsers` → `E2E (Playwright)` → 失敗時 `Upload Playwright report` artifact (7日保持)。CI 上では dummy env のため Supabase 依存テストは graceful skip、LP/静的/セキュリティヘッダー等の browser テストが恒久 regression net に。
 - [x] **41. cart 内税表示 (recovery Phase R-5 / L4)** (2026-05-24 完了)  
