@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { notifyOrder, notifyStore } from '@/lib/webpush'
+import { startCronCheckIn } from '@/lib/sentry-cron'
 
 // Vercel Cron / 外部スケジューラーから1分ごとに呼び出す
 // Authorization: Bearer <CRON_SECRET> で保護
@@ -12,6 +13,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '認証が必要です。' }, { status: 401 })
     }
   }
+
+  // Sentry Cron Monitor (DSN 未設定なら no-op)
+  const monitor = startCronCheckIn('no-show', '* * * * *')
 
   const supabase = createServiceClient()
   const now = new Date()
@@ -26,6 +30,7 @@ export async function GET(request: NextRequest) {
 
   if (fetchErr) {
     console.error('[cron/no-show] 対象注文取得失敗:', fetchErr)
+    monitor.error()
     return NextResponse.json({ error: 'サーバーエラー' }, { status: 500 })
   }
 
@@ -105,5 +110,6 @@ export async function GET(request: NextRequest) {
     }).catch((e) => console.error('[cron] スケジュールアラート通知失敗:', e))
   }
 
+  monitor.ok()
   return NextResponse.json({ ok: true, noShow: noShowCount })
 }
