@@ -132,6 +132,101 @@ describe('createOrderAction — combo 計算', () => {
     }
   })
 
+  // -----------------------------------------------------------------------
+  // #54 図 B 失敗経路カバレッジ
+  // 経路 6  (createPayment throw) / 経路 6' (order_items.insert 失敗) のテスト
+  // docs/payment-flow.md 図 B [6] / [6'] / app/actions/orders.ts:308-345
+  // -----------------------------------------------------------------------
+  function setupOrderInsertSuccess(): { orderUpdates: Record<string, unknown>[] } {
+    const captured = { orderUpdates: [] as Record<string, unknown>[] }
+    supabaseMock.handlers['stores'] = () => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: { is_open: true, wait_minutes: 15, stripe_account_id: 'acct_test' },
+      }),
+    })
+    supabaseMock.handlers['combo_offers'] = () => ({
+      select: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockResolvedValue({
+        data: [{ id: COMBO_ID, name: 'お得セット', price_delta: 0, is_available: true }],
+      }),
+    })
+    supabaseMock.handlers['combo_offer_items'] = () => ({
+      select: vi.fn().mockReturnThis(),
+      in: vi.fn().mockResolvedValue({
+        data: [{ combo_id: COMBO_ID, menu_item_id: MENU_A, qty: 1 }],
+      }),
+    })
+    supabaseMock.handlers['menu_items'] = () => ({
+      select: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockResolvedValue({
+        data: [{ id: MENU_A, name: 'バーガー', price: 500, is_available: true }],
+      }),
+    })
+    supabaseMock.handlers['orders'] = () => ({
+      insert: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: { id: ORDER_ID, order_number: 1 },
+          error: null,
+        }),
+      })),
+      update: vi.fn((row: Record<string, unknown>) => {
+        captured.orderUpdates.push(row)
+        return { eq: vi.fn().mockResolvedValue({ error: null }) }
+      }),
+    })
+    return captured
+  }
+
+  it('図 B 経路 6\': order_items.insert 失敗 → orders を cancelled (reason: timeout) に update', async () => {
+    const captured = setupOrderInsertSuccess()
+    supabaseMock.handlers['order_items'] = () => ({
+      insert: vi.fn().mockResolvedValue({ error: { message: 'insert failed' } }),
+    })
+
+    const result = await createOrderAction(undefined, formData({
+      storeId: STORE_ID,
+      pickupType: 'standard',
+      items: '[]',
+      combos: JSON.stringify([{ comboId: COMBO_ID, qty: 1 }]),
+    }))
+
+    expect(result).toMatchObject({ error: expect.stringContaining('注文の作成に失敗') })
+    // pending pre-insert は別経路、ここでは cancelled の update が呼ばれる
+    expect(captured.orderUpdates).toContainEqual({
+      status: 'cancelled',
+      cancelled_reason_type: 'timeout',
+    })
+    // PaymentIntent 作成は呼ばれない (order_items 段階で中断)
+    expect(createPaymentMock).not.toHaveBeenCalled()
+  })
+
+  it('図 B 経路 6: createPayment が throw → orders を cancelled (reason: payment_failed) に update', async () => {
+    const captured = setupOrderInsertSuccess()
+    supabaseMock.handlers['order_items'] = () => ({
+      insert: vi.fn().mockResolvedValue({ error: null }),
+    })
+    createPaymentMock.mockRejectedValueOnce(new Error('Stripe API error'))
+
+    const result = await createOrderAction(undefined, formData({
+      storeId: STORE_ID,
+      pickupType: 'standard',
+      items: '[]',
+      combos: JSON.stringify([{ comboId: COMBO_ID, qty: 1 }]),
+    }))
+
+    expect(result).toMatchObject({ error: expect.stringContaining('決済の準備に失敗') })
+    expect(captured.orderUpdates).toContainEqual({
+      status: 'cancelled',
+      cancelled_reason_type: 'payment_failed',
+    })
+    expect(createPaymentMock).toHaveBeenCalledTimes(1)
+  })
+
   it('不正な combos (UUID 違反 / qty 超過) は reject する', async () => {
     const bad1 = await createOrderAction(undefined, formData({
       storeId: STORE_ID,

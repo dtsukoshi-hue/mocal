@@ -216,8 +216,22 @@
   `processed_webhook_events` INSERT が処理前に行われ、処理失敗時に 200 を返して Stripe retry を止めてしまう。注文 pending 永久放置のリスク。修正案 A/B/C を提示してユーザー判断。テスト追加必須。1時間。
 - [x] **40. お問い合わせフォーム + 管理画面 + 通知 (recovery Phase R-4 / L9)** (2026-05-24 完了)  
   PR-A ([mocal#12](https://github.com/dtsukoshi-hue/mocal/pull/12)) で顧客送信フロー (migration + form + email)、PR-B で `/admin/inquiries` owner 限定一覧画面と settings からの導線を追加。`INQUIRY_NOTIFICATION_EMAIL` env を Vercel に登録すれば email 通知有効。ADMIN_STORE_ID / ADMIN_EMAIL は削除済 (#12) なので Push 通知は省略
-- [ ] **54. 失敗 / 返金フロー test coverage audit** (2026-05-30 起票、`docs/payment-flow.md` 図 B より発見)  
-  図 B の 8 経路 (顧客 cancel / 店舗 cancel / 外部返金 sync / payment_failed / store 閉店中 / amount mismatch / no_show / pending timeout) のうち、現状の自動テスト ([tests/api/webhook-stripe.test.ts](tests/api/webhook-stripe.test.ts) / [tests/api/orders-id-cancel.test.ts](tests/api/orders-id-cancel.test.ts) 等) でカバーされていない経路を audit + 追加。Phase 4c 完了後 (#49) 〜 pilot 直前。半日〜1 日。
+- [x] **54. 失敗 / 返金フロー test coverage audit** (2026-05-30 完了)  
+  図 B の 8 経路 audit 結果:<br>
+  | 経路 | カバー状態 | テスト |<br>
+  |---|---|---|<br>
+  | 1. 顧客 cancel | ✅ | `tests/api/orders-id-cancel.test.ts` 10 ケース |<br>
+  | 2. 店舗 cancel | ✅ | `tests/api/orders-id-patch.test.ts` 10+ ケース |<br>
+  | 3. 外部返金 sync (charge.refunded) | ⚠️ filter 冪等 OK、副作用 bug → **#57** | `tests/api/webhook-stripe.test.ts` 3 ケース (本タスクで冪等性ケース追加、現状の副作用挙動を verify) |<br>
+  | 4. payment_failed | ✅ | `tests/api/webhook-stripe.test.ts` 2 ケース |<br>
+  | 5. webhook 内 自動 cancel + refund (store_closed / amount_mismatch) | ✅ | `tests/api/webhook-stripe.test.ts` 3 ケース |<br>
+  | 6. PI 作成失敗 (createPayment throw) | ✅ (本タスクで追加) | `tests/actions/orders.test.ts` |<br>
+  | 6'. order_items.insert 失敗 | ✅ (本タスクで追加) | `tests/actions/orders.test.ts` |<br>
+  | 7. no_show | ✅ | `tests/api/cron-no-show.test.ts` 4+ ケース |<br>
+  | 8. pending timeout | ✅ | `tests/api/cron-no-show.test.ts` 1 ケース |
+- [ ] **57. webhook charge.refunded の二重通知バグ** (2026-05-30 起票、#54 audit 中に発見)  
+  `app/api/webhook/stripe/route.ts:264-278`: update 自体は `.neq('status', 'refunded')` で冪等 (0 行 update) だが、**update が 0 行でも `notifyOrder` を呼ぶ**。既 refunded order に対し Stripe 側で再 webhook 発火 (リトライ等) すると顧客に「返金処理が完了しました」通知が二重に届く。<br>
+  修正案: update に `.select('id', { count: 'exact', head: true })` で更新行数を取り、0 行なら notify を skip。または `notifyOrder` 前に order の現状 status を再取得して `refunded` なら skip。30 分。`tests/api/webhook-stripe.test.ts` の対応テストも更新 (現状の verify から 修正後の verify に)。
 - [~] **56. mocal.jp の noindex 化 (pilot 開始まで)** (2026-05-30 緊急対応)  
   Google 検索結果に mocal.jp が表示されていた指摘を受け、`app/layout.tsx` `metadata.robots` を `{ index: false, follow: false }` に、`app/robots.ts` を `disallow: '/'` に変更 (全 page クロール禁止 + meta noindex の二重)。**pilot 開始時に解除予定** (`app/layout.tsx` を `{ index: true, follow: true }` / `app/robots.ts` を `allow: '/'` + 管理系 disallow に戻す)。既に indexed 済の URL は **user 側で Google Search Console から URL 削除リクエスト** を推奨 (noindex の Googlebot 反映待ちより速い)。
 
