@@ -222,7 +222,7 @@
   |---|---|---|<br>
   | 1. 顧客 cancel | ✅ | `tests/api/orders-id-cancel.test.ts` 10 ケース |<br>
   | 2. 店舗 cancel | ✅ | `tests/api/orders-id-patch.test.ts` 10+ ケース |<br>
-  | 3. 外部返金 sync (charge.refunded) | ✅ (本タスクで冪等性ケース追加) | `tests/api/webhook-stripe.test.ts` 3 ケース。**副作用 bug 発見 → #57** |<br>
+  | 3. 外部返金 sync (charge.refunded) | ⚠️ filter 冪等 OK、副作用 bug → **#57** | `tests/api/webhook-stripe.test.ts` 3 ケース (本タスクで冪等性ケース追加、現状の副作用挙動を verify) |<br>
   | 4. payment_failed | ✅ | `tests/api/webhook-stripe.test.ts` 2 ケース |<br>
   | 5. webhook 内 自動 cancel + refund (store_closed / amount_mismatch) | ✅ | `tests/api/webhook-stripe.test.ts` 3 ケース |<br>
   | 6. PI 作成失敗 (createPayment throw) | ✅ (本タスクで追加) | `tests/actions/orders.test.ts` |<br>

@@ -491,7 +491,11 @@ describe('POST /api/webhook/stripe — charge.refunded', () => {
     const updateChain = { update: vi.fn(), eq: vi.fn(), neq: vi.fn() }
     updateChain.update.mockReturnValue(updateChain)
     updateChain.eq.mockReturnValue(updateChain)
-    // 既に refunded のため neq filter で 0 行 update、error なし
+    // 既に refunded のため neq filter で 0 行 update、error なし。
+    // 注意: 現実装は destructure で error しか読まないため count は読まれない
+    // (route.ts:264 `const { error: updateErr } = ...`)。#57 修正後は
+    // `.select('id')` 等で affected rows を取り 0 件なら notify skip する想定、
+    // その時点で本テストも count を実際に assert する形に更新予定。
     updateChain.neq.mockResolvedValue({ error: null, count: 0 })
 
     let call = 0
