@@ -55,6 +55,24 @@ export async function updateStoreProfileAction(
     ? cuisineTypeRaw.trim().slice(0, 30)
     : null
 
+  // 外部 URL (任意、空文字 → NULL、http(s) のみ、2048 文字以内)
+  // 各店舗の特商法 / アレルゲン情報は自社サイトで担保する設計
+  // (docs/payment-design-legal.md §3 取次事業者モデル)
+  function parseUrl(field: string): string | null | { error: string } {
+    const raw = formData.get(field)
+    if (typeof raw !== 'string' || !raw.trim()) return null
+    const v = raw.trim()
+    if (!/^https?:\/\/[^\s]+$/i.test(v)) return { error: `${field === 'tokushoho_url' ? '特商法URL' : 'アレルゲン情報URL'} は http(s) で始まる URL を入力してください。` }
+    if (v.length > 2048) return { error: 'URL が長すぎます (2048 文字以内)。' }
+    return v
+  }
+  const tokushohoUrlResult = parseUrl('tokushoho_url')
+  if (tokushohoUrlResult && typeof tokushohoUrlResult === 'object') return tokushohoUrlResult
+  const allergenUrlResult = parseUrl('allergen_url')
+  if (allergenUrlResult && typeof allergenUrlResult === 'object') return allergenUrlResult
+  const tokushohoUrl = tokushohoUrlResult as string | null
+  const allergenUrl = allergenUrlResult as string | null
+
   if (typeof name !== 'string' || !name.trim()) return { error: '店舗名を入力してください。' }
   if (typeof slug !== 'string' || !slug.trim()) return { error: 'URLを入力してください。' }
   if (!/^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/.test(slug)) {
@@ -70,7 +88,15 @@ export async function updateStoreProfileAction(
 
   const { error } = await supabase
     .from('stores')
-    .update({ name: name.trim(), slug: slug.trim(), description, area, cuisine_type: cuisineType })
+    .update({
+      name: name.trim(),
+      slug: slug.trim(),
+      description,
+      area,
+      cuisine_type: cuisineType,
+      tokushoho_url: tokushohoUrl,
+      allergen_url: allergenUrl,
+    })
     .eq('id', session.storeId)
 
   if (error) {

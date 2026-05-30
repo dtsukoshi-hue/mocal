@@ -9,6 +9,8 @@ interface Props {
   description: string | null
   area: string | null
   cuisineType: string | null
+  tokushohoUrl: string | null
+  allergenUrl: string | null
 }
 
 const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/
@@ -21,7 +23,7 @@ function validateSlug(value: string): string | null {
   return null
 }
 
-export default function StoreProfileForm({ name, slug, description, area, cuisineType }: Props) {
+export default function StoreProfileForm({ name, slug, description, area, cuisineType, tokushohoUrl, allergenUrl }: Props) {
   const [state, formAction, isPending] = useActionState(updateStoreProfileAction, undefined)
   const [slugValue, setSlugValue] = useState(slug ?? '')
   const [slugChangeAcknowledged, setSlugChangeAcknowledged] = useState(false)
@@ -120,6 +122,41 @@ export default function StoreProfileForm({ name, slug, description, area, cuisin
             defaultValue={cuisineType ?? ''}
             placeholder="例：バーガー"
             maxLength={30}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-600"
+          />
+        </div>
+      </div>
+
+      <div className="pt-4 border-t border-gray-100 space-y-3">
+        <div>
+          <p className="text-sm font-medium text-gray-700">外部リンク（任意）</p>
+          <p className="text-xs text-gray-500 mt-0.5">
+            自社サイトの該当ページ URL を入力すると、お客様の店舗ページに「特定商取引法に基づく表示」「アレルゲン情報」リンクが表示されます。
+          </p>
+        </div>
+
+        <div>
+          <label htmlFor="store-tokushoho-url" className="block text-sm font-medium text-gray-700 mb-1">特定商取引法に基づく表示 URL</label>
+          <input
+            id="store-tokushoho-url"
+            name="tokushoho_url"
+            type="url"
+            defaultValue={tokushohoUrl ?? ''}
+            placeholder="https://example.com/tokushoho"
+            maxLength={2048}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-600"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="store-allergen-url" className="block text-sm font-medium text-gray-700 mb-1">アレルゲン情報 URL</label>
+          <input
+            id="store-allergen-url"
+            name="allergen_url"
+            type="url"
+            defaultValue={allergenUrl ?? ''}
+            placeholder="https://example.com/allergen"
+            maxLength={2048}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-600"
           />
         </div>
