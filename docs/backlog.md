@@ -218,6 +218,8 @@
   PR-A ([mocal#12](https://github.com/dtsukoshi-hue/mocal/pull/12)) で顧客送信フロー (migration + form + email)、PR-B で `/admin/inquiries` owner 限定一覧画面と settings からの導線を追加。`INQUIRY_NOTIFICATION_EMAIL` env を Vercel に登録すれば email 通知有効。ADMIN_STORE_ID / ADMIN_EMAIL は削除済 (#12) なので Push 通知は省略
 - [ ] **54. 失敗 / 返金フロー test coverage audit** (2026-05-30 起票、`docs/payment-flow.md` 図 B より発見)  
   図 B の 8 経路 (顧客 cancel / 店舗 cancel / 外部返金 sync / payment_failed / store 閉店中 / amount mismatch / no_show / pending timeout) のうち、現状の自動テスト ([tests/api/webhook-stripe.test.ts](tests/api/webhook-stripe.test.ts) / [tests/api/orders-id-cancel.test.ts](tests/api/orders-id-cancel.test.ts) 等) でカバーされていない経路を audit + 追加。Phase 4c 完了後 (#49) 〜 pilot 直前。半日〜1 日。
+- [~] **56. mocal.jp の noindex 化 (pilot 開始まで)** (2026-05-30 緊急対応)  
+  Google 検索結果に mocal.jp が表示されていた指摘を受け、`app/layout.tsx` `metadata.robots` を `{ index: false, follow: false }` に、`app/robots.ts` を `disallow: '/'` に変更 (全 page クロール禁止 + meta noindex の二重)。**pilot 開始時に解除予定** (`app/layout.tsx` を `{ index: true, follow: true }` / `app/robots.ts` を `allow: '/'` + 管理系 disallow に戻す)。既に indexed 済の URL は **user 側で Google Search Console から URL 削除リクエスト** を推奨 (noindex の Googlebot 反映待ちより速い)。
 
 ## 🟡 中期の機能拡張（Phase 2）
 
