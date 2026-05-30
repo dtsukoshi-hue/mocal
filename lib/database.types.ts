@@ -529,6 +529,7 @@ export type Database = {
       }
       stores: {
         Row: {
+          allergen_url: string | null
           area: string | null
           cover_url: string | null
           created_at: string
@@ -541,9 +542,11 @@ export type Database = {
           name: string
           slug: string | null
           stripe_account_id: string | null
+          tokushoho_url: string | null
           wait_minutes: number
         }
         Insert: {
+          allergen_url?: string | null
           area?: string | null
           cover_url?: string | null
           created_at?: string
@@ -556,9 +559,11 @@ export type Database = {
           name: string
           slug?: string | null
           stripe_account_id?: string | null
+          tokushoho_url?: string | null
           wait_minutes?: number
         }
         Update: {
+          allergen_url?: string | null
           area?: string | null
           cover_url?: string | null
           created_at?: string
@@ -571,6 +576,7 @@ export type Database = {
           name?: string
           slug?: string | null
           stripe_account_id?: string | null
+          tokushoho_url?: string | null
           wait_minutes?: number
         }
         Relationships: []
