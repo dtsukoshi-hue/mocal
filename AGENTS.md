@@ -80,6 +80,51 @@ npm run db:check
   4. `npm run types:gen`（types.ts 自動生成）
   5. **手書きで `lib/database.types.ts` を編集しない**。アプリ側の helper エイリアスは `lib/database.aliases.ts` に書く
 
+### 決済 / 法的整合性に関わる変更（2026-05-30 ルール化）
+
+過去経緯: 2026-05-30 session で `lib/payment.ts` の `if (stripeConnectedAccountId)` 分岐 (initial commit から存在) を「動くから本番運用 OK」と短絡し、資金決済法 §37 違反相当の経路 (mocal が販売者として代金を預かる) を生み得る状態を作っていた。さらに、検証後に書いた決済フロー図も最初 4 件 + 2 件の誤りを含み、user に都度指摘されて修正した (`docs/payment-flow.md` 履歴参照)。
+
+#### ルール（厳守）
+
+**決済 / 法的当事者整理 / 資金移動経路に関わるコード変更は、実装の前に `docs/payment-flow.md` を更新する。**
+
+具体的に対象となるもの:
+- `lib/payment.ts` (createPayment / refundPayment / Stripe API 直接呼び出し全般)
+- `app/api/webhook/stripe/route.ts` (event handler 追加・変更)
+- `app/api/orders/[id]/route.ts` の PATCH / `app/api/orders/[id]/cancel/route.ts` の POST (status 遷移を伴う)
+- `stores` テーブルの `stripe_account_id` 関連の制約・filter
+- `/tokushoho` page の販売者表記
+- 上記に関連する admin UI / 公開 UI / 設計ドキュメント
+
+#### 手順
+
+1. `docs/payment-flow.md` の A (Happy Path) / B (失敗 / 返金) / C (法的当事者 + 5 重防御) のうち、影響する図を**先に**更新
+2. user に diff outline を提示して合意
+3. 合意後にコード実装 → tests → PR
+4. PR description に `docs/payment-flow.md` の対応箇所への参照を入れる
+
+#### 検証の必須化
+
+図を更新したら、**コードと突き合わせて 1 行ずつ verify** する。具体的には:
+- WHERE 句 / SELECT field を実コードと突き合わせる
+- 関数引数 / params を実コードと突き合わせる
+- `cancelled_reason_type` 等の enum 値を実コードの分岐ごとに突き合わせる
+- webhook が処理する event type を実コードの `case '...'` と突き合わせる
+
+「描けたから正しい」は禁止 (recovery-plan §4.7 「過信バイアス」の再演を防ぐ)。
+
+#### 法的領域での記述
+
+- 法令文言は **e-Gov 等の引用元 URL** を併記、引用と解釈を区別
+- Stripe Japan 等第三者の法的登録区分について **断定を書かない** (出典確認まで保留)
+- 為替取引該当性 / 特商法上の販売者 等は「現状」「Phase 4c 後 (目標)」を**分けて記述**
+
+#### Phase 4c PR-A への適用
+
+#49 PR-A (`docs/payment-design-legal.md` §3 改訂) 着手時は本ルールを最初に確認、その上で着手すること。
+
+---
+
 ### Supabase RLS の罠（必読・F-18 同類事故防止）
 
 過去事故 F-18（`orders_public_select_by_uuid USING (true)` で全顧客データが anon 漏洩）の根本原因は **RLS セマンティクスの誤解**。**RLS ポリシーを書く・変更するときは必ず `docs/rls-review-checklist.md` を見ること**。
