@@ -1,15 +1,31 @@
 # mocal — テイクアウト事前注文プラットフォーム
 
-飲食店のテイクアウト注文を事前予約・決済できる B2B SaaS プラットフォームです。
+mocal は飲食店のテイクアウト事前注文 / 決済導線を提供する**取次事業者**であり、商品（食品）の販売者ではありません。各商品の販売者は、mocal を通じて出店している各店舗です。法的整理 / 決済モデルの詳細は [`docs/payment-design-legal.md`](docs/payment-design-legal.md) を参照。
 
 ## 技術スタック
 
 - **フレームワーク**: Next.js 16 (App Router, Turbopack)
-- **DB / 認証**: Supabase (PostgreSQL + Auth + Realtime)
-- **決済**: Stripe (Connect, PaymentIntent)
+- **DB / 認証**: Supabase (PostgreSQL + Auth + Realtime + RLS)
+- **決済**: Stripe Connect Standard + Destination Charges + `on_behalf_of`（取次事業者モデル、各店舗が merchant of record）
 - **メール**: Resend
 - **プッシュ通知**: Web Push (VAPID)
 - **スタイリング**: Tailwind CSS v4
+
+---
+
+## 開発者向け — まず読むもの
+
+新規参加 / セッション再開時は以下を必ず確認:
+
+| ファイル | 内容 |
+|---|---|
+| [`AGENTS.md`](AGENTS.md) | 運用ルール（過去事故と再発防止、ブランチ運用、DB スキーマ、RLS の罠、決済 / 法的整合性に関わる変更の手順、push 前のチェック等） |
+| [`docs/backlog.md`](docs/backlog.md) | 残作業の単一の真実（着手前に必ず確認、`[~]` 化してから実装） |
+| [`docs/payment-design-legal.md`](docs/payment-design-legal.md) | 決済設計の法的整合性（資金決済法 §37 / 取次事業者モデル / 5 重防御 L1–L6） |
+| [`docs/payment-flow.md`](docs/payment-flow.md) | 決済フロー 3 枚（A: Happy Path / B: 失敗・返金 / C: 法的当事者 + 5 重防御） |
+| [`docs/customer-auth-design.md`](docs/customer-auth-design.md) | 顧客認証（Supabase Anonymous Sign-Ins ベース） |
+| [`docs/workflow.md`](docs/workflow.md) | アーキテクチャ全体図 |
+| [`docs/deploy-runbook.md`](docs/deploy-runbook.md) | デプロイ手順 + 初回セットアップ |
 
 ---
 
@@ -91,19 +107,24 @@ E2E テストは `globalSetup` で自動的にテスト用店舗を Supabase に
 
 ## 注文フロー
 
+要点のみ（詳細フロー / 失敗 / 返金 / 法的当事者は [`docs/payment-flow.md`](docs/payment-flow.md) 図 A/B/C 参照）:
+
 ```
-顧客: メニュー → カート → 決済（Stripe Elements）
-                            ↓
-Stripe Webhook: payment_intent.succeeded
-                            ↓
-                注文ステータス: paid
-                メール: 注文確認メール送信
-                Push: 店舗スタッフに通知
-                            ↓
-管理者: 注文受理 → 調理中 → 準備完了
-                            ↓
+顧客: 店舗ページ（/[slug]）→ カート → 決済（Stripe Elements）
+                                          ↓
+Stripe Connect: Platform Account で PaymentIntent 作成
+                  ├─ transfer_data.destination = 店舗 Connect account（売上計上）
+                  ├─ on_behalf_of = 店舗 Connect account（merchant of record を店舗に）
+                  └─ application_fee_amount = mocal の取次手数料（6.4%）
+                                          ↓
+Webhook payment_intent.succeeded → 注文ステータス: paid → 店舗に Push 通知
+                                          ↓
+店舗管理者: 注文受理 → 調理中 → 準備完了
+                                          ↓
 顧客: Push通知 + メール（準備完了 / キャンセル / 返金）
 ```
+
+決済関連コード / Webhook / 返金経路を変更する場合は、AGENTS.md §「決済 / 法的整合性に関わる変更」のルール（payment-flow.md を先に更新 → user 合意 → 実装）に従ってください。
 
 ---
 
