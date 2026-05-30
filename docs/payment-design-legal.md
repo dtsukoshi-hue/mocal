@@ -60,30 +60,19 @@
 
 ### 3.1 採用: **Stripe Connect Standard + Destination Charges + `on_behalf_of` (取次事業者モデル)**
 
-- Stripe は日本国内で**カード決済の処理サービスを提供する事業者** (Stripe Japan 株式会社 / Stripe Inc. の連携)。具体的な法的登録区分 (資金移動業 / 包括加盟店契約 / クレジットカード等決済代行業 等) の一次出典は §7 に未解決事項として記録。本書は「Stripe が licensed infrastructure を提供している」事実のみを前提とし、具体的登録区分は断定しない。
-- 各店舗は **Connect Standard アカウント**を保有 (= 各店舗が Stripe との独立した契約。Stripe Connect Standard 規約により店舗が直接 Stripe の merchant となる)
+- Stripe は日本国内で**カード決済の処理サービスを提供する事業者** (Stripe Japan 株式会社 / Stripe Inc. の役割分担は公式情報の確認待ち、§7)。具体的な法的登録区分 (資金移動業 / 包括加盟店契約 / クレジットカード等決済代行業 等) の一次出典は §7 に未解決事項として記録。本書は「Stripe が licensed infrastructure を提供している」事実のみを前提とし、具体的登録区分は断定しない。
+- 各店舗は **Connect Standard アカウント**を保有 (Stripe Connect Service Agreement: https://stripe.com/jp/connect-account/legal — 店舗と Stripe の契約関係はこの規約に基づく)
 - mocal (Entrust) は Platform Account を保有、**取次事業者**として決済導線を整備し、`application_fee` を受領する
-- 決済の構造 (Phase 4c 完了後の目標形):
 
-```
-顧客 →（カード決済 / Stripe.js）→ Stripe
-                                    │  PaymentIntent (Platform Account 経由で作成)
-                                    │    - amount, currency
-                                    │    - transfer_data.destination = 店舗 Connect account
-                                    │    - on_behalf_of = 店舗 Connect account ← Phase 4c PR-B
-                                    │    - application_fee_amount = 6.4%
-                                    │
-                                    │  上記により:
-                                    │    - charge の merchant of record = 店舗
-                                    │    - カード明細の statement_descriptor = 店舗名
-                                    │    - 売上計上 = 店舗 Connect account
-                                    │    - application_fee = mocal (Entrust) Platform Account
-                                    ▼
-                            店舗の銀行口座 (Stripe Payouts、各 account 独立設定)
-                            Entrust の銀行口座 (application_fee 合計分、週次月曜)
-```
+決済の構造 (Phase 4c 完了後の目標形、詳細フロー図は `docs/payment-flow.md` 図 A 参照):
 
-現状 (Phase 4a まで) は `on_behalf_of` 未設定。merchant of record が mocal となる Stripe 上の表示が残っており、Phase 4c PR-B でこれを是正する。
+- PaymentIntent を Platform Account (mocal/Entrust) で作成、`transfer_data.destination` = 店舗 Connect account に売上計上
+- `application_fee_amount` = 6.4% を mocal が受領 (`lib/payment.ts` の `MOCAL_FEE_RATE`)
+- `on_behalf_of` = 店舗 Connect account ← Phase 4c PR-B で追加予定
+- 上記により Stripe 上の merchant of record / 売上計上 が**店舗**に統一される。カード明細の `statement_descriptor` の最終的な見え方は Stripe Connect 規約 / 各 Connect アカウントの設定に依存
+- Payout は店舗 / mocal の各 Connect account 独立設定 (Stripe Connect Standard の標準仕様、各アカウントの設定に依存)
+
+現状 (Phase 4a まで) は `on_behalf_of` 未設定で、Stripe 上の merchant of record が mocal となる表示が残る。Phase 4c PR-B で是正。
 
 ### 3.2 法的当事者の整理 (現状 vs Phase 4c 完了後)
 
@@ -96,7 +85,7 @@
 | 為替取引該当性の主体 | Stripe の licensed infrastructure 経由、解釈余地あり (※) | 同左 + `on_behalf_of` で更に明確化 |
 | 商品の販売者 (業務設計) | 各店舗 | 各店舗 |
 | 商品の販売者 (Stripe 上の見え方) | mocal が merchant となる乖離あり | **各店舗 (法的にも合致)** |
-| 顧客への領収書発行 | mocal 名で発行 | **各店舗名で発行** (Stripe が店舗名で receipt 生成) |
+| 顧客への領収書発行 | mocal 名で発行 (※) | **各店舗名で発行** (※ Stripe の receipt 発行ルールは Connect 規約 / Dashboard 設定に依存、PR-B 完了後に実機で再確認) |
 | 特商法表示の販売者 | mocal `/tokushoho` が事実上の表示元 (#36 で `stores.tokushoho_url` 追加済、未表示) | **各店舗** (PR-E 店舗ページから外部リンク表示 / PR-F mocal `/tokushoho` を取次事業者表記に改訂) |
 | アレルゲン表示の責任 | 各店舗 (未導線化) | **各店舗** (PR-E `stores.allergen_url` 表示) |
 | チャージバック責任 | mocal (Stripe 上の merchant) | **各店舗** (Connect Standard 標準) |
@@ -121,10 +110,10 @@ mocal (Entrust) は商品の販売者ではなく、**取次事業者**として
 
 ### 3.4 「mocal が販売者になる経路」を一切作らない (5 重防御)
 
-`lib/payment.ts:46` に initial commit から存在した `if (stripeConnectedAccountId)` 分岐 (NULL なら通常の charge 作成) は、§3.3 で整理した取次事業者の役割から逸脱する経路を生んでいた。
+`lib/payment.ts` の `createPayment` 関数には initial commit から「`stripeConnectedAccountId` が未設定なら通常の charge を作成する」分岐が存在し、§3.3 で整理した取次事業者の役割から逸脱する経路を生んでいた。
 
-- **Phase 4a (#35) で throw 化済**: `if (!stripeConnectedAccountId) throw` に変更、引数の型は null 許容のまま関数内で必ず弾く
-- **5 重防御** (§4) で各層に独立した防御を入れ、L1〜L6 のいずれか単独に依存しない設計
+- **Phase 4a (#35) で throw 化済**: 関数冒頭で `if (!stripeConnectedAccountId) throw` を行い、Connect 未接続を強制エラーに (現状の実装は `lib/payment.ts` 参照、行番号は drift するため引用しない)
+- **5 重防御** (§4) で各層に独立した防御を入れ、L1〜L5 のいずれか単独に依存しない設計
 - **Phase 4c PR-B** で `on_behalf_of` を追加し、Stripe 側の merchant of record も店舗に一致させる
 
 これらにより、mocal が販売者として代金を受領する経路は (a) コード上 throw、(b) Stripe 上も店舗 merchant、の二重で塞がれる。
@@ -151,12 +140,11 @@ mocal (Entrust) は商品の販売者ではなく、**取次事業者**として
 
 ### 4.2 修正対象 (本書承認後の Phase 4 コード PR)
 
-A. `lib/payment.ts:46` `if (stripeConnectedAccountId)` → `if (!stripeConnectedAccountId) throw new Error(...)` に変更し、Connect 必須に (Phase 4a #35 完了)
-B. `lib/payment.ts:72` `_stripeConnectedAccountId` 引数を関数シグネチャから削除 (将来の再導入リスクを構造的に防ぐ) (Phase 4a #35 完了)
-C. migration で `stores` に CHECK 制約追加 (Phase 4b #50 予定)
-D. `lib/store-cache.ts` / `sitemap.ts` の select / フィルタに `stripe_account_id NOT NULL` 追加 (Phase 4a #35 完了)
-E. `app/api/admin/store/route.ts` で `is_open=true` 切替時のガード追加 (Phase 4a #35 完了)
-F. `lib/payment.ts` `paymentIntents.create` に `on_behalf_of: stripeConnectedAccountId` 追加 — Stripe 上の merchant of record を店舗に一致させる (Phase 4c PR-B 予定、本書 §3.1 / §3.2 と整合)
+A. `lib/payment.ts` `createPayment` 関数で `if (stripeConnectedAccountId)` 分岐を排し、未設定なら `throw new Error(...)` で Connect 必須に (Phase 4a #35 完了)
+B. migration で `stores` に CHECK 制約追加 (Phase 4b #50 予定)
+C. `lib/store-cache.ts` / `sitemap.ts` の select / フィルタに `stripe_account_id NOT NULL` 追加 (Phase 4a #35 完了)
+D. `app/api/admin/store/route.ts` で `is_open=true` 切替時のガード追加 (Phase 4a #35 完了)
+E. `lib/payment.ts` `paymentIntents.create` に `on_behalf_of: stripeConnectedAccountId` 追加 — Stripe 上の merchant of record を店舗に一致させる (Phase 4c PR-B 予定、本書 §3.1 / §3.2 と整合)
 
 ---
 
