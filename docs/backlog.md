@@ -107,13 +107,24 @@
 
 - [ ] **47. Stripe Connect サンドボックス設定 + live mode 申請** (#4 を内包)  
   サンドボックスで Connect 設定 (ビジネスモデル / アカウントタイプ Standard / charge type) → live mode Connect 申請 → 審査通過 → live mode の `STRIPE_CLIENT_ID` (`ca_live_*`) 取得 → Vercel + `.env.local` 登録 → Redirect URI 追加 (`https://mocal.jp/api/onboarding/stripe/callback`)。2026-05-30 時点でサンドボックス設定途中 (ビジネスモデル「マーケットプレイス」選択完了、次は「Connect をテスト」セクション)。Stripe 審査時間が最大の不確実要素。
-- [ ] **48. Stripe live mode env 切替**  
-  KYC 通過済、live key 取得可能。以下を Vercel + `.env.local` で切替 (Sensitive 値は Dashboard 経由で user 手動更新):<br>
-  - `STRIPE_SECRET_KEY`: `sk_test_*` → `sk_live_*`<br>
-  - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`: `pk_test_*` → `pk_live_*`<br>
-  - `STRIPE_WEBHOOK_SECRET`: live mode で新規 webhook endpoint 登録 (`https://mocal.jp/api/webhook/stripe`) → 新 `whsec_*` 取得<br>
-  - `STRIPE_CLIENT_ID`: live mode の `ca_live_*` (上 #47 と同タイミング)<br>
-  active 注文 0 件確認 → `npx vercel --prod` redeploy → live curl 疎通。
+- [ ] **48. Stripe live mode env 切替** — **2026-05-30 着手準備、次セッションで実施**  
+  KYC 通過済、live key 画面で取得可能 (Stripe Dashboard → 開発者 → API キー)。<br>
+  画面確認時点で公開キー (`pk_live_51TPIyDLGTKV…yiH`) は visible、シークレットキーは「本番キーを表示」ボタンで取得可。<br>
+  <br>
+  **サブタスク (依存関係ごとに分割)**:<br>
+  - **#48a 公開キー + シークレットキー切替** (依存なし、即実施可):<br>
+    - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` を `pk_live_*` に → 私が Vercel CLI で代行可<br>
+    - `STRIPE_SECRET_KEY` を `sk_live_*` に → **user が Vercel Dashboard 直接更新** (Sensitive)<br>
+    - active 注文 0 件確認 → `npx vercel --prod` redeploy → curl で `/api/health` 200<br>
+  - **#48b live mode webhook 登録 + `STRIPE_WEBHOOK_SECRET` 切替** (依存なし、即実施可):<br>
+    - Stripe Dashboard → 開発者 → Webhook → live mode で endpoint 新規作成<br>
+    - URL: `https://mocal.jp/api/webhook/stripe`<br>
+    - Events: `payment_intent.succeeded` / `payment_intent.payment_failed` / `charge.refunded`<br>
+    - 表示される `whsec_*` を **user が Vercel Dashboard 直接更新** (Sensitive)<br>
+  - **#48c `STRIPE_CLIENT_ID` (`ca_live_*`)** — **#47 完了が前提**:<br>
+    - Stripe Dashboard → Connect → Settings → Integration の OAuth → live mode 用 Client ID を取得<br>
+    - **user が Vercel Dashboard 直接更新** (Sensitive)<br>
+    - Connect Redirect URI に `https://mocal.jp/api/onboarding/stripe/callback` 追加 (live mode 側)
 - [ ] **49. #payment Phase 4c (取次事業者モデル 完成)**  
   Phase 4a (#35) + PR-D (#36) で基盤完了。残:<br>
   - **PR-A**: `docs/payment-design-legal.md` §3 (採用モデル) を「mocal は取次事業者」に書き直し (Stripe 上の merchant of record 明確化、特商法位置付け整理) — 1h<br>
@@ -134,6 +145,31 @@
   実カードで 1 件注文 → pending → paid → accepted → preparing → ready → completed の全 status 遷移 → 払戻 (refund) → no-show 経路 (別注文)。Stripe Dashboard と mocal の DB 両方で正常完了を確認。約 1h。
 - [ ] **53. Go/No-Go 判定**  
   下記「Pilot 開始 Go/No-Go 基準」全 must を `[x]` 確認 → user が pilot 開始判断。
+
+### Pilot 開始までの推奨実施順 (次セッション開始時)
+
+**依存関係 + 外部審査待ち時間を考慮した優先順**。並列実施可能なものは横並びで記載。
+
+| 順 | 項目 | 工数 | 主体 | 外部待ち | 並列可能 |
+|---|---|---|---|---|---|
+| **1** | **#47 Stripe Connect サンドボックス完了 + live 申請 submit** | user 1〜2h + 審査数時間〜数日 | user | ⭐最長 | (以下と並列) |
+| 2 | **#48a 公開キー + シークレットキー切替** (`pk_live_` / `sk_live_`) | 30 分 | 私 (pk) + user (sk) | なし | OK |
+| 3 | **#48b live mode webhook 登録 + `whsec_*` 切替** | 30 分 | user | なし | OK |
+| 4 | **#2 cron-job.org 登録** (3 ジョブ) | user 1〜2h | user | なし | OK |
+| 5 | **#15 (b) Cron Monitor slug 登録** (#2 完了直後) | user 15 分 | user | なし | #2 直後 |
+| 6 | **#49 PR-A 設計合意** (`docs/payment-design-legal.md` §3 取次事業者モデル改訂) | 1h | 私 → user review | なし | OK (PR-B/E/F の前提) |
+| 7 | **#49 PR-B `on_behalf_of` 追加** | 30 分 + tests | 私 | なし | PR-A 後 |
+| 8 | **#49 PR-E `/[slug]` フッタリンク** | 1〜2h | 私 | なし | PR-A 後、PR-B と並列 |
+| 9 | **#49 PR-F `/tokushoho` 取次事業者表記書き直し** | 1h | 私 | なし | PR-A 後、PR-B/E と並列 |
+| 10 | **#15 (a) Sentry alert rule 設定** | 30 分 | user | なし | いつでも |
+| 11 | **#47 完了待ち** (Stripe Connect 審査通過) | 受動 | — | ⭐ | ここで初めて #48c / #50 が unblock |
+| 12 | **#48c `STRIPE_CLIENT_ID` (`ca_live_`) 登録 + Redirect URI 追加** | 15 分 | user | なし | #47 後 |
+| 13 | **#50 既存 1 row 是正** (3000DAYS BURGER) → Connect onboarding 完了 or `is_open=false` | user 30 分 | user | なし | #47 後 |
+| 14 | **#50 DB CHECK 制約 migration** | 私 30 分 | 私 | なし | #50 row 是正後 |
+| 15 | **#15 (c) `SENTRY_AUTH_TOKEN` 登録** (source map upload 有効化) | user 15 分 | user | なし | pilot 直前 |
+| 16 | **#51 Pilot 開始前 実機 audit** (push / Realtime / L1〜L10) | user + 私 2〜3h | user + 私 | なし | #48 / #49 / #50 完了後 |
+| 17 | **#52 Pilot 開始 smoke** (live mode 実カード 1 件、全 status 遷移 + refund) | user + 私 1〜1.5h | user + 私 | なし | #51 通過後 |
+| 18 | **#53 Go/No-Go 判定** | user | user | — | 最後 |
 
 ### Pilot 開始 Go/No-Go 基準
 
