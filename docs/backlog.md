@@ -127,8 +127,8 @@
     - Connect Redirect URI に `https://mocal.jp/api/onboarding/stripe/callback` 追加 (live mode 側)
 - [~] **49. #payment Phase 4c (取次事業者モデル 完成)**  
   Phase 4a (#35) + PR-D (#36) で基盤完了。残:<br>
-  - **PR-A** (着手中、2026-05-30): `docs/payment-design-legal.md` §3 (採用モデル) を「mocal は取次事業者」に書き直し (Stripe 上の merchant of record 明確化、特商法位置付け整理) — 1h。**着手前に `AGENTS.md` §「決済 / 法的整合性に関わる変更」のルール確認必須**。<br>
-  - **PR-B**: `lib/payment.ts` paymentIntents.create に `on_behalf_of: stripeConnectedAccountId` 追加 → カード明細表示 / Stripe 上の merchant が店舗に — 30 分<br>
+  - **PR-A** (完了、2026-05-30 [mocal#39](https://github.com/dtsukoshi-hue/mocal/pull/39)): `docs/payment-design-legal.md` §3 (採用モデル) を「mocal は取次事業者」に書き直し (Stripe 上の merchant of record 明確化、特商法位置付け整理) — 1h。<br>
+  - **PR-B** (着手中、2026-05-30): `lib/payment.ts` paymentIntents.create に `on_behalf_of: stripeConnectedAccountId` 追加 → カード明細表示 / Stripe 上の merchant が店舗に — 30 分<br>
   - **PR-E**: `/[slug]` 店舗ページのフッタに「特定商取引法に基づく表示」「アレルゲン情報」リンク表示 (#36 で追加した `tokushoho_url` / `allergen_url` を表示) — 1〜2h<br>
   - **PR-F**: mocal `/tokushoho` を取次事業者表記に書き直し (mocal は場の提供、各商品の販売者は各店舗) — 1h<br>
   順序: PR-A (設計合意) → PR-B/E/F 並列。
