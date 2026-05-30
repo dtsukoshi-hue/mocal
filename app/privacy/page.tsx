@@ -41,7 +41,7 @@ export default function PrivacyPage() {
           <p>本サービスは以下の情報を取得することがあります。</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>店舗オーナーの氏名・メールアドレス・電話番号（店舗登録時）</li>
-            <li>顧客の注文内容・受取情報・決済情報（決済情報は Stripe が処理・保管）</li>
+            <li>顧客の注文内容・受取情報・決済情報（決済情報は決済処理事業者が処理・保管）</li>
             <li>お問い合わせ時に入力された氏名・メールアドレス・お問い合わせ内容</li>
             <li>プッシュ通知の購読情報（エンドポイント・暗号化キー）</li>
             <li>アクセスログ（IPアドレス・ブラウザ情報・操作ログ）</li>
@@ -57,41 +57,12 @@ export default function PrivacyPage() {
             <li>サービスの改善・障害対応・不正利用の防止</li>
             <li>法令に基づく対応</li>
           </ul>
-
-          <h2 className="text-base font-semibold text-gray-900 mt-6">4. 第三者提供・委託</h2>
-          <p>当事業者は、以下の場合を除き、個人情報を第三者に提供しません。</p>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>ユーザーの同意がある場合</li>
-            <li>取次事業者として、注文情報を各販売者（出店店舗）に提供する場合</li>
-            <li>決済処理のため Stripe, Inc. に提供する場合</li>
-            <li>法令に基づき開示が必要な場合</li>
-          </ul>
-          <p>
-            また、サービス運営上必要な業務（データベース管理、ホスティング、エラー監視、メール送信等）の
-            一部を外部サービスに委託することがあります。委託先には個人情報保護法に基づき適切な監督を行います。
+          <p className="text-xs text-gray-500">
+            ※ 上記目的の達成に必要な範囲で、業務の一部を外部サービスに委託することがあります。委託先には
+            個人情報保護法に基づき適切な監督を行います。
           </p>
 
-          <h2 className="text-base font-semibold text-gray-900 mt-6">5. 外国にある第三者への提供</h2>
-          <p>
-            本サービスは以下の外国にある事業者にデータの保管・処理を委託しています。各事業者の所在地および
-            個人情報保護に関する規律は、各事業者の公表する情報をご参照ください。
-          </p>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>
-              <strong>Stripe, Inc.</strong>（米国／決済処理）
-              {' '}<a href="https://stripe.com/jp/privacy" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:underline">プライバシーポリシー</a>
-            </li>
-            <li>
-              <strong>Supabase, Inc.</strong>（米国／データベース・認証）
-              {' '}<a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:underline">プライバシーポリシー</a>
-            </li>
-            <li>
-              <strong>Vercel Inc.</strong>（米国／ホスティング）
-              {' '}<a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:underline">プライバシーポリシー</a>
-            </li>
-          </ul>
-
-          <h2 className="text-base font-semibold text-gray-900 mt-6">6. 安全管理措置の概要</h2>
+          <h2 className="text-base font-semibold text-gray-900 mt-6">4. 安全管理措置の概要</h2>
           <p>当事業者は、個人情報の漏えい・滅失・毀損の防止のため、以下の措置を講じています。</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>通信の暗号化（HTTPS / TLS）</li>
@@ -99,29 +70,28 @@ export default function PrivacyPage() {
             <li>管理権限の最小化・多要素認証の利用</li>
             <li>Content Security Policy 等のセキュリティヘッダーの適用</li>
             <li>エラー監視ログから個人情報を除外する仕組み（PII sanitize）</li>
-            <li>業務委託先に対する個人情報保護法に基づく適切な監督</li>
           </ul>
 
-          <h2 className="text-base font-semibold text-gray-900 mt-6">7. Cookie・セッション</h2>
+          <h2 className="text-base font-semibold text-gray-900 mt-6">5. Cookie・セッション</h2>
           <p>
             本サービスは認証セッションの管理および顧客識別のため Cookie を使用します。
             ブラウザの設定で Cookie を無効にすると、注文・お問い合わせ等の一部機能が利用できなくなる場合があります。
           </p>
 
-          <h2 className="text-base font-semibold text-gray-900 mt-6">8. 個人情報の保管期間</h2>
+          <h2 className="text-base font-semibold text-gray-900 mt-6">6. 個人情報の保管期間</h2>
           <p>
             個人情報は、利用目的の達成に必要な期間または法令の定める期間、適切に保管します。
             目的達成後、または保管期間経過後、合理的な範囲で速やかに消去または匿名化します。
           </p>
 
-          <h2 className="text-base font-semibold text-gray-900 mt-6">9. 開示・訂正・利用停止等の請求</h2>
+          <h2 className="text-base font-semibold text-gray-900 mt-6">7. 開示・訂正・利用停止等の請求</h2>
           <p>
             ご本人または代理人からの保有個人データの開示、訂正、追加、削除、利用停止、第三者提供の停止等の
             ご請求については、下記窓口にてメールまたは書面にてお受けします。本人確認のためご本人を確認できる
             情報の提示をお願いする場合があります。
           </p>
 
-          <h2 className="text-base font-semibold text-gray-900 mt-6">10. お問い合わせ窓口</h2>
+          <h2 className="text-base font-semibold text-gray-900 mt-6">8. お問い合わせ窓口</h2>
           <p>
             個人情報の取り扱いに関するお問い合わせは、
             <a href="mailto:support@mocal.jp" className="text-orange-500 hover:underline">
@@ -130,7 +100,7 @@ export default function PrivacyPage() {
             までご連絡ください。
           </p>
 
-          <h2 className="text-base font-semibold text-gray-900 mt-6">11. ポリシーの変更</h2>
+          <h2 className="text-base font-semibold text-gray-900 mt-6">9. ポリシーの変更</h2>
           <p>
             本ポリシーは、法令の改正またはサービスの変更に応じて改定することがあります。
             改定後のポリシーは本ページにて公開し、本ページ冒頭の「最終更新日」を更新します。
