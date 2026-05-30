@@ -229,9 +229,9 @@
   | 6'. order_items.insert 失敗 | ✅ (本タスクで追加) | `tests/actions/orders.test.ts` |<br>
   | 7. no_show | ✅ | `tests/api/cron-no-show.test.ts` 4+ ケース |<br>
   | 8. pending timeout | ✅ | `tests/api/cron-no-show.test.ts` 1 ケース |
-- [ ] **57. webhook charge.refunded の二重通知バグ** (2026-05-30 起票、#54 audit 中に発見)  
-  `app/api/webhook/stripe/route.ts:264-278`: update 自体は `.neq('status', 'refunded')` で冪等 (0 行 update) だが、**update が 0 行でも `notifyOrder` を呼ぶ**。既 refunded order に対し Stripe 側で再 webhook 発火 (リトライ等) すると顧客に「返金処理が完了しました」通知が二重に届く。<br>
-  修正案: update に `.select('id', { count: 'exact', head: true })` で更新行数を取り、0 行なら notify を skip。または `notifyOrder` 前に order の現状 status を再取得して `refunded` なら skip。30 分。`tests/api/webhook-stripe.test.ts` の対応テストも更新 (現状の verify から 修正後の verify に)。
+- [x] **57. webhook charge.refunded の二重通知バグ** (2026-05-30 完了、#54 audit 中に発見)  
+  `app/api/webhook/stripe/route.ts:264-280`: update 自体は `.neq('status', 'refunded')` で冪等 (0 行 update) だが、update が 0 行でも `notifyOrder` を呼んで顧客に二重通知が届く可能性があった。<br>
+  修正: update に `.select('id')` を chain して `updatedRows` を取得、`updatedRows.length === 0` なら `break` で notify skip。`docs/payment-flow.md` 図 B [3] にも 1 行追加。`tests/api/webhook-stripe.test.ts` の対応テストを修正後挙動 (0 行 → notify not called) に書き換え。
 - [~] **56. mocal.jp の noindex 化 (pilot 開始まで)** (2026-05-30 緊急対応)  
   Google 検索結果に mocal.jp が表示されていた指摘を受け、`app/layout.tsx` `metadata.robots` を `{ index: false, follow: false }` に、`app/robots.ts` を `disallow: '/'` に変更 (全 page クロール禁止 + meta noindex の二重)。**pilot 開始時に解除予定** (`app/layout.tsx` を `{ index: true, follow: true }` / `app/robots.ts` を `allow: '/'` + 管理系 disallow に戻す)。既に indexed 済の URL は **user 側で Google Search Console から URL 削除リクエスト** を推奨 (noindex の Googlebot 反映待ちより速い)。
 
