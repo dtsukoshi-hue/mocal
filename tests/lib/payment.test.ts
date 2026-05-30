@@ -62,6 +62,9 @@ describe('createPayment — Connect 必須ガード (L3)', () => {
     // 6.4% = 64
     expect(callArg.application_fee_amount).toBe(64)
     expect(callArg.transfer_data).toEqual({ destination: 'acct_connected' })
+    // 取次事業者モデル: on_behalf_of で Stripe 上の merchant を店舗に
+    // (docs/payment-design-legal.md §3.1, §3.2 / Phase 4c PR-B)
+    expect(callArg.on_behalf_of).toBe('acct_connected')
     expect(callArg.metadata).toEqual({ order_id: 'order_1' })
   })
 

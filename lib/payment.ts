@@ -21,11 +21,14 @@ export interface RefundPaymentResult {
  * @param stripeConnectedAccountId   店舗の Stripe Connect アカウント ID（必須・NULL 不可）
  * @param receiptEmail               レシート送信先メール（任意）
  *
- * ## 決済モデル — Destination Charges 一択
+ * ## 決済モデル — Destination Charges + on_behalf_of (取次事業者モデル)
  *
  *   - PaymentIntent はプラットフォーム (mocal) アカウントで作成
  *   - charge はプラットフォームに作成され、`transfer_data.destination` で
  *     接続アカウント（店舗）へ自動送金
+ *   - `on_behalf_of` で Stripe 上の merchant of record を店舗に一致させる
+ *     (カード明細 / receipt / 統計上の merchant 表示)。
+ *     詳細: docs/payment-design-legal.md §3.1, §3.2
  *   - `application_fee_amount` = mocal の手数料（送金額から差し引かれる）
  *   - charge 取得・返金はプラットフォーム側で行う（stripeAccount ヘッダー不要）
  *
@@ -66,6 +69,8 @@ export async function createPayment(
     automatic_payment_methods: { enabled: true },
     application_fee_amount: Math.floor(amountJpy * MOCAL_FEE_RATE),
     transfer_data: { destination: stripeConnectedAccountId },
+    // 取次事業者モデル: Stripe 上の merchant of record を店舗に一致させる
+    on_behalf_of: stripeConnectedAccountId,
     ...(receiptEmail ? { receipt_email: receiptEmail } : {}),
   }
 
