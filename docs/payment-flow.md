@@ -135,13 +135,20 @@
                                orders.update(status='refunded',
                                              stripe_charge_id=chargeId)
 
-[6] タイムアウト      createOrderAction の PI 作成失敗 catch              cancelled
-    PI 作成失敗       ├─ orders.insert (status='pending')
+[6] PI 作成失敗       createOrderAction (app/actions/orders.ts:325-342)   cancelled
+                      ├─ orders.insert (status='pending')
                       ├─ createPayment(...) throw
                       └─ orders.update(
                            status='cancelled',
-                           cancelled_reason_type='timeout' (※ 'payment_failed' 表記)
-                         )
+                           cancelled_reason_type='payment_failed')
+                      ※ charge 未作成のため refund 不要
+
+[6'] order_items      createOrderAction (app/actions/orders.ts:308-318)   cancelled
+     insert 失敗      ├─ orders.insert (status='pending')
+                      ├─ order_items.insert error
+                      └─ orders.update(
+                           status='cancelled',
+                           cancelled_reason_type='timeout')
                       ※ charge 未作成のため refund 不要
 
 [7] no_show           cron /api/cron/no-show (1 分間隔)                    no_show
