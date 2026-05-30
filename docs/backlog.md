@@ -140,6 +140,7 @@
   - **顧客側 Push 通知** (iOS / Android で `notifyOrder()` が届くか、accepted / ready / cancelled 各 status で確認)<br>
   - **Realtime 接続** (顧客側 `/orders/[id]` で status 変更が即時反映されるか)<br>
   - **復元機能 L1〜L10** (recovery-plan §2 の 10 項目: コンボ表示・購入 / 顧客キャンセル / アップセル / 2-step UI / FAQ / お問い合わせ / 店舗キャンセル理由選択 等)<br>
+  - **失敗 / 返金フロー** (`docs/payment-flow.md` 図 B の経路 1〜8 を順次): 顧客 cancel / 店舗 cancel / 外部返金 sync / payment_failed / store 閉店中 succeeded / amount mismatch / no_show / pending timeout<br>
   チェックリスト形式で結果を残す。
 - [ ] **52. Pilot 開始 smoke (live mode 1 件決済)**  
   実カードで 1 件注文 → pending → paid → accepted → preparing → ready → completed の全 status 遷移 → 払戻 (refund) → no-show 経路 (別注文)。Stripe Dashboard と mocal の DB 両方で正常完了を確認。約 1h。
@@ -215,6 +216,8 @@
   `processed_webhook_events` INSERT が処理前に行われ、処理失敗時に 200 を返して Stripe retry を止めてしまう。注文 pending 永久放置のリスク。修正案 A/B/C を提示してユーザー判断。テスト追加必須。1時間。
 - [x] **40. お問い合わせフォーム + 管理画面 + 通知 (recovery Phase R-4 / L9)** (2026-05-24 完了)  
   PR-A ([mocal#12](https://github.com/dtsukoshi-hue/mocal/pull/12)) で顧客送信フロー (migration + form + email)、PR-B で `/admin/inquiries` owner 限定一覧画面と settings からの導線を追加。`INQUIRY_NOTIFICATION_EMAIL` env を Vercel に登録すれば email 通知有効。ADMIN_STORE_ID / ADMIN_EMAIL は削除済 (#12) なので Push 通知は省略
+- [ ] **54. 失敗 / 返金フロー test coverage audit** (2026-05-30 起票、`docs/payment-flow.md` 図 B より発見)  
+  図 B の 8 経路 (顧客 cancel / 店舗 cancel / 外部返金 sync / payment_failed / store 閉店中 / amount mismatch / no_show / pending timeout) のうち、現状の自動テスト ([tests/api/webhook-stripe.test.ts](tests/api/webhook-stripe.test.ts) / [tests/api/orders-id-cancel.test.ts](tests/api/orders-id-cancel.test.ts) 等) でカバーされていない経路を audit + 追加。Phase 4c 完了後 (#49) 〜 pilot 直前。半日〜1 日。
 
 ## 🟡 中期の機能拡張（Phase 2）
 
@@ -256,6 +259,12 @@
   (d) order_items 反映: 選択結果を combo_id + combo_label + 実 menu_item_id 込みで保存  
   (e) cart の qty 増減で variant 再選択させるか・初回固定にするかの仕様判断  
   プロトタイプ実装は失われている。設計から起こす必要あり。約 1〜2 日
+- [ ] **55. Stripe Connect アカウント無効化への動的対応** (2026-05-30 起票、`docs/payment-flow.md` 図 C より発見)  
+  5 重防御は `stripe_account_id IS NULL` を弾くが、SET されている account が後で suspended / restricted になる場合は弾けない。<br>
+  対応案:<br>
+  - Stripe webhook `account.application.deauthorized` / `account.updated` を購読 → DB の `stripe_account_id` を NULL に戻す<br>
+  - 決済前に `accounts.retrieve` で last_check (TTL cache)<br>
+  pilot 開始後に運用観点で必要性を判断。約 1 日。
 
 ## 🟢 長期（Phase 3）
 
@@ -276,6 +285,7 @@
 - `docs/workflow.md` — アーキテクチャ全体図
 - `docs/recovery-plan.md` — 2026-05-19 reset で失われた機能の復元計画 (#38 / #39 / #40 / #41〜45 の起点)
 - `docs/payment-design-legal.md` — 決済設計の法的整合性 (取次事業者モデル、5 重防御。#49 Phase 4c で §3 改訂予定)
+- `docs/payment-flow.md` — 決済フロー 3 枚 (A: happy path / B: 失敗・返金 / C: 法的当事者 + 5 重防御)。#54 / #55 の起点
 - `docs/monitoring-design.md` — Sentry / Cron Monitor 設計 (#15)
 - `docs/captcha-design.md` — Cloudflare Turnstile 設計 (#33)
 - `docs/customer-auth-design.md` — 顧客認証設計
