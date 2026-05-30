@@ -66,7 +66,7 @@ export default async function StorePage({ params }: Props) {
 
   return (
     <>
-      
+
       <Suspense fallback={null}>
         <StoreJsonLd store={store} slug={slug} />
       </Suspense>
@@ -74,7 +74,50 @@ export default async function StorePage({ params }: Props) {
       <Suspense fallback={<div className="min-h-screen bg-stone-50" />}>
         <CachedMenuContent store={store} />
       </Suspense>
+      <StoreLegalFooter store={store} />
     </>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// 店舗ページのフッタ — 特商法 / アレルゲン情報の外部リンク
+// 取次事業者モデル: 販売者は各店舗、特商法 / アレルゲン表示は店舗自身が
+// 自社サイトで担保する設計 (docs/payment-design-legal.md §3.2 / §3.3)。
+// URL が NULL の店舗では当該リンクを表示しない (任意項目)。
+// ---------------------------------------------------------------------------
+function StoreLegalFooter({
+  store,
+}: {
+  store: NonNullable<Awaited<ReturnType<typeof getCachedStore>>>
+}) {
+  if (!store.tokushoho_url && !store.allergen_url) return null
+
+  return (
+    <footer
+      aria-label="店舗の法令表示・アレルゲン情報"
+      className="mt-4 mb-8 px-4 text-center text-xs text-gray-500 space-x-4"
+    >
+      {store.tokushoho_url && (
+        <a
+          href={store.tokushoho_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:text-gray-700"
+        >
+          特定商取引法に基づく表示
+        </a>
+      )}
+      {store.allergen_url && (
+        <a
+          href={store.allergen_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:text-gray-700"
+        >
+          アレルゲン情報
+        </a>
+      )}
+    </footer>
   )
 }
 

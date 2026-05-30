@@ -23,7 +23,7 @@ import type { Store, StoreHour } from './database.aliases'
 // DB の CHECK 制約 (wait_minutes IN (10,15,20,30,40,60) / weekday 0..6) が
 // auto-generated 型の number を narrow union (WaitMinutes / Weekday) と等価に保証する。
 // supabase gen types は CHECK を読まないため、ここで境界で cast する。
-type StoreRow = Pick<Store, 'id' | 'name' | 'description' | 'is_open' | 'wait_minutes' | 'logo_url' | 'cover_url' | 'area' | 'cuisine_type'>
+type StoreRow = Pick<Store, 'id' | 'name' | 'description' | 'is_open' | 'wait_minutes' | 'logo_url' | 'cover_url' | 'area' | 'cuisine_type' | 'tokushoho_url' | 'allergen_url'>
 type StoreMetaRow = Pick<Store, 'id' | 'name' | 'description' | 'area' | 'cuisine_type' | 'cover_url'>
 type StoreHourRow = Pick<StoreHour, 'weekday' | 'open_time' | 'close_time' | 'is_open' | 'last_order'>
 
@@ -42,7 +42,7 @@ export async function getCachedStore(slug: string) {
       const { data } = await supabase
         .from('stores')
         .select(
-          'id, name, description, is_open, wait_minutes, logo_url, cover_url, area, cuisine_type',
+          'id, name, description, is_open, wait_minutes, logo_url, cover_url, area, cuisine_type, tokushoho_url, allergen_url',
         )
         .eq('slug', slug)
         .not('stripe_account_id', 'is', null)
