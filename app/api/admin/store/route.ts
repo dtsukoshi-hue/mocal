@@ -36,6 +36,27 @@ export async function PATCH(request: NextRequest) {
     update.manual_override_until = manualOverrideUntil
   }
 
+  // is_open=true への切替は Connect 接続必須 (docs/payment-design-legal.md L4)
+  // Connect 未接続店舗を公開状態にできてしまうと、顧客が注文 → 通常 charge 経路 →
+  // mocal が販売者として代金を預かる構造 (資金決済法 §37 違反相当) になり得る。
+  if (update.is_open === true) {
+    const supabaseCheck = createServiceClient()
+    const { data: storeRow } = await supabaseCheck
+      .from('stores')
+      .select('stripe_account_id')
+      .eq('id', session.storeId)
+      .single()
+    if (!storeRow?.stripe_account_id) {
+      return NextResponse.json(
+        {
+          error: 'Stripe Connect への接続が完了していません。受付開始 (公開) には Connect onboarding が必要です。',
+          code: 'connect_required',
+        },
+        { status: 422 },
+      )
+    }
+  }
+
   if (typeof body.wait_minutes === 'number') {
     if (!VALID_WAIT_MINUTES.includes(body.wait_minutes as WaitMinutes)) {
       return NextResponse.json({ error: '予定受取時間の値が不正です。' }, { status: 400 })

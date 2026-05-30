@@ -5,11 +5,15 @@ import { createServiceClient } from '@/lib/supabase-server'
 const getStoreSlugs = unstable_cache(
   async () => {
     const supabase = createServiceClient()
+    // 公開フィルタ (docs/payment-design-legal.md L2):
+    //   - is_open=true かつ stripe_account_id IS NOT NULL の店舗のみ sitemap に載せる
+    //   - Connect 未完了店舗を sitemap 経由で公開しない
     const { data } = await supabase
       .from('stores')
       .select('slug, created_at')
       .eq('is_open', true)
       .not('slug', 'is', null)
+      .not('stripe_account_id', 'is', null)
     return data ?? []
   },
   ['sitemap-stores'],

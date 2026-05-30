@@ -183,18 +183,11 @@ export async function PATCH(
 
   // キャンセル時の自動返金（paid 以降に決済済みの場合）
   // 仕様書 6.3: cancelled → refunded はサーバー自動
+  // Destination Charges: platform 側で refund、Stripe が transfer を自動逆転
+  // → 店舗情報は不要
   if (status === 'cancelled' && order.stripe_charge_id) {
-    const { data: storeRow, error: storeErr } = await supabase
-      .from('stores')
-      .select('stripe_account_id')
-      .eq('id', order.store_id)
-      .single()
-
-    if (storeErr) {
-      console.error('[orders/PATCH] 返金用店舗情報取得失敗:', storeErr)
-    } else {
-      try {
-        await refundPayment(order.stripe_charge_id, storeRow?.stripe_account_id)
+    try {
+      await refundPayment(order.stripe_charge_id)
         const { error: refundUpdateErr } = await supabase
           .from('orders')
           .update({ status: 'refunded' })
@@ -225,10 +218,9 @@ export async function PATCH(
               .catch(e => console.error('[orders/PATCH] 返金メール送信失敗:', e))
           }
         }
-      } catch (err) {
-        // Stripe 返金失敗：注文は cancelled のまま、手動対応が必要
-        console.error('[orders/PATCH] Stripe 返金失敗（手動対応必要）charge:', order.stripe_charge_id, err)
-      }
+    } catch (err) {
+      // Stripe 返金失敗：注文は cancelled のまま、手動対応が必要
+      console.error('[orders/PATCH] Stripe 返金失敗（手動対応必要）charge:', order.stripe_charge_id, err)
     }
   }
 

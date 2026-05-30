@@ -29,6 +29,11 @@ type StoreHourRow = Pick<StoreHour, 'weekday' | 'open_time' | 'close_time' | 'is
 
 // ---------------------------------------------------------------------------
 // 店舗データ（60s TTL）— slug ベースで取得
+//
+// 公開フィルタ (docs/payment-design-legal.md L2):
+//   - `stripe_account_id IS NULL` の店舗は **顧客に表示しない**
+//   - Connect onboarding 未完了 = mocal が販売者として代金を預かる経路 = 違法経路
+//   - L3 (lib/payment.ts throw) があれば最終的に決済不可だが、顧客に表示自体させない
 // ---------------------------------------------------------------------------
 export async function getCachedStore(slug: string) {
   return unstable_cache(
@@ -40,6 +45,7 @@ export async function getCachedStore(slug: string) {
           'id, name, description, is_open, wait_minutes, logo_url, cover_url, area, cuisine_type',
         )
         .eq('slug', slug)
+        .not('stripe_account_id', 'is', null)
         .single()
       return (data as StoreRow | null) ?? null
     },
@@ -58,10 +64,12 @@ export async function getCachedStoreMeta(slug: string) {
   return unstable_cache(
     async () => {
       const supabase = createServiceClient()
+      // 公開フィルタ: stripe_account_id IS NULL を除外 (docs/payment-design-legal.md L2)
       const { data } = await supabase
         .from('stores')
         .select('id, name, description, area, cuisine_type, cover_url')
         .eq('slug', slug)
+        .not('stripe_account_id', 'is', null)
         .single()
       return (data as StoreMetaRow | null) ?? null
     },

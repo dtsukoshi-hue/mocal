@@ -116,16 +116,17 @@ export default async function SettingsPage({ searchParams }: Props) {
         {isOwner && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-3">
             <div>
-              <p className="font-semibold text-gray-900">Stripe 決済連携</p>
+              <p className="font-semibold text-gray-900">Stripe 決済連携 <span className="text-xs text-red-600 font-normal">（必須）</span></p>
               <p className="text-sm text-gray-500 mt-0.5">
                 {store?.stripe_account_id
                   ? `接続済み（${store.stripe_account_id}）`
-                  : 'まだ Stripe に接続されていません。接続するとカード決済が有効になります。'}
+                  : 'まだ Stripe に接続されていません。お客様への公開・注文受付の前提条件です。'}
               </p>
             </div>
             {!store?.stripe_account_id && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800">
-                <span aria-hidden="true">⚠️</span> Stripe 未接続のため、現在は決済を受け付けられません
+              <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-800 space-y-1">
+                <p><span aria-hidden="true">⚠️</span> <strong>Stripe Connect 未接続のため、店舗を公開できません</strong></p>
+                <p>顧客が貴店を発見・注文するには、まず Stripe に接続する必要があります。接続が完了すると、貴店が販売者として直接お客様から代金を受け取り、Stripe 経由で銀行口座に入金されます。</p>
               </div>
             )}
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- API routeへの遷移のため<a>が正しい */}
