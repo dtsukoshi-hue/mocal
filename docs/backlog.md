@@ -35,10 +35,23 @@
 
 ---
 
+## 直近完了マイルストーン（2026-05-28〜30）
+
+- [x] **mocal.jp ドメイン取得 + Cloudflare 移管** — Xserver 取得 → Cloudflare 移管 (`desi/milan.ns.cloudflare.com`) → Vercel `mocal-iota.vercel.app` から `mocal.jp` へ完全移行
+- [x] **Cloudflare Email Routing** — `support@mocal.jp` → `d.tsukoshi@gmail.com` 転送、Vercel ・特商法 page・Stripe ビジネス URL を `mocal.jp` ベースに統一
+- [x] **Resend 送信基盤** — domain verify (DKIM/SPF/DMARC)、API key 発行、`RESEND_API_KEY` / `RESEND_FROM_EMAIL` / `INQUIRY_NOTIFICATION_EMAIL` を Vercel + `.env.local` に登録
+- [x] **Sentry DSN 取得 + 登録 (PR #32 の続き)** — Sentry account (GitHub OAuth)、Project、DSN を Vercel + `.env.local` に登録 (5 env 設定済)
+- [x] **Stripe KYC 通過 (本番アカウント有効化)** — KYC 申請 + セキュリティ対策チェックリスト submit → 審査通過
+- [x] **Stripe ビジネス URL を `mocal.jp` に更新**
+- [x] **#payment Phase 4a (5 重防御 L2/L3/L4/L5)** — `lib/payment.ts` の NULL 経路を throw、公開フィルタ・admin ガード・UI 強化 ([mocal#35](https://github.com/dtsukoshi-hue/mocal/pull/35))。設計書 `docs/payment-design-legal.md` ([mocal#34](https://github.com/dtsukoshi-hue/mocal/pull/34))
+- [x] **#payment 取次事業者モデル 移行開始 (Phase 4c PR-D)** — `stores.tokushoho_url` / `allergen_url` 追加 + admin UI で店舗オーナーが入力可能に ([mocal#36](https://github.com/dtsukoshi-hue/mocal/pull/36))
+
+---
+
 ## 🔴 出荷ブロッカー
 
-- [ ] **1. 法人設立後の `/tokushoho` 更新**  
-  「販売業者: Entrust合同会社（設立準備中）」「メールアドレス: support@mocal.jp（準備中）」を実値に。15分
+- [~] **1. 法人設立後の `/tokushoho` 更新**  
+  2026-05-27 [mocal#31](https://github.com/dtsukoshi-hue/mocal/pull/31): 個人事業主の実値に第 1 弾更新 (氏名 / 住所 / 電話 / メール)。2026-05-30 [mocal#33](https://github.com/dtsukoshi-hue/mocal/pull/33): email を `support@mocal.jp` に切替。<br>**残**: Phase 4c PR-F で「mocal は取次事業者、各商品の販売者は各店舗」表記に書き直し (取次事業者モデルへの移行と同期)。法人化時はさらに法人名 / 法人所在地に切替。
 - [~] **2. cron 外部スケジューラを実稼働化**  
   Hobby plan 制約のため Vercel Cron は不可、cron-job.org で暫定運用。実証実験開始時に Pro 化して `vercel.json` の `crons` に移行する方針。設定手順は `docs/deploy-runbook.md` §9.1 に明文化済。ユーザーが cron-job.org に 3 ジョブ登録 (store-hours / no-show / cleanup-anon) すれば完了。
 - [x] **3. `CRON_SECRET` を Vercel に登録** (2026-05-21 完了)  
@@ -90,6 +103,58 @@
 - [x] **36. Server Action へのレート制限拡張** (2026-05-22 完了)  
   `proxy.ts` に `isServerActionRequest` 検出 (POST + next-action ヘッダー) と `checkServerActionRateLimit` を追加。30 req/min/IP の generic 制限。createOrderAction (anonymous sign-in spam) / loginAction (brute-force) 等の第二層防御に。新規 5 ケース proxy test 追加。
 
+### Pilot 開始ブロッカー (2026-05-30 追加)
+
+- [ ] **47. Stripe Connect サンドボックス設定 + live mode 申請** (#4 を内包)  
+  サンドボックスで Connect 設定 (ビジネスモデル / アカウントタイプ Standard / charge type) → live mode Connect 申請 → 審査通過 → live mode の `STRIPE_CLIENT_ID` (`ca_live_*`) 取得 → Vercel + `.env.local` 登録 → Redirect URI 追加 (`https://mocal.jp/api/onboarding/stripe/callback`)。2026-05-30 時点でサンドボックス設定途中 (ビジネスモデル「マーケットプレイス」選択完了、次は「Connect をテスト」セクション)。Stripe 審査時間が最大の不確実要素。
+- [ ] **48. Stripe live mode env 切替**  
+  KYC 通過済、live key 取得可能。以下を Vercel + `.env.local` で切替 (Sensitive 値は Dashboard 経由で user 手動更新):<br>
+  - `STRIPE_SECRET_KEY`: `sk_test_*` → `sk_live_*`<br>
+  - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`: `pk_test_*` → `pk_live_*`<br>
+  - `STRIPE_WEBHOOK_SECRET`: live mode で新規 webhook endpoint 登録 (`https://mocal.jp/api/webhook/stripe`) → 新 `whsec_*` 取得<br>
+  - `STRIPE_CLIENT_ID`: live mode の `ca_live_*` (上 #47 と同タイミング)<br>
+  active 注文 0 件確認 → `npx vercel --prod` redeploy → live curl 疎通。
+- [ ] **49. #payment Phase 4c (取次事業者モデル 完成)**  
+  Phase 4a (#35) + PR-D (#36) で基盤完了。残:<br>
+  - **PR-A**: `docs/payment-design-legal.md` §3 (採用モデル) を「mocal は取次事業者」に書き直し (Stripe 上の merchant of record 明確化、特商法位置付け整理) — 1h<br>
+  - **PR-B**: `lib/payment.ts` paymentIntents.create に `on_behalf_of: stripeConnectedAccountId` 追加 → カード明細表示 / Stripe 上の merchant が店舗に — 30 分<br>
+  - **PR-E**: `/[slug]` 店舗ページのフッタに「特定商取引法に基づく表示」「アレルゲン情報」リンク表示 (#36 で追加した `tokushoho_url` / `allergen_url` を表示) — 1〜2h<br>
+  - **PR-F**: mocal `/tokushoho` を取次事業者表記に書き直し (mocal は場の提供、各商品の販売者は各店舗) — 1h<br>
+  順序: PR-A (設計合意) → PR-B/E/F 並列。
+- [ ] **50. #payment Phase 4b (DB CHECK 制約 + 既存 1 row 是正)**  
+  既存 1 row (「3000DAYS BURGER 清澄白河本店」、`stripe_account_id IS NULL` ∧ `is_open=true`) を Connect onboarding 完了させるか `is_open=false` に。その後 migration で `stores` に `CHECK (NOT is_open OR stripe_account_id IS NOT NULL)` 追加。**#47 と同タイミング**で実施。
+- [ ] **51. Pilot 開始前 実機 audit**  
+  以下を実機で 1 件ずつ動作確認:<br>
+  - **#6 管理画面 Push 通知** (iOS / Android で `notifyStore()` が届くか、新規注文 → 受付状態切替で動作確認)<br>
+  - **顧客側 Push 通知** (iOS / Android で `notifyOrder()` が届くか、accepted / ready / cancelled 各 status で確認)<br>
+  - **Realtime 接続** (顧客側 `/orders/[id]` で status 変更が即時反映されるか)<br>
+  - **復元機能 L1〜L10** (recovery-plan §2 の 10 項目: コンボ表示・購入 / 顧客キャンセル / アップセル / 2-step UI / FAQ / お問い合わせ / 店舗キャンセル理由選択 等)<br>
+  チェックリスト形式で結果を残す。
+- [ ] **52. Pilot 開始 smoke (live mode 1 件決済)**  
+  実カードで 1 件注文 → pending → paid → accepted → preparing → ready → completed の全 status 遷移 → 払戻 (refund) → no-show 経路 (別注文)。Stripe Dashboard と mocal の DB 両方で正常完了を確認。約 1h。
+- [ ] **53. Go/No-Go 判定**  
+  下記「Pilot 開始 Go/No-Go 基準」全 must を `[x]` 確認 → user が pilot 開始判断。
+
+### Pilot 開始 Go/No-Go 基準
+
+**Must (1 つでも欠ければ pilot 開始不可)**:
+1. [ ] #47 Stripe Connect live mode 有効化 + `STRIPE_CLIENT_ID` 登録
+2. [ ] #48 Stripe live mode env 切替 (`sk_live_*` / `pk_live_*` / live `whsec_*`)
+3. [ ] #49 Phase 4c 完了 (PR-A/B/E/F 全て merged)
+4. [ ] #50 Phase 4b 完了 (DB CHECK + 既存 1 row 是正)
+5. [ ] #2 cron 3 ジョブ稼働中
+6. [ ] #51 実機 audit 全項目 ✓
+7. [ ] #52 live mode smoke (1 件決済 → 全 status 遷移 → 返金) 完了
+8. [ ] #1 mocal `/tokushoho` の取次事業者表記 (#49 PR-F) 反映済
+9. [ ] 各店舗 (#47 完了店舗) の特商法 URL / アレルゲン URL 入力済 (#36 で追加した admin UI 経由)
+
+**Should (推奨だが pilot 中に追従可)**:
+10. [ ] #15 Sentry alert rule + Cron Monitor slug 登録
+11. [ ] #33 CAPTCHA (anonymous sign-in spam 防御)
+
+**Nice to have (pilot 後でも問題ない)**:
+- backlog の 🟡 / 🟢 セクション全般
+
 ## 🟠 直近の品質改善
 
 - [x] **5. GitHub Branch Protection で owner bypass を禁止** (2026-05-22 完了)  
@@ -133,7 +198,7 @@
   (C) `estimated_ready_at` を「waitMinutes × 件数係数」で動的算出（係数を店舗設定可）  
   運用上スタッフが waitMinutes を実情で入力する前提なら不要かも。仕様判断後に実装、半日〜1日。
 - [~] **15. 監視・アラート整備**  
-  設計 `docs/monitoring-design.md` (2026-05-26) → scaffold 実装 (2026-05-28、PR 別途)。`@sentry/nextjs` 10.55 install、`sentry.{client,server,edge}.config.ts` + `instrumentation.ts` + `lib/logger.ts` で breadcrumb / captureException 統合、`lib/sentry-cron.ts` で 3 cron に Cron Monitor 統合、PII sanitize (cookie / authorization / email / ip) 込み。**`SENTRY_DSN` 未設定なら全て no-op で本番影響ゼロ**。<br>残: (a) user が Sentry account 作成 → DSN 取得 → Vercel + .env.local に登録 → (b) Sentry Dashboard で alert rule (5xx 急増 / cron failure / anonymous sign-in spike) 設定 → (c) Cron Monitor の slug 登録。
+  設計 `docs/monitoring-design.md` (2026-05-26) → scaffold ([mocal#32](https://github.com/dtsukoshi-hue/mocal/pull/32)、2026-05-28) → DSN + 関連 env 登録済 (2026-05-29、Sentry 接続中)。<br>**残**: (a) Sentry Dashboard で **alert rule 設定** (5xx 急増 / cron failure / anonymous sign-in spike) — user 30 分。(b) **Cron Monitor slug 登録** (`store-hours` / `no-show` / `cleanup-anonymous-users`) — #2 cron 稼働後に user 15 分。(c) `SENTRY_AUTH_TOKEN` 取得 + 登録 (source map upload 有効化) — pilot 直前。(d) Sentry Project rename `javascript-nextjs` → `mocal` (任意)。
 - [x] **16. E2E テストを CI で実行 (F-09)** (2026-05-22 完了)  
   `.github/workflows/ci.yml` に Playwright (chromium) ステップを追加。env を job 共通化、`Install Playwright browsers` → `E2E (Playwright)` → 失敗時 `Upload Playwright report` artifact (7日保持)。CI 上では dummy env のため Supabase 依存テストは graceful skip、LP/静的/セキュリティヘッダー等の browser テストが恒久 regression net に。
 - [x] **41. cart 内税表示 (recovery Phase R-5 / L4)** (2026-05-24 完了)  
@@ -174,5 +239,10 @@
 - `AGENTS.md` — 運用ルール・過去事故
 - `docs/workflow.md` — アーキテクチャ全体図
 - `docs/recovery-plan.md` — 2026-05-19 reset で失われた機能の復元計画 (#38 / #39 / #40 / #41〜45 の起点)
+- `docs/payment-design-legal.md` — 決済設計の法的整合性 (取次事業者モデル、5 重防御。#49 Phase 4c で §3 改訂予定)
+- `docs/monitoring-design.md` — Sentry / Cron Monitor 設計 (#15)
+- `docs/captcha-design.md` — Cloudflare Turnstile 設計 (#33)
+- `docs/customer-auth-design.md` — 顧客認証設計
+- `docs/deploy-runbook.md` — デプロイ手順 + 初回セットアップ (cron-job.org §9.1 / Stripe Connect §9.2)
 - `.env.local.example` — 必須環境変数と取得手順
 - `lib/validation.ts` — 注文ステータス遷移定義
