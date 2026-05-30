@@ -108,8 +108,9 @@
                       Webhook charge.refunded ──→ /api/webhook/stripe
                       ├─ verify signature
                       ├─ orders SELECT (stripe_charge_id 経由)
-                      ├─ orders.update(status='refunded')
+                      ├─ orders.update(status='refunded').select('id')
                       │   ※ neq('status', 'refunded') で冪等
+                      ├─ updated rows = 0 (既 refunded) なら通知 skip (#57)
                       └─ notifyOrder('返金処理が完了しました')
 
 [4] 決済失敗          Stripe 側カード認証失敗 / 残高不足等                  cancelled

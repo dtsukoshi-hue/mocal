@@ -448,10 +448,12 @@ describe('POST /api/webhook/stripe — charge.refunded', () => {
 
     const eventChain  = insertChain(null)
     const orderChain  = singleChain({ id: ORDER_ID })
-    const updateChain = { update: vi.fn(), eq: vi.fn(), neq: vi.fn() }
+    const updateChain = { update: vi.fn(), eq: vi.fn(), neq: vi.fn(), select: vi.fn() }
     updateChain.update.mockReturnValue(updateChain)
     updateChain.eq.mockReturnValue(updateChain)
-    updateChain.neq.mockResolvedValue({ error: null })
+    updateChain.neq.mockReturnValue(updateChain)
+    // 1 行 update → notify 呼ばれる (#57)
+    updateChain.select.mockResolvedValue({ data: [{ id: ORDER_ID }], error: null })
 
     let call = 0
     const client = {
@@ -473,14 +475,12 @@ describe('POST /api/webhook/stripe — charge.refunded', () => {
   })
 
   // -------------------------------------------------------------------------
-  // #54 図 B 経路 3 冪等性: 既 refunded 状態の order に webhook 再発火しても
-  // update 自体は .neq('status', 'refunded') で 0 行に抑止される。
-  //
-  // 注意: 現実装は update が 0 行でも notifyOrder を呼ぶ仕様
-  // (route.ts:264-278)、これにより**顧客に重複通知が届く可能性あり** —
-  // backlog #57 として別途修正予定。本テストは現状挙動を verify する。
+  // #54 図 B 経路 3 冪等性 / #57 二重通知防止:
+  // 既 refunded 状態の order に webhook 再発火しても、(a) update は
+  // .neq('status', 'refunded') で 0 行に抑止され、(b) updated rows = 0 なら
+  // notify を skip して顧客への重複通知を防ぐ (#57 修正済)。
   // -------------------------------------------------------------------------
-  it('既 refunded order への charge.refunded 再発火: update に neq filter が付く (冪等)', async () => {
+  it('既 refunded order への charge.refunded 再発火: update 0 行 → notify skip', async () => {
     const chargeObj = { id: CHARGE_ID }
     stripeMock.webhooks.constructEvent.mockReturnValueOnce(
       makeEvent('charge.refunded', chargeObj)
@@ -488,15 +488,12 @@ describe('POST /api/webhook/stripe — charge.refunded', () => {
 
     const eventChain = insertChain(null)
     const orderChain = singleChain({ id: ORDER_ID })
-    const updateChain = { update: vi.fn(), eq: vi.fn(), neq: vi.fn() }
+    const updateChain = { update: vi.fn(), eq: vi.fn(), neq: vi.fn(), select: vi.fn() }
     updateChain.update.mockReturnValue(updateChain)
     updateChain.eq.mockReturnValue(updateChain)
-    // 既に refunded のため neq filter で 0 行 update、error なし。
-    // 注意: 現実装は destructure で error しか読まないため count は読まれない
-    // (route.ts:264 `const { error: updateErr } = ...`)。#57 修正後は
-    // `.select('id')` 等で affected rows を取り 0 件なら notify skip する想定、
-    // その時点で本テストも count を実際に assert する形に更新予定。
-    updateChain.neq.mockResolvedValue({ error: null, count: 0 })
+    updateChain.neq.mockReturnValue(updateChain)
+    // 既 refunded のため neq filter で 0 行 update (.select('id') で affected rows = [])
+    updateChain.select.mockResolvedValue({ data: [], error: null })
 
     let call = 0
     const client = {
@@ -511,10 +508,11 @@ describe('POST /api/webhook/stripe — charge.refunded', () => {
 
     const res = await POST(makeRequest())
     expect(res.status).toBe(200)
-    // 冪等性の証拠: update chain に neq('status', 'refunded') が付与されている
+    // 冪等性の証拠: update chain に neq('status', 'refunded') + select('id') が付与
     expect(updateChain.neq).toHaveBeenCalledWith('status', 'refunded')
-    // 現状挙動 (#57 未修正): update が 0 行でも notifyOrder は呼ばれる
-    expect(notifyOrderMock.fn).toHaveBeenCalled()
+    expect(updateChain.select).toHaveBeenCalledWith('id')
+    // #57 修正: 0 行 update なら notifyOrder は呼ばれない (二重通知防止)
+    expect(notifyOrderMock.fn).not.toHaveBeenCalled()
   })
 
   it('skips update when charge is not in DB (external charge)', async () => {
