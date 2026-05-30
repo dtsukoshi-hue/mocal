@@ -10,7 +10,7 @@ const rows: { label: string; value: string }[] = [
   { label: '代表責任者',     value: '津越 大輔' },
   { label: '所在地',         value: '埼玉県越谷市瓦曽根1-21-33' },
   { label: '電話番号',       value: '090-4159-6828' },
-  { label: 'メールアドレス', value: 'd.tsukoshi@gmail.com' },
+  { label: 'メールアドレス', value: 'support@mocal.jp' },
   { label: '販売価格',       value: '各店舗のメニューに表示の金額（消費税込）' },
   { label: '支払方法',       value: 'クレジットカード（Visa / Mastercard / Amex / JCB）、Apple Pay、Google Pay' },
   { label: '支払時期',       value: '注文確定時に即時決済' },
@@ -30,7 +30,7 @@ export default function TokushohoPage() {
       </header>
 
       <main id="main-content" className="max-w-2xl mx-auto px-4 py-8">
-        <p className="text-xs text-gray-400 mb-6">最終更新日：<time dateTime="2026-05-27">2026年5月27日</time></p>
+        <p className="text-xs text-gray-400 mb-6">最終更新日：<time dateTime="2026-05-30">2026年5月30日</time></p>
 
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <table className="w-full text-sm">
