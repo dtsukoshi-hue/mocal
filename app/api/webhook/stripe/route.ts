@@ -72,13 +72,9 @@ export async function POST(request: NextRequest) {
           ? intent.latest_charge
           : intent.latest_charge?.id ?? null
         if (chargeId) {
-          const { data: storeForRefund } = await supabase
-            .from('stores')
-            .select('stripe_account_id')
-            .eq('id', order.store_id)
-            .single()
           try {
-            await refundPayment(chargeId, storeForRefund?.stripe_account_id)
+            // Destination Charges: platform 側で refund、Stripe が transfer を自動逆転
+            await refundPayment(chargeId)
             await supabase.from('orders').update({ status: 'refunded', stripe_charge_id: chargeId }).eq('id', orderId)
             notifyOrder(orderId, {
               title: 'キャンセル・返金のお知らせ',
@@ -96,7 +92,7 @@ export async function POST(request: NextRequest) {
 
       const { data: store, error: storeErr } = await supabase
         .from('stores')
-        .select('stripe_account_id, is_open')
+        .select('is_open')
         .eq('id', order.store_id)
         .single()
 
@@ -140,7 +136,8 @@ export async function POST(request: NextRequest) {
 
         if (chargeId) {
           try {
-            await refundPayment(chargeId, store?.stripe_account_id)
+            // Destination Charges: platform 側で refund、Stripe が transfer を自動逆転
+            await refundPayment(chargeId)
             const { error: refundUpdateErr } = await supabase
               .from('orders')
               .update({ status: 'refunded' })

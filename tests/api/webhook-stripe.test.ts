@@ -278,7 +278,7 @@ describe('POST /api/webhook/stripe — payment_intent.succeeded', () => {
 
     const res = await POST(makeRequest())
     expect(res.status).toBe(200)
-    expect(refundPaymentMock.fn).toHaveBeenCalledWith(CHARGE_ID, 'acct_test')
+    expect(refundPaymentMock.fn).toHaveBeenCalledWith(CHARGE_ID)
   })
 
   it('cancels and refunds when store is closed', async () => {
@@ -291,7 +291,7 @@ describe('POST /api/webhook/stripe — payment_intent.succeeded', () => {
 
     const res = await POST(makeRequest())
     expect(res.status).toBe(200)
-    expect(refundPaymentMock.fn).toHaveBeenCalledWith(CHARGE_ID, 'acct_test')
+    expect(refundPaymentMock.fn).toHaveBeenCalledWith(CHARGE_ID)
   })
 
   it('cancels and refunds when amount does not match', async () => {

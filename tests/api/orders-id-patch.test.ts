@@ -279,7 +279,7 @@ describe('PATCH /api/orders/[id] — refund flow', () => {
     const { refundPayment } = await import('@/lib/payment')
     const res = await PATCH(makeRequest({ status: 'cancelled' }), makeCtx())
     expect(res.status).toBe(200)
-    expect(refundPayment).toHaveBeenCalledWith(CHARGE_ID, 'acct_test')
+    expect(refundPayment).toHaveBeenCalledWith(CHARGE_ID)
   })
 })
 
