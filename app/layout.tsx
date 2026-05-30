@@ -26,9 +26,11 @@ export const metadata: Metadata = {
     card: 'summary',
     site: '@mocal_jp',
   },
+  // Pilot 開始前は全 page noindex/nofollow (Google 検索結果露出防止)
+  // Pilot 開始時に { index: true, follow: true } に戻す (backlog 参照)
   robots: {
-    index: true,
-    follow: true,
+    index: false,
+    follow: false,
   },
 }
 
