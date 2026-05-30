@@ -130,7 +130,7 @@
   - **PR-A** (着手中、2026-05-30): `docs/payment-design-legal.md` §3 (採用モデル) を「mocal は取次事業者」に書き直し (Stripe 上の merchant of record 明確化、特商法位置付け整理) — 1h。**着手前に `AGENTS.md` §「決済 / 法的整合性に関わる変更」のルール確認必須**。<br>
   - **PR-B**: `lib/payment.ts` paymentIntents.create に `on_behalf_of: stripeConnectedAccountId` 追加 → カード明細表示 / Stripe 上の merchant が店舗に — 30 分<br>
   - **PR-E**: `/[slug]` 店舗ページのフッタに「特定商取引法に基づく表示」「アレルゲン情報」リンク表示 (#36 で追加した `tokushoho_url` / `allergen_url` を表示) — 1〜2h<br>
-  - **PR-F**: mocal `/tokushoho` を取次事業者表記に書き直し (mocal は場の提供、各商品の販売者は各店舗) — 1h<br>
+  - **PR-F** (着手中、2026-05-30): mocal `/tokushoho` を取次事業者表記に書き直し (mocal は場の提供、各商品の販売者は各店舗) — 1h<br>
   順序: PR-A (設計合意) → PR-B/E/F 並列。
 - [ ] **50. #payment Phase 4b (DB CHECK 制約 + 既存 1 row 是正)**  
   既存 1 row (「3000DAYS BURGER 清澄白河本店」、`stripe_account_id IS NULL` ∧ `is_open=true`) を Connect onboarding 完了させるか `is_open=false` に。その後 migration で `stores` に `CHECK (NOT is_open OR stripe_account_id IS NOT NULL)` 追加。**#47 と同タイミング**で実施。
