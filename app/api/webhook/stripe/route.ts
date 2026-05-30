@@ -261,15 +261,21 @@ export async function POST(request: NextRequest) {
       }
       if (!order) break
 
-      const { error: updateErr } = await supabase
+      const { data: updatedRows, error: updateErr } = await supabase
         .from('orders')
         .update({ status: 'refunded' })
         .eq('id', order.id)
         .neq('status', 'refunded')
+        .select('id')
 
       if (updateErr) {
         throw new Error(`[webhook/charge.refunded] refunded 更新失敗: ${updateErr.message}`)
       }
+
+      // 既 refunded (0 行 update) なら通知 skip — 二重通知防止 (#57)
+      // Stripe webhook の retry / 同一 charge への複数 refund.created 等で
+      // 同じ order に対して再発火しても、顧客に「返金完了」通知が重複しない。
+      if (!updatedRows || updatedRows.length === 0) break
 
       notifyOrder(order.id, {
         title: '返金処理が完了しました',
