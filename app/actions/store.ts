@@ -58,12 +58,29 @@ export async function updateStoreProfileAction(
   // 外部 URL (任意、空文字 → NULL、http(s) のみ、2048 文字以内)
   // 各店舗の特商法 / アレルゲン情報は自社サイトで担保する設計
   // (docs/payment-design-legal.md §3 取次事業者モデル)
+  //
+  // 検証は URL constructor で行い、`javascript:` / `data:` / `ftp:` 等の
+  // non-http(s) scheme を構造的に弾く (正規表現 prefix check より厳密)。
+  // store owner が信頼される前提だが、defense in depth として host/protocol
+  // を明示的に validate する。
   function parseUrl(field: string): string | null | { error: string } {
     const raw = formData.get(field)
     if (typeof raw !== 'string' || !raw.trim()) return null
     const v = raw.trim()
-    if (!/^https?:\/\/[^\s]+$/i.test(v)) return { error: `${field === 'tokushoho_url' ? '特商法URL' : 'アレルゲン情報URL'} は http(s) で始まる URL を入力してください。` }
-    if (v.length > 2048) return { error: 'URL が長すぎます (2048 文字以内)。' }
+    const fieldLabel = field === 'tokushoho_url' ? '特商法URL' : 'アレルゲン情報URL'
+    if (v.length > 2048) return { error: `${fieldLabel} が長すぎます (2048 文字以内)。` }
+    let parsed: URL
+    try {
+      parsed = new URL(v)
+    } catch {
+      return { error: `${fieldLabel} は有効な URL を入力してください。` }
+    }
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return { error: `${fieldLabel} は http(s) で始まる URL を入力してください。` }
+    }
+    if (!parsed.hostname) {
+      return { error: `${fieldLabel} はホスト名を含む URL を入力してください。` }
+    }
     return v
   }
   const tokushohoUrlResult = parseUrl('tokushoho_url')
