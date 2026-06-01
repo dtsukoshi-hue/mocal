@@ -112,10 +112,12 @@
   画面確認時点で公開キー (`pk_live_51TPIyDLGTKV…yiH`) は visible、シークレットキーは「本番キーを表示」ボタンで取得可。<br>
   <br>
   **サブタスク (依存関係ごとに分割)**:<br>
-  - **#48a 公開キー + シークレットキー切替** (依存なし、即実施可):<br>
-    - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` を `pk_live_*` に → 私が Vercel CLI で代行可<br>
-    - `STRIPE_SECRET_KEY` を `sk_live_*` に → **user が Vercel Dashboard 直接更新** (Sensitive)<br>
-    - active 注文 0 件確認 → `npx vercel --prod` redeploy → curl で `/api/health` 200<br>
+  - **#48a 公開キー + シークレットキー切替** — **2026-05-30 完了**:<br>
+    - `STRIPE_SECRET_KEY` を `sk_live_*` に → user が Vercel Dashboard 直接更新 ✅ (Sensitive)<br>
+    - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` を `pk_live_*` に → Vercel CLI で代行 ✅ (production / development)<br>
+    - active 注文 0 件確認 ✅ → production redeploy ✅ → `curl https://mocal.jp/api/health` 200 ✅<br>
+    - `.env.local` は **test mode 維持** (ローカル開発は test カードで継続、Pilot smoke は production の live mode で実施、user 合意済)<br>
+    - **残**: preview 環境の `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` 追加 (CLI v54 で `--git-branch` 制約のため Vercel Dashboard で user 手動追加が必要、優先度低)<br>
   - **#48b live mode webhook 登録 + `STRIPE_WEBHOOK_SECRET` 切替** (依存なし、即実施可):<br>
     - Stripe Dashboard → 開発者 → Webhook → live mode で endpoint 新規作成<br>
     - URL: `https://mocal.jp/api/webhook/stripe`<br>
@@ -132,8 +134,9 @@
   - **PR-E** (完了、2026-05-30 [mocal#41](https://github.com/dtsukoshi-hue/mocal/pull/41)): `/[slug]` 店舗ページのフッタに特商法 / アレルゲン外部リンクを表示<br>
   - **PR-F** (完了、2026-05-30 [mocal#42](https://github.com/dtsukoshi-hue/mocal/pull/42)): mocal `/tokushoho` を取次事業者表記に書き直し<br>
   順序実績: PR-A → PR-B/E/F 並列。残: pilot 開始前の弁護士確認 (`docs/payment-design-legal.md` §7 未解決事項)。
-- [ ] **50. #payment Phase 4b (DB CHECK 制約 + 既存 1 row 是正)**  
-  既存 1 row (「3000DAYS BURGER 清澄白河本店」、`stripe_account_id IS NULL` ∧ `is_open=true`) を Connect onboarding 完了させるか `is_open=false` に。その後 migration で `stores` に `CHECK (NOT is_open OR stripe_account_id IS NOT NULL)` 追加。**#47 と同タイミング**で実施。
+- [~] **50. #payment Phase 4b (DB CHECK 制約 + 既存 1 row 是正)**  
+  既存 1 row (「3000DAYS BURGER 清澄白河本店」、`stripe_account_id IS NULL` ∧ `is_open=true`) を Connect onboarding 完了させるか `is_open=false` に。その後 migration で `stores` に `CHECK (NOT is_open OR stripe_account_id IS NOT NULL)` 追加。<br>
+  **進捗 2026-05-30**: migration draft (`supabase/migrations/20260530220000_stores_stripe_account_required.sql`) 作成済 (#50 PR、merge 待ち)。**apply は user の既存 1 row 是正後**: (a) Supabase SQL Editor で `UPDATE stores SET is_open=false WHERE stripe_account_id IS NULL` 実行、または (b) admin から Stripe Connect onboarding 完了。是正完了通知後に `npx supabase db push` で apply。
 - [ ] **51. Pilot 開始前 実機 audit**  
   以下を実機で 1 件ずつ動作確認:<br>
   - **#6 管理画面 Push 通知** (iOS / Android で `notifyStore()` が届くか、新規注文 → 受付状態切替で動作確認)<br>
