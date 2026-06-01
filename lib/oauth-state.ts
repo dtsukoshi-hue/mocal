@@ -1,5 +1,5 @@
 import 'server-only'
-import { createHmac } from 'crypto'
+import { createHmac, timingSafeEqual } from 'crypto'
 
 /**
  * Stripe Connect OAuth の `state` パラメータの sign / verify。
@@ -74,7 +74,9 @@ export function verifyState(stateParam: string): { storeId: string } | null {
     if (now - decoded.iat > STATE_TTL_SEC) return null
     if (decoded.iat > now + CLOCK_SKEW_TOLERANCE_SEC) return null // future-dated
 
-    // Signature check (timing-safe)
+    // Signature check (Node.js 標準の timing-safe 比較を使用)
+    // 旧実装は自前 XOR loop だったが、`crypto.timingSafeEqual` の方が標準的で
+    // レビュー時に意図が明確 (#48 code-review finding 2)。
     const payload: StatePayload = {
       storeId: decoded.storeId,
       nonce:   decoded.nonce,
@@ -82,12 +84,10 @@ export function verifyState(stateParam: string): { storeId: string } | null {
     }
     const expected = createHmac('sha256', secret)
       .update(JSON.stringify(payload))
-      .digest('hex')
-    const sig = decoded.sig
-    if (sig.length !== expected.length) return null
-    let diff = 0
-    for (let i = 0; i < sig.length; i++) diff |= sig.charCodeAt(i) ^ expected.charCodeAt(i)
-    if (diff !== 0) return null
+      .digest()  // Buffer 比較のため raw bytes で取得
+    const sigBuf = Buffer.from(decoded.sig, 'hex')
+    if (sigBuf.length !== expected.length) return null
+    if (!timingSafeEqual(sigBuf, expected)) return null
 
     return { storeId: payload.storeId }
   } catch {

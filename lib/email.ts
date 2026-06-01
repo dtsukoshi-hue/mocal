@@ -74,7 +74,9 @@ export async function sendOrderConfirmEmail(data: OrderConfirmEmailData): Promis
 
   // orderStatusUrl はサーバー側で組み立てた信頼できる URL のみ渡る前提だが、
   // 防御層として HTML エスケープも実施 (F-17)
-  const safeStoreUrl = orderStatusUrl.startsWith('http') ? escapeHtml(orderStatusUrl) : '#'
+  // 防御層として https:// 限定 (#48 code-review finding 12)。
+  // http:// での誘導を防ぐ (cleartext / MITM 等のリスク低減)。
+  const safeStoreUrl = orderStatusUrl.startsWith('https://') ? escapeHtml(orderStatusUrl) : '#'
 
   const html = `<!DOCTYPE html>
 <html lang="ja">

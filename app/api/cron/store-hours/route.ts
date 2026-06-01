@@ -5,12 +5,14 @@ import { startCronCheckIn } from '@/lib/sentry-cron'
 // 外部スケジューラ (cron-job.org 等) から 5 分ごとに呼び出す
 // Authorization: Bearer <CRON_SECRET> で保護
 export async function GET(request: NextRequest) {
+  // CRON_SECRET 必須化 (#48 code-review finding 5)
   const secret = process.env.CRON_SECRET
-  if (secret) {
-    const auth = request.headers.get('authorization')
-    if (auth !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: '認証が必要です。' }, { status: 401 })
-    }
+  if (!secret) {
+    return NextResponse.json({ error: 'CRON_SECRET が設定されていません。' }, { status: 503 })
+  }
+  const auth = request.headers.get('authorization')
+  if (auth !== `Bearer ${secret}`) {
+    return NextResponse.json({ error: '認証が必要です。' }, { status: 401 })
   }
 
   // Sentry Cron Monitor (DSN 未設定なら no-op)

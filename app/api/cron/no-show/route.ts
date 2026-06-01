@@ -6,12 +6,17 @@ import { startCronCheckIn } from '@/lib/sentry-cron'
 // Vercel Cron / 外部スケジューラーから1分ごとに呼び出す
 // Authorization: Bearer <CRON_SECRET> で保護
 export async function GET(request: NextRequest) {
+  // CRON_SECRET 必須化 (#48 code-review finding 5):
+  // 未設定で deploy すると endpoint が無認証で叩け、service role で DB write
+  // が可能になるため、503 で fail-closed にする。lib/env.ts REQUIRED でも
+  // 起動時 throw する二重防御。
   const secret = process.env.CRON_SECRET
-  if (secret) {
-    const auth = request.headers.get('authorization')
-    if (auth !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: '認証が必要です。' }, { status: 401 })
-    }
+  if (!secret) {
+    return NextResponse.json({ error: 'CRON_SECRET が設定されていません。' }, { status: 503 })
+  }
+  const auth = request.headers.get('authorization')
+  if (auth !== `Bearer ${secret}`) {
+    return NextResponse.json({ error: '認証が必要です。' }, { status: 401 })
   }
 
   // Sentry Cron Monitor (DSN 未設定なら no-op)
