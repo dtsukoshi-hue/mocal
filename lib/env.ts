@@ -20,6 +20,10 @@ const REQUIRED_VARS = [
   'VAPID_SUBJECT',
   // 公開 URL（プッシュ通知のリンク先など）
   'NEXT_PUBLIC_APP_URL',
+  // cron 認証用 (Bearer)。未設定だと cron endpoint が誰でも叩け、service role
+  // で DB write 可能になるため REQUIRED。各 cron route も `if (!secret) return 503`
+  // でガード (defense in depth)。
+  'CRON_SECRET',
 ] as const
 
 type RequiredVar = typeof REQUIRED_VARS[number]

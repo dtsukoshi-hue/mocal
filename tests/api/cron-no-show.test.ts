@@ -188,11 +188,14 @@ describe('GET /api/cron/no-show — authentication', () => {
     expect(res.status).toBe(401)
   })
 
-  it('passes through when CRON_SECRET is not set', async () => {
+  it('returns 503 when CRON_SECRET is not set (fail-closed)', async () => {
+    // #48 code-review finding 5: CRON_SECRET 必須化。
+    // 旧挙動 (未設定なら認証スキップ) は誰でも cron endpoint を叩ける危険があり、
+    // 503 で fail-closed に変更。lib/env.ts REQUIRED にも追加で二重防御。
     delete process.env.CRON_SECRET
     setupSupabaseMock()
-    const res = await GET(makeRequest()) // no auth header — should be fine
-    expect(res.status).toBe(200)
+    const res = await GET(makeRequest()) // no auth header
+    expect(res.status).toBe(503)
   })
 })
 

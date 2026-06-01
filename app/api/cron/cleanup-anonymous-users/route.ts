@@ -40,13 +40,14 @@ const BATCH_SIZE     = 100
 const LIST_PAGE_SIZE = 1000
 
 export async function GET(request: NextRequest) {
-  // CRON_SECRET 認証 (他の cron と同じパターン)
+  // CRON_SECRET 必須化 (#48 code-review finding 5)
   const secret = process.env.CRON_SECRET
-  if (secret) {
-    const auth = request.headers.get('authorization')
-    if (auth !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: '認証が必要です。' }, { status: 401 })
-    }
+  if (!secret) {
+    return NextResponse.json({ error: 'CRON_SECRET が設定されていません。' }, { status: 503 })
+  }
+  const auth = request.headers.get('authorization')
+  if (auth !== `Bearer ${secret}`) {
+    return NextResponse.json({ error: '認証が必要です。' }, { status: 401 })
   }
 
   // Sentry Cron Monitor (DSN 未設定なら no-op)

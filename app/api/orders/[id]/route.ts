@@ -188,14 +188,19 @@ export async function PATCH(
   if (status === 'cancelled' && order.stripe_charge_id) {
     try {
       await refundPayment(order.stripe_charge_id)
-        const { error: refundUpdateErr } = await supabase
+      // 二重通知防止 (#48 code-review finding 6、#57 と同型修正):
+      // 既に refunded 状態 (webhook 等が先に処理済) なら .neq filter で 0 行 update、
+      // .select('id') で affected rows を取り 0 件なら notify / メール skip。
+        const { data: refundedRows, error: refundUpdateErr } = await supabase
           .from('orders')
           .update({ status: 'refunded' })
           .eq('id', id)
+          .neq('status', 'refunded')
+          .select('id')
 
         if (refundUpdateErr) {
           console.error('[orders/PATCH] refunded 更新失敗:', refundUpdateErr)
-        } else {
+        } else if (refundedRows && refundedRows.length > 0) {
           notifyOrder(id, {
             title: 'キャンセル・返金のお知らせ',
             body: '注文がキャンセルされ、返金処理を行いました',
