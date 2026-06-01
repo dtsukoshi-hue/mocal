@@ -234,6 +234,13 @@
   修正: update に `.select('id')` を chain して `updatedRows` を取得、`updatedRows.length === 0` なら `break` で notify skip。`docs/payment-flow.md` 図 B [3] にも 1 行追加。`tests/api/webhook-stripe.test.ts` の対応テストを修正後挙動 (0 行 → notify not called) に書き換え。
 - [~] **56. mocal.jp の noindex 化 (pilot 開始まで)** (2026-05-30 緊急対応)  
   Google 検索結果に mocal.jp が表示されていた指摘を受け、`app/layout.tsx` `metadata.robots` を `{ index: false, follow: false }` に、`app/robots.ts` を `disallow: '/'` に変更 (全 page クロール禁止 + meta noindex の二重)。**pilot 開始時に解除予定** (`app/layout.tsx` を `{ index: true, follow: true }` / `app/robots.ts` を `allow: '/'` + 管理系 disallow に戻す)。既に indexed 済の URL は **user 側で Google Search Console から URL 削除リクエスト** を推奨 (noindex の Googlebot 反映待ちより速い)。
+- [ ] **58. code-review cleanup 一括 (pilot 後)** (2026-05-30 起票、code-review (B + high effort) finding 2-5 より)  
+  Pilot 直前の code-review で挙がった軽微な cleanup を pilot 後にまとめて 1 PR で対応:<br>
+  - **finding 2 (DRY)**: `app/(store)/[slug]/page.tsx` StoreLegalFooter の `<a target=_blank rel=noopener noreferrer>` 2 件を `[{href,label}]` 配列 + map で集約 (将来 URL field 追加時に行追加 1 行で済む)<br>
+  - **finding 3 (altitude / reuse)**: `app/actions/store.ts` の inline `parseUrl` を `lib/url-validation.ts` の `parseOptionalHttpUrl(value, fieldLabel)` として共通 helper 化 (将来 menu_items.url 等で再利用想定)<br>
+  - **finding 4 (type narrowing)**: `parseUrl` の戻り値 `string | null | { error: string }` を tagged union (`{ok: true, value: string|null} | {ok: false, error: string}`) または例外スロー化で narrowing 明示化<br>
+  - **finding 5 (reuse)**: `app/tokushoho/page.tsx` の `Table` コンポーネントを `app/_components/LegalTable.tsx` (or `<dl>` semantic 共通 component) に昇格、`app/privacy/page.tsx` でも再利用<br>
+  finding 1 (parseUrl URL constructor 化) は別途 [mocal#49](https://github.com/dtsukoshi-hue/customer-issue/pull/49) で先行対応済 (defense in depth、pilot 前)。本タスクは pilot 後の品質向上 cleanup として 1〜2h で 1 PR にまとめる。
 
 ## 🟡 中期の機能拡張（Phase 2）
 
