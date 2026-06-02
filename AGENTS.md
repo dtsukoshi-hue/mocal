@@ -33,6 +33,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ### 作業開始時に必ずやること
 
+**0a) 直前セッション末の handoff を必ず読む（最初に必ず）**:
+
+`~/.claude/projects/-Users-daisuke-mocal/memory/session_handoff.md` を最初に読む。直前セッション末の進行中タスク・残作業優先順・詰まったポイント・触ってはいけないものが記録されている。**これを読まずに着手すると同じ作業を繰り返したり、警告を無視して本番 DB を汚す事故が起きる**（2026-06-02 session で localhost テストによる本番 DB 汚染リスクを学習）。
+
+memory は MEMORY.md index 経由で inject されるが、agent 判断で個別 file を読み飛ばすことがあるため、AGENTS.md 上で必読を明示する。
+
 ```bash
 # 0) ローカルと origin/main の同期確認（最重要・最初に必ず）
 git fetch origin
