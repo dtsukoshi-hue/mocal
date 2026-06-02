@@ -16,7 +16,9 @@ export async function GET(request: NextRequest) {
   }
 
   // Sentry Cron Monitor (DSN 未設定なら no-op)
-  const monitor = startCronCheckIn('store-hours', '*/5 * * * *')
+  // schedule は cron-job.org / 外部スケジューラ の実 schedule と一致させる
+  // (Sentry の expected schedule、不一致だと missed runs alert が出る)
+  const monitor = startCronCheckIn('store-hours', '0 * * * *')
 
   const supabase = createServiceClient()
   const now = new Date()
