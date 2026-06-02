@@ -51,13 +51,13 @@
 ## 🔴 出荷ブロッカー
 
 - [~] **1. 法人設立後の `/tokushoho` 更新**  
-  2026-05-27 [mocal#31](https://github.com/dtsukoshi-hue/mocal/pull/31): 個人事業主の実値に第 1 弾更新 (氏名 / 住所 / 電話 / メール)。2026-05-30 [mocal#33](https://github.com/dtsukoshi-hue/mocal/pull/33): email を `support@mocal.jp` に切替。<br>**残**: Phase 4c PR-F で「mocal は取次事業者、各商品の販売者は各店舗」表記に書き直し (取次事業者モデルへの移行と同期)。法人化時はさらに法人名 / 法人所在地に切替。
-- [~] **2. cron 外部スケジューラを実稼働化**  
-  Hobby plan 制約のため Vercel Cron は不可、cron-job.org で暫定運用。実証実験開始時に Pro 化して `vercel.json` の `crons` に移行する方針。設定手順は `docs/deploy-runbook.md` §9.1 に明文化済。ユーザーが cron-job.org に 3 ジョブ登録 (store-hours / no-show / cleanup-anon) すれば完了。
+  2026-05-27 [mocal#31](https://github.com/dtsukoshi-hue/mocal/pull/31): 個人事業主の実値に第 1 弾更新 (氏名 / 住所 / 電話 / メール)。2026-05-30 [mocal#33](https://github.com/dtsukoshi-hue/mocal/pull/33): email を `support@mocal.jp` に切替。2026-05-30 [mocal#42](https://github.com/dtsukoshi-hue/mocal/pull/42) (Phase 4c PR-F): 取次事業者表記に改訂 (mocal は場の提供、各商品の販売者は各店舗)、2026-05-30 [mocal#46](https://github.com/dtsukoshi-hue/mocal/pull/46): 免責事項 + 関連事項追記 (内容拡充)。<br>**残**: 法人化時に法人名 / 法人所在地 / 法人連絡先に切替。
+- [x] **2. cron 外部スケジューラを実稼働化** (2026-06-02 完了)  
+  cron-job.org に 3 ジョブ登録完了: (a) `mocal store-hours` (`https://mocal.jp/api/cron/store-hours`, Every 1 hour `0 * * * *`)、(b) `mocal no-show` (`https://mocal.jp/api/cron/no-show`, Every 1 minute)、(c) `mocal cleanup-anon` (`https://mocal.jp/api/cron/cleanup-anonymous-users?dry=1`, Daily at 03:00)。各ジョブに `Authorization: Bearer <CRON_SECRET>` header 付与、Test run 全て HTTP 200 確認済。失敗通知 + 復旧通知 ON。設定手順は `docs/deploy-runbook.md` §9.1 に明文化済。**Pilot 中は cron-job.org で暫定運用、Pro 化後に `vercel.json` の `crons` へ移行**。
 - [x] **3. `CRON_SECRET` を Vercel に登録** (2026-05-21 完了)  
-  生成 → `.env.local` 追記 → Vercel (Prod/Preview/Dev) 登録 → Redeploy → 本番 curl で 401/200 を実証確認。F-03 解消。
-- [~] **4. 新規店舗 onboarding の Stripe Connect 動作確認**  
-  `STRIPE_CLIENT_ID` が Vercel env に無く `/api/onboarding/stripe/connect` が 500 になる。設定手順は `docs/deploy-runbook.md` §9.2 に明文化済。ユーザーが Stripe Dashboard → Connect で client_id 取得 + Vercel env 登録 + redirect URI 追加 + redeploy + .env.local 更新で完了。
+  生成 → `.env.local` 追記 → Vercel (Prod/Preview/Dev) 登録 → Redeploy → 本番 curl で 401/200 を実証確認。F-03 解消。2026-06-02 [mocal#51](https://github.com/dtsukoshi-hue/mocal/pull/51) で `lib/env.ts` REQUIRED に追加 + 全 cron route が `if (!secret) return 503` で fail-closed 化。
+- [x] **4. 新規店舗 onboarding の Stripe Connect 動作確認** (2026-06-02 完了)  
+  `STRIPE_CLIENT_ID = ca_Ubu1hp3Go4JgDbO71HgGmFKeBCgudKqh` (live mode) を Vercel に登録 (production / development、preview は CLI 制約で別途要)、Redirect URI `https://mocal.jp/api/onboarding/stripe/callback` を Stripe Dashboard live mode の OAuth 設定に追加、Vercel production redeploy 済。OAuth flow は sandbox で動作確認済 (signState HMAC + Stripe redirect)。**live mode での実際の店舗 onboarding は #51 audit でテスト店舗作成時に本確認**。
 - [x] **38. コンボ商品復元 (recovery Phase R-2 / L1)** (2026-05-23 完了)  
   R2-1 ([mocal#8](https://github.com/dtsukoshi-hue/mocal/pull/8)) で server action + tests、R2-2 ([mocal#9](https://github.com/dtsukoshi-hue/mocal/pull/9)) で cache + page.tsx、R2-3 統合 ([mocal#10](https://github.com/dtsukoshi-hue/mocal/pull/10)) で MenuView + Cart UI。実機 verify 済 (テスト combo `テストセット` で 2,360円 → qty 変更まで動作)
 - [x] **39. pickup type ラベル + デザイン復元 (recovery Phase R-1 R1-2 / L2)** (2026-05-23 完了)  
@@ -105,28 +105,25 @@
 
 ### Pilot 開始ブロッカー (2026-05-30 追加)
 
-- [ ] **47. Stripe Connect サンドボックス設定 + live mode 申請** (#4 を内包)  
-  サンドボックスで Connect 設定 (ビジネスモデル / アカウントタイプ Standard / charge type) → live mode Connect 申請 → 審査通過 → live mode の `STRIPE_CLIENT_ID` (`ca_live_*`) 取得 → Vercel + `.env.local` 登録 → Redirect URI 追加 (`https://mocal.jp/api/onboarding/stripe/callback`)。2026-05-30 時点でサンドボックス設定途中 (ビジネスモデル「マーケットプレイス」選択完了、次は「Connect をテスト」セクション)。Stripe 審査時間が最大の不確実要素。
-- [ ] **48. Stripe live mode env 切替** — **2026-05-30 着手準備、次セッションで実施**  
-  KYC 通過済、live key 画面で取得可能 (Stripe Dashboard → 開発者 → API キー)。<br>
-  画面確認時点で公開キー (`pk_live_51TPIyDLGTKV…yiH`) は visible、シークレットキーは「本番キーを表示」ボタンで取得可。<br>
-  <br>
-  **サブタスク (依存関係ごとに分割)**:<br>
-  - **#48a 公開キー + シークレットキー切替** — **2026-05-30 完了**:<br>
-    - `STRIPE_SECRET_KEY` を `sk_live_*` に → user が Vercel Dashboard 直接更新 ✅ (Sensitive)<br>
-    - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` を `pk_live_*` に → Vercel CLI で代行 ✅ (production / development)<br>
-    - active 注文 0 件確認 ✅ → production redeploy ✅ → `curl https://mocal.jp/api/health` 200 ✅<br>
+- [x] **47. Stripe Connect サンドボックス設定 + live mode 有効化** (2026-06-02 完了)  
+  Stripe Workbench sandbox で Connect 設定完了 (ビジネスモデル「マーケットプレイス」、アカウントタイプ Standard、Charge type Destination Charges、OAuth 有効化 + sandbox Client ID `ca_Ubu1IbhexaIgrGXonMvfPvT2KsUEoX0T`)、Connect OAuth flow テスト成功 (mocal の signState HMAC + Stripe → callback の流れ)。**live mode は別途 Connect が有効化済** (KYC 通過済の Entrust 本番アカウント、live mode Client ID `ca_Ubu1hp3Go4JgDbO71HgGmFKeBCgudKqh`) — 別途審査申請は不要だった (Stripe Connect Standard は KYC 通過 + サンドボックス確認後に live で即利用可)。
+- [x] **48. Stripe live mode env 切替** (2026-06-02 完了)  
+  **サブタスク完了状況**:<br>
+  - **[x] #48a 公開キー + シークレットキー切替** (2026-05-30 完了):<br>
+    - `STRIPE_SECRET_KEY` = `sk_live_*` → user が Vercel Dashboard 直接更新 (Sensitive、production / preview / development)<br>
+    - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` = `pk_live_51TPIyDLGTKV4sBVUBeK69R4e30RQBFo8C3H4C8Fr74z3XV8XknmjnaKX5C8h5t3isbMlLJVQemROTXMtLzr6Dbpr00HGk24yiH` → Vercel CLI で代行 (production / development)<br>
+    - active 注文 0 件確認 → `npx vercel deploy --prod --yes` → `curl https://mocal.jp/api/health` 200 ✓<br>
     - `.env.local` は **test mode 維持** (ローカル開発は test カードで継続、Pilot smoke は production の live mode で実施、user 合意済)<br>
     - **残**: preview 環境の `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` 追加 (CLI v54 で `--git-branch` 制約のため Vercel Dashboard で user 手動追加が必要、優先度低)<br>
-  - **#48b live mode webhook 登録 + `STRIPE_WEBHOOK_SECRET` 切替** (依存なし、即実施可):<br>
-    - Stripe Dashboard → 開発者 → Webhook → live mode で endpoint 新規作成<br>
-    - URL: `https://mocal.jp/api/webhook/stripe`<br>
-    - Events: `payment_intent.succeeded` / `payment_intent.payment_failed` / `charge.refunded`<br>
-    - 表示される `whsec_*` を **user が Vercel Dashboard 直接更新** (Sensitive)<br>
-  - **#48c `STRIPE_CLIENT_ID` (`ca_live_*`)** — **#47 完了が前提**:<br>
-    - Stripe Dashboard → Connect → Settings → Integration の OAuth → live mode 用 Client ID を取得<br>
-    - **user が Vercel Dashboard 直接更新** (Sensitive)<br>
-    - Connect Redirect URI に `https://mocal.jp/api/onboarding/stripe/callback` 追加 (live mode 側)
+  - **[x] #48b live mode webhook 登録 + `STRIPE_WEBHOOK_SECRET` 切替** (2026-06-02 完了):<br>
+    - Stripe Dashboard live mode で endpoint `mocal 本番 webhook` 作成 (`https://mocal.jp/api/webhook/stripe`)<br>
+    - Events: `payment_intent.succeeded` / `payment_intent.payment_failed` / `charge.refunded` の 3 件<br>
+    - API バージョン: `2026-03-25.dahlia` (default)、イベント宛先スコープ: 「お客様のアカウント」 (Platform-level)<br>
+    - 表示された `whsec_*` を user が Vercel Dashboard 直接更新 (Sensitive、Production / Preview / Development 全環境)、production redeploy 完了<br>
+  - **[x] #48c `STRIPE_CLIENT_ID` (live mode)** (2026-06-02 完了):<br>
+    - `STRIPE_CLIENT_ID = ca_Ubu1hp3Go4JgDbO71HgGmFKeBCgudKqh` を Vercel CLI で登録 (production / development、preview は CLI 制約で手動別途)<br>
+    - Stripe Dashboard live mode の OAuth Redirect URI に `https://mocal.jp/api/onboarding/stripe/callback` を追加<br>
+    - production redeploy 完了、`/api/health` 200 確認
 - [x] **49. #payment Phase 4c (取次事業者モデル 完成)** (2026-05-30 完了)  
   Phase 4a (#35) + PR-D (#36) で基盤、Phase 4c で取次事業者モデル完成:<br>
   - **PR-A** (完了、2026-05-30 [mocal#39](https://github.com/dtsukoshi-hue/mocal/pull/39)): `docs/payment-design-legal.md` §3 (採用モデル) を「mocal は取次事業者」に書き直し<br>
@@ -134,9 +131,12 @@
   - **PR-E** (完了、2026-05-30 [mocal#41](https://github.com/dtsukoshi-hue/mocal/pull/41)): `/[slug]` 店舗ページのフッタに特商法 / アレルゲン外部リンクを表示<br>
   - **PR-F** (完了、2026-05-30 [mocal#42](https://github.com/dtsukoshi-hue/mocal/pull/42)): mocal `/tokushoho` を取次事業者表記に書き直し<br>
   順序実績: PR-A → PR-B/E/F 並列。残: pilot 開始前の弁護士確認 (`docs/payment-design-legal.md` §7 未解決事項)。
-- [~] **50. #payment Phase 4b (DB CHECK 制約 + 既存 1 row 是正)**  
-  既存 1 row (「3000DAYS BURGER 清澄白河本店」、`stripe_account_id IS NULL` ∧ `is_open=true`) を Connect onboarding 完了させるか `is_open=false` に。その後 migration で `stores` に `CHECK (NOT is_open OR stripe_account_id IS NOT NULL)` 追加。<br>
-  **進捗 2026-05-30**: migration draft (`supabase/migrations/20260530220000_stores_stripe_account_required.sql`) 作成済 (#50 PR、merge 待ち)。**apply は user の既存 1 row 是正後**: (a) Supabase SQL Editor で `UPDATE stores SET is_open=false WHERE stripe_account_id IS NULL` 実行、または (b) admin から Stripe Connect onboarding 完了。是正完了通知後に `npx supabase db push` で apply。
+- [x] **50. #payment Phase 4b (DB CHECK 制約 + 既存 1 row 是正)** (2026-06-02 完了)  
+  - **(a) 既存 1 row 是正**: 3000DAYS BURGER 清澄白河本店 を `UPDATE stores SET is_open=false, manual_override_until=NOW()+INTERVAL '7 days' WHERE name='3000DAYS BURGER 清澄白河本店'` で `is_open=false` に + cron 自動 ON 抑制 (`manual_override_until` 7 日後)。<br>
+  - **(b) CHECK 制約 apply**: Supabase SQL Editor で `ALTER TABLE stores ADD CONSTRAINT stores_stripe_account_required CHECK (NOT is_open OR stripe_account_id IS NOT NULL)` 実行済。<br>
+  - **動作 verify**: `stripe_account_id IS NULL` の店舗を `is_open=true` に切替試行 → DB レベルで `check constraint violated` で弾かれることを confirm。<br>
+  - migration file (`supabase/migrations/20260530220000_stores_stripe_account_required.sql`) は repo に追加済 ([mocal#48](https://github.com/dtsukoshi-hue/cnen/pull/48))。本番 DB への apply は SQL Editor で直接実施 (`npx supabase db push` 不使用)。<br>
+  - 5 重防御の全層完成 (L1 CHECK / L2 公開フィルタ / L3 createPayment throw / L4 admin guard / L5 onboarding UI / L6 createOrderAction check)。
 - [ ] **51. Pilot 開始前 実機 audit**  
   以下を実機で 1 件ずつ動作確認:<br>
   - **#6 管理画面 Push 通知** (iOS / Android で `notifyStore()` が届くか、新規注文 → 受付状態切替で動作確認)<br>
@@ -150,46 +150,39 @@
 - [ ] **53. Go/No-Go 判定**  
   下記「Pilot 開始 Go/No-Go 基準」全 must を `[x]` 確認 → user が pilot 開始判断。
 
-### Pilot 開始までの推奨実施順 (次セッション開始時)
+### Pilot 開始までの推奨実施順 (2026-06-02 update — 残作業のみ)
 
-**依存関係 + 外部審査待ち時間を考慮した優先順**。並列実施可能なものは横並びで記載。
+このセッション (2026-06-02) で順 1〜14 のうち user 作業大半 + Phase 4c PR (#49 PR-A/B/E/F) 全部完了。残作業のみ再掲:
 
-| 順 | 項目 | 工数 | 主体 | 外部待ち | 並列可能 |
-|---|---|---|---|---|---|
-| **1** | **#47 Stripe Connect サンドボックス完了 + live 申請 submit** | user 1〜2h + 審査数時間〜数日 | user | ⭐最長 | (以下と並列) |
-| 2 | **#48a 公開キー + シークレットキー切替** (`pk_live_` / `sk_live_`) | 30 分 | 私 (pk) + user (sk) | なし | OK |
-| 3 | **#48b live mode webhook 登録 + `whsec_*` 切替** | 30 分 | user | なし | OK |
-| 4 | **#2 cron-job.org 登録** (3 ジョブ) | user 1〜2h | user | なし | OK |
-| 5 | **#15 (b) Cron Monitor slug 登録** (#2 完了直後) | user 15 分 | user | なし | #2 直後 |
-| 6 | **#49 PR-A 設計合意** (`docs/payment-design-legal.md` §3 取次事業者モデル改訂) | 1h | 私 → user review | なし | OK (PR-B/E/F の前提) |
-| 7 | **#49 PR-B `on_behalf_of` 追加** | 30 分 + tests | 私 | なし | PR-A 後 |
-| 8 | **#49 PR-E `/[slug]` フッタリンク** | 1〜2h | 私 | なし | PR-A 後、PR-B と並列 |
-| 9 | **#49 PR-F `/tokushoho` 取次事業者表記書き直し** | 1h | 私 | なし | PR-A 後、PR-B/E と並列 |
-| 10 | **#15 (a) Sentry alert rule 設定** | 30 分 | user | なし | いつでも |
-| 11 | **#47 完了待ち** (Stripe Connect 審査通過) | 受動 | — | ⭐ | ここで初めて #48c / #50 が unblock |
-| 12 | **#48c `STRIPE_CLIENT_ID` (`ca_live_`) 登録 + Redirect URI 追加** | 15 分 | user | なし | #47 後 |
-| 13 | **#50 既存 1 row 是正** (3000DAYS BURGER) → Connect onboarding 完了 or `is_open=false` | user 30 分 | user | なし | #47 後 |
-| 14 | **#50 DB CHECK 制約 migration** | 私 30 分 | 私 | なし | #50 row 是正後 |
-| 15 | **#15 (c) `SENTRY_AUTH_TOKEN` 登録** (source map upload 有効化) | user 15 分 | user | なし | pilot 直前 |
-| 16 | **#51 Pilot 開始前 実機 audit** (push / Realtime / L1〜L10) | user + 私 2〜3h | user + 私 | なし | #48 / #49 / #50 完了後 |
-| 17 | **#52 Pilot 開始 smoke** (live mode 実カード 1 件、全 status 遷移 + refund) | user + 私 1〜1.5h | user + 私 | なし | #51 通過後 |
-| 18 | **#53 Go/No-Go 判定** | user | user | — | 最後 |
+| 順 | 項目 | 工数 | 主体 | 状態 |
+|---|---|---|---|---|
+| **R1** | **#15(a) Sentry Alert rule 設定** (Rule 1: Error event spike per issue / Rule 2: Cron monitor failure) | 10 分 | user | 次セッション着手 |
+| R2 | **テスト店舗を live mode で新規作成** — `https://mocal.jp/onboarding` で user 自身が新規 sign up → admin/settings → Stripe Connect onboarding (user の銀行口座で本物の KYC) → `stripe_account_id` set | 10〜15 分 + Stripe KYC 数分 | user | #15(a) 並列可 |
+| R3 | テスト店舗にメニュー登録 (100-200 円 × 1-2 件) | 5 分 | user | R2 後 |
+| R4 | **#15(c) `SENTRY_AUTH_TOKEN` 登録** (source map upload 有効化) | 15 分 | user | pilot 直前、いつでも可 |
+| R5 | **#51 Pilot 実機 audit** (Push iOS/Android / Realtime / L1-L10 / 図 B 8 経路) | 2〜3h | user + 私 | R2-R3 完了後 |
+| R6 | **#52 Live smoke** (実カード 1 件 → 全 status 遷移 → refund) | 1〜1.5h | user + 私 | R5 通過後 |
+| R7 | **#53 Go/No-Go 判定** | 30 分 | user | 最後 |
+
+### 完了済の旧優先順 (記録、2026-05-30〜06-02)
+
+順 1 (#47 Stripe Connect)、順 2 (#48a)、順 3 (#48b)、順 4 (#2 cron)、順 5 (#15(b))、順 6-9 (#49 PR-A/B/E/F)、順 11 (#47 通過待ち = sandbox で動作確認済み + live mode は既に有効化)、順 12 (#48c)、順 13-14 (#50 a + b) は全部済。
 
 ### Pilot 開始 Go/No-Go 基準
 
 **Must (1 つでも欠ければ pilot 開始不可)**:
-1. [ ] #47 Stripe Connect live mode 有効化 + `STRIPE_CLIENT_ID` 登録
-2. [ ] #48 Stripe live mode env 切替 (`sk_live_*` / `pk_live_*` / live `whsec_*`)
-3. [ ] #49 Phase 4c 完了 (PR-A/B/E/F 全て merged)
-4. [ ] #50 Phase 4b 完了 (DB CHECK + 既存 1 row 是正)
-5. [ ] #2 cron 3 ジョブ稼働中
+1. [x] #47 Stripe Connect live mode 有効化 + `STRIPE_CLIENT_ID` 登録 (2026-06-02 完了)
+2. [x] #48 Stripe live mode env 切替 (`sk_live_*` / `pk_live_*` / live `whsec_*`) (2026-06-02 完了)
+3. [x] #49 Phase 4c 完了 (PR-A/B/E/F 全て merged) (2026-05-30 完了)
+4. [x] #50 Phase 4b 完了 (DB CHECK + 既存 1 row 是正) (2026-06-02 完了)
+5. [x] #2 cron 3 ジョブ稼働中 (2026-06-02 cron-job.org 登録完了、Test run 200 OK)
 6. [ ] #51 実機 audit 全項目 ✓
 7. [ ] #52 live mode smoke (1 件決済 → 全 status 遷移 → 返金) 完了
-8. [ ] #1 mocal `/tokushoho` の取次事業者表記 (#49 PR-F) 反映済
-9. [ ] 各店舗 (#47 完了店舗) の特商法 URL / アレルゲン URL 入力済 (#36 で追加した admin UI 経由)
+8. [x] #1 mocal `/tokushoho` の取次事業者表記 (#49 PR-F) 反映済 (2026-05-30 [mocal#42](https://github.com/dtsukoshi-hue/mocal/pull/42))
+9. [ ] 各店舗 (#47 完了店舗) の特商法 URL / アレルゲン URL 入力済 (#36 で追加した admin UI 経由) ← テスト店舗 (R2) 作成時に入力
 
 **Should (推奨だが pilot 中に追従可)**:
-10. [ ] #15 Sentry alert rule + Cron Monitor slug 登録
+10. [~] #15 Sentry alert rule + Cron Monitor slug 登録 (slug 登録は 2026-06-02 完了、alert rule は R1 で実施)
 11. [ ] #33 CAPTCHA (anonymous sign-in spam 防御)
 
 **Nice to have (pilot 後でも問題ない)**:
@@ -272,7 +265,12 @@
   (C) `estimated_ready_at` を「waitMinutes × 件数係数」で動的算出（係数を店舗設定可）  
   運用上スタッフが waitMinutes を実情で入力する前提なら不要かも。仕様判断後に実装、半日〜1日。
 - [~] **15. 監視・アラート整備**  
-  設計 `docs/monitoring-design.md` (2026-05-26) → scaffold ([mocal#32](https://github.com/dtsukoshi-hue/mocal/pull/32)、2026-05-28) → DSN + 関連 env 登録済 (2026-05-29、Sentry 接続中)。<br>**残**: (a) Sentry Dashboard で **alert rule 設定** (5xx 急増 / cron failure / anonymous sign-in spike) — user 30 分。(b) **Cron Monitor slug 登録** (`store-hours` / `no-show` / `cleanup-anonymous-users`) — #2 cron 稼働後に user 15 分。(c) `SENTRY_AUTH_TOKEN` 取得 + 登録 (source map upload 有効化) — pilot 直前。(d) Sentry Project rename `javascript-nextjs` → `mocal` (任意)。
+  設計 `docs/monitoring-design.md` (2026-05-26) → scaffold ([mocal#32](https://github.com/dtsukoshi-hue/mocal/pull/32)、2026-05-28) → DSN + 関連 env 登録済 (2026-05-29、Sentry 接続中)。<br>
+  **進捗 2026-06-02**:<br>
+  - **[x] (b) Cron Monitor slug 登録** (2026-06-02 完了): mocal の `lib/sentry-cron.ts` `startCronCheckIn()` 経由で Sentry が **auto-created**。3 件確認済 (`no-show` / `store-hours` / `cleanup-anonymous-users`)。store-hours の expected schedule が `*/5 * * * *` で誤っていたため [mocal#53](https://github.com/dtsukoshi-hue/mocal/pull/53) で `0 * * * *` に修正。<br>
+  - **[ ] (a) Alert rule 設定** (次セッション、10 分): 2 件設定予定 — **Rule 1**: Sentry Issue Alert で `Number of events in an issue is more than 10 in 5 minutes` trigger + IF event.level=error + Email + 30 分 throttle (rule name: `Error event spike (per issue)`)。**Rule 2**: Issue Alert で WHEN A new issue is created + IF tag `monitor.slug` in [no-show, store-hours, cleanup-anonymous-users] + Email + 30 分 throttle (rule name: `Cron monitor failure`)。**Rule 3 (Anonymous sign-in spike)** は pilot 後の別 PR で実装 (`lib/customer-session.ts` に `Sentry.captureMessage('anonymous sign-in created', { level: 'info' })` 追加 + frequency alert)。<br>
+  - **[ ] (c) `SENTRY_AUTH_TOKEN` 取得 + 登録** (pilot 直前、15 分): Sentry → User Settings → Auth Tokens → Create New Token (scopes: `project:releases` / `org:read`) → Vercel `SENTRY_AUTH_TOKEN` 登録 (Sensitive) で source map upload 有効化。<br>
+  - **[ ] (d) Sentry Project rename `javascript-nextjs` → `mocal`** (任意)。
 - [x] **16. E2E テストを CI で実行 (F-09)** (2026-05-22 完了)  
   `.github/workflows/ci.yml` に Playwright (chromium) ステップを追加。env を job 共通化、`Install Playwright browsers` → `E2E (Playwright)` → 失敗時 `Upload Playwright report` artifact (7日保持)。CI 上では dummy env のため Supabase 依存テストは graceful skip、LP/静的/セキュリティヘッダー等の browser テストが恒久 regression net に。
 - [x] **41. cart 内税表示 (recovery Phase R-5 / L4)** (2026-05-24 完了)  
