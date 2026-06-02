@@ -247,6 +247,15 @@
 
 ## 🟡 中期の機能拡張（Phase 2）
 
+- [ ] **59. Supabase staging project の導入** (2026-06-02 起票、localhost テスト方針の再考から)  
+  現状 mocal は Supabase project 1 つ (production) のみ。`.env.local` も production を指すため、ローカル開発で test 店舗 / orphaned user 等を作ると**本番 DB に書き込まれる**。Pilot smoke (#52) 前の動作確認をローカルで安全に行うには分離が必要。<br>
+  **方針**:<br>
+  - Supabase で **staging project** を作成 (本番 project と別 URL / Anon Key / Service Role Key)<br>
+  - 本番 → staging への schema 同期手順 (`supabase db dump --linked` → staging に restore) を `docs/deploy-runbook.md` に追加<br>
+  - `.env.local` を staging を指すように切替、production env (Vercel) のみ本番 project<br>
+  - 過去事故 #4 (DB 列名乖離) / #6 (本番未整合 deploy) と同型のリスクを構造的に閉塞<br>
+  **実施タイミング**: pilot 完走後、Phase 2 で対応。pilot 中は本番 1 個で運用、テスト data は cleanup script で削除する運用で凌ぐ。<br>
+  工数: 半日 (project 作成 + schema 同期手順 + 設計ドキュメント)。
 - [ ] **10. マイページ「準備中」3項目**  
   FAQ / プロフィール編集 / 支払い方法。FAQ は 2026-05-24 完了 (recovery R-5 L8 で `app/(store)/faq/page.tsx` 復元、mypage の RowDisabled を RowLink に変更)。残るプロフィール編集 / 支払い方法は各半日〜1日
 - [ ] **11. 顧客向けログイン機能**  
