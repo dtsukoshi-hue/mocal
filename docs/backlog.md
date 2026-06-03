@@ -156,7 +156,7 @@
 
 | 順 | 項目 | 工数 | 主体 | 状態 |
 |---|---|---|---|---|
-| **R1** | **#15(a) Sentry Alert rule 設定** (Rule 1: Error event spike per issue / Rule 2: Cron monitor failure) | 10 分 | user | 次セッション着手 |
+| ~~**R1**~~ | ~~**#15(a) Sentry Alert rule 設定**~~ (2026-06-03 完了) Rule 1 `New error issue` (WHEN new issue + IF level≥error → Email) / Rule 2 `Cron monitor failure` (WHEN new issue + IF tag `monitor.slug` is one of `no-show,store-hours,cleanup-anonymous-users` → Email)。Issue Alert UI 簡素化により Rule 1 は spike → 新規 error issue 検知にダウングレード。spike rule は #60 で pilot 後追加 | 10 分 | user | [x] 完了 |
 | R2 | **テスト店舗を live mode で新規作成** — `https://mocal.jp/onboarding` で user 自身が新規 sign up → admin/settings → Stripe Connect onboarding (user の銀行口座で本物の KYC) → `stripe_account_id` set | 10〜15 分 + Stripe KYC 数分 | user | #15(a) 並列可 |
 | R3 | テスト店舗にメニュー登録 (100-200 円 × 1-2 件) | 5 分 | user | R2 後 |
 | R4 | **#15(c) `SENTRY_AUTH_TOKEN` 登録** (source map upload 有効化) | 15 分 | user | pilot 直前、いつでも可 |
@@ -182,7 +182,7 @@
 9. [ ] 各店舗 (#47 完了店舗) の特商法 URL / アレルゲン URL 入力済 (#36 で追加した admin UI 経由) ← テスト店舗 (R2) 作成時に入力
 
 **Should (推奨だが pilot 中に追従可)**:
-10. [~] #15 Sentry alert rule + Cron Monitor slug 登録 (slug 登録は 2026-06-02 完了、alert rule は R1 で実施)
+10. [x] #15 Sentry alert rule + Cron Monitor slug 登録 (slug 登録 2026-06-02、alert rule 2 件 2026-06-03 完了)
 11. [ ] #33 CAPTCHA (anonymous sign-in spam 防御)
 
 **Nice to have (pilot 後でも問題ない)**:
@@ -237,6 +237,10 @@
   - **finding 4 (type narrowing)**: `parseUrl` の戻り値 `string | null | { error: string }` を tagged union (`{ok: true, value: string|null} | {ok: false, error: string}`) または例外スロー化で narrowing 明示化<br>
   - **finding 5 (reuse)**: `app/tokushoho/page.tsx` の `Table` コンポーネントを `app/_components/LegalTable.tsx` (or `<dl>` semantic 共通 component) に昇格、`app/privacy/page.tsx` でも再利用<br>
   finding 1 (parseUrl URL constructor 化) は別途 [mocal#49](https://github.com/dtsukoshi-hue/customer-issue/pull/49) で先行対応済 (defense in depth、pilot 前)。本タスクは pilot 後の品質向上 cleanup として 1〜2h で 1 PR にまとめる。
+- [ ] **60. Sentry Metric Alert で 5xx spike rule 追加 (pilot 後)** (2026-06-02 起票、#15(a) Rule 1 ダウングレードの補完)  
+  pilot 期は #15(a) Rule 1 (新規 error issue → email) で取りこぼし防止に注力。トラフィック蓄積後 (Go-live 後 2-4 週) に Sentry **Metric Alert** で「5 分間 error event > 閾値」型の spike rule を追加。<br>
+  理由: 現 Sentry Issue Alert UI から frequency 系トリガーが Metric Alert 側に移行。pilot 期は平常値 (baseline) のデータがなく閾値が勘になるため、データ蓄積後にキャリブレーションして導入する方が誤検知が少ない。<br>
+  作業: Sentry Dashboard → Alerts → Create Alert → Metric Alert → events count > N in 5 min → email。N は pilot 蓄積データから決定 (目安: 平常値の 3-5 倍)。
 
 ## 🟡 中期の機能拡張（Phase 2）
 
