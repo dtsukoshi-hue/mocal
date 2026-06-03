@@ -156,10 +156,11 @@
 
 「pilot 1 店舗で動いても 2 店舗目で必ず破綻」する base 欠陥のため、pilot 開始前に基盤として正しく作り直す方針を user 承認 (2026-06-03)。詳細設計は `docs/onboarding-auth-redesign.md`。
 
-- [ ] **61. PR-1: Resend SMTP + 5 branded email templates**  
+- [x] **61. PR-1: Resend SMTP + 5 branded email templates** (2026-06-03 完了、PR [#57](https://github.com/dtsukoshi-hue/hue/pull/57) + [#58](https://github.com/dtsukoshi-hue/mocal/pull/58))  
   Supabase Auth の SMTP を default (mail.app.supabase.io) → Resend (support@mocal.jp from) に切替。5 種テンプレ (Confirm signup / Invite / Reset password / Change email / Reauthentication) を日本語 + mocal ブランド HTML 化。`docs/email-templates/*.html` を canonical として commit、Dashboard へ paste 運用。Redirect URLs allowlist に `/auth/confirm` `/auth/invite-accept` `/admin/reset-password` を追加。DNS で `_dmarc.mocal.jp` policy 確認 (p=none なら別 PR で quarantine 化推奨)。工数: 私 2h + user 1h。依存なし、最初に着手。
 
-- [ ] **62. PR-2: Onboarding 再設計 + 多店舗対応 + slug 予約語**  
+- [x] **62. PR-2: Onboarding 再設計 + 多店舗対応 + slug 予約語** (2026-06-03 完了、PR [#59](https://github.com/dtsukoshi-hue/mocal/pull/59) + hotfix [#62](https://github.com/dtsukoshi-hue/mocal/pull/62))  
+  本番 smoke で PKCE callback の取りこぼし + Supabase の obfuscated user (identities=[]) 検出漏れの 2 欠陥が連鎖発火し Sentry に FK violation (23503) を出した。hotfix で 4 層防御 (L1 template の token_hash 形式化 / L2 route の ?code= 経路追加 / L3 identities=[] 検出 / L4 23503 catch) を実装し再 smoke 成功。新規 user で `test4` store 作成を完全 verify。詳細は session_handoff.md §学び 1-7 参照。  
   `pending_signups` テーブル + `create_store_with_owner` RPC migration 追加。`app/actions/onboarding.ts` を 2 mode (新規 / ログイン中多店舗) に書き換え、確認メール送信を成功状態として返す。`app/auth/confirm/route.ts` 新規追加 (verifyOtp + RPC + idempotent)。`app/onboarding/page.tsx` に query (error / resume / prefill) 対応と多店舗フロー追加。`lib/slug-reservation.ts` で reserved slugs reject。Upstash rate limit (5 req/min/IP) + Sentry capture。既存 3000DAYS 店舗 login の回帰テスト必須。工数: 6-8h。PR-1 merge 後。
 
 - [ ] **63. PR-3: Auth endpoint rate limit + Sentry**  
@@ -186,7 +187,7 @@
 | 順 | 項目 | 工数 | 主体 | 状態 |
 |---|---|---|---|---|
 | ~~**R1**~~ | ~~**#15(a) Sentry Alert rule 設定**~~ (2026-06-03 完了) Rule 1 `New error issue` (WHEN new issue + IF level≥error → Email) / Rule 2 `Cron monitor failure` (WHEN new issue + IF tag `monitor.slug` is one of `no-show,store-hours,cleanup-anonymous-users` → Email)。Issue Alert UI 簡素化により Rule 1 は spike → 新規 error issue 検知にダウングレード。spike rule は #60 で pilot 後追加 | 10 分 | user | [x] 完了 |
-| R2 | **テスト店舗を live mode で新規作成** — `https://mocal.jp/onboarding` で user 自身が新規 sign up → admin/settings → Stripe Connect onboarding (user の銀行口座で本物の KYC) → `stripe_account_id` set | 10〜15 分 + Stripe KYC 数分 | user | **🚫 ブロック中** (2026-06-03、現行 onboarding に構造欠陥発覚 → #61〜#67 redesign 完了後に再開) |
+| ~~R2~~ | ~~**テスト店舗を live mode で新規作成**~~ (2026-06-03 sign up 部分完了、`d.tsukoshi@me.com` で `test4` store 作成 + 多店舗分離 verify 済)。**残**: 同店舗で Stripe Connect onboarding (live mode KYC) | 10〜15 分 + Stripe KYC 数分 | user | [~] 進行中 (sign up 完了、Stripe 接続のみ残) |
 | R3 | テスト店舗にメニュー登録 (100-200 円 × 1-2 件) | 5 分 | user | R2 後 |
 | R4 | **#15(c) `SENTRY_AUTH_TOKEN` 登録** (source map upload 有効化) + **Sentry GitHub Integration 設定** (2026-06-03 install 済、未 configure。Settings → Integrations → GitHub → Configurations で `dtsukoshi-hue/mocal` connect + Code Mappings で `app/` 等を設定。stack trace から GitHub source へジャンプ + suspect commit 検出が有効化) | 20 分 | user | pilot 直前、いつでも可 |
 | R5 | **#51 Pilot 実機 audit** (Push iOS/Android / Realtime / L1-L10 / 図 B 8 経路) | 2〜3h | user + 私 | R2-R3 完了後 |
@@ -270,6 +271,10 @@
   pilot 期は #15(a) Rule 1 (新規 error issue → email) で取りこぼし防止に注力。トラフィック蓄積後 (Go-live 後 2-4 週) に Sentry **Metric Alert** で「5 分間 error event > 閾値」型の spike rule を追加。<br>
   理由: 現 Sentry Issue Alert UI から frequency 系トリガーが Metric Alert 側に移行。pilot 期は平常値 (baseline) のデータがなく閾値が勘になるため、データ蓄積後にキャリブレーションして導入する方が誤検知が少ない。<br>
   作業: Sentry Dashboard → Alerts → Create Alert → Metric Alert → events count > N in 5 min → email。N は pilot 蓄積データから決定 (目安: 平常値の 3-5 倍)。
+- [ ] **69. ログイン中 user の `/onboarding` 訪問時に未完了 pending を auto-detect → resume UI 表示** (2026-06-03 起票、#62 hotfix の audit で発見)  
+  現状 `/auth/confirm` で store 作成が失敗 (server error) すると `?resume=1` 付きで `/onboarding` に redirect され ResumeUI が表示される。しかし user が手動で `/onboarding` を訪問した場合 (URL 直打ち or 別経路から到達) は `?resume=1` が付かず、`add-store form` が表示されるため pending 未完了状態に気付けない。<br>
+  **対応**: `app/onboarding/page.tsx` の server component で、ログイン中かつ `pending_signups.status !== 'completed'` の行が存在する場合は ResumeUI を自動表示する (`?resume=1` query 不要)。多店舗追加の本来の add-store flow と区別するため、`pending` 行があるときのみ ResumeUI を優先。<br>
+  工数: 1-2h。test 含めて 1 PR で済む規模。本 onboarding redesign の細部 UX 改善。
 
 ## 🟡 中期の機能拡張（Phase 2）
 
