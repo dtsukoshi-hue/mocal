@@ -150,6 +150,35 @@
 - [ ] **53. Go/No-Go 判定**  
   下記「Pilot 開始 Go/No-Go 基準」全 must を `[x]` 確認 → user が pilot 開始判断。
 
+### Onboarding & Auth 基盤再設計 (2026-06-03 起票、pilot R2 ブロック)
+
+2026-06-03 セッションで `R2: テスト店舗を live mode で新規作成` 着手時に現行 onboarding フローの構造的欠陥を 4 件発見 (確認メール経路で店舗が永久に作られない / staff invite が実質動かない / Supabase default SMTP / 英語テンプレ)。加えて多店舗対応 / bounce 検知 / audit log / slug 予約語の拡張性懸念。
+
+「pilot 1 店舗で動いても 2 店舗目で必ず破綻」する base 欠陥のため、pilot 開始前に基盤として正しく作り直す方針を user 承認 (2026-06-03)。詳細設計は `docs/onboarding-auth-redesign.md`。
+
+- [ ] **61. PR-1: Resend SMTP + 5 branded email templates**  
+  Supabase Auth の SMTP を default (mail.app.supabase.io) → Resend (support@mocal.jp from) に切替。5 種テンプレ (Confirm signup / Invite / Reset password / Change email / Reauthentication) を日本語 + mocal ブランド HTML 化。`docs/email-templates/*.html` を canonical として commit、Dashboard へ paste 運用。Redirect URLs allowlist に `/auth/confirm` `/auth/invite-accept` `/admin/reset-password` を追加。DNS で `_dmarc.mocal.jp` policy 確認 (p=none なら別 PR で quarantine 化推奨)。工数: 私 2h + user 1h。依存なし、最初に着手。
+
+- [ ] **62. PR-2: Onboarding 再設計 + 多店舗対応 + slug 予約語**  
+  `pending_signups` テーブル + `create_store_with_owner` RPC migration 追加。`app/actions/onboarding.ts` を 2 mode (新規 / ログイン中多店舗) に書き換え、確認メール送信を成功状態として返す。`app/auth/confirm/route.ts` 新規追加 (verifyOtp + RPC + idempotent)。`app/onboarding/page.tsx` に query (error / resume / prefill) 対応と多店舗フロー追加。`lib/slug-reservation.ts` で reserved slugs reject。Upstash rate limit (5 req/min/IP) + Sentry capture。既存 3000DAYS 店舗 login の回帰テスト必須。工数: 6-8h。PR-1 merge 後。
+
+- [ ] **63. PR-3: Auth endpoint rate limit + Sentry**  
+  `/admin/login` (IP + email per、5 failures → 5 min lockout) / `/admin/reset-password` (per email) / `/auth/confirm` (per IP、defense in depth) に Upstash rate limit。Sentry tag を auth 系全 endpoint に統一。工数: 2h。PR-1 merge 後。
+
+- [ ] **64. PR-4: Staff invite 再設計 (自前 token、Supabase invite 不使用)**  
+  Supabase の `auth.admin.inviteUserByEmail` は `data` が user_metadata 行きで改竄可能 (`invited_to_store_id` 偽造リスク) のため使わない。`pending_invitations` テーブル + 32-byte secure token + `lib/email.ts` 経由の自前招待メール。`/auth/invite-accept` route で token 検証 + signUp/signIn + store_members insert。`InviteStaffForm` の「事前登録必須」を廃止し email 入力だけで OK に。工数: 4-5h。PR-2 merge 後。
+
+- [ ] **65. PR-5: Resend webhook (bounce / complaint 検知)**  
+  Resend Dashboard で webhook 登録 (`https://mocal.jp/api/webhook/resend`、`RESEND_WEBHOOK_SECRET` env 追加)。Svix signature 検証 + `email.bounced` / `email.complained` を Sentry breadcrumb + `auth.users.user_metadata.email_delivery_status='bounced'` でマーク。admin UI 警告表示は別 backlog。工数: 2-3h。PR-1 merge 後。
+
+- [ ] **66. PR-6: store_member audit log**  
+  `store_member_events` テーブル (event_type: added/removed/role_changed, actor/target/role_before/role_after)。既存 add/remove actions に insert 追加。RLS: store の owner SELECT 可 + service role only INSERT。UI は本 PR 範囲外。工数: 2-3h。PR-2 / PR-4 merge 後。
+
+- [ ] **67. PR-7: Tests + docs + backlog 整理 (本 redesign の締め)**  
+  vitest 全 PR の test ファイル整備 (~40 件追加目安)。`docs/customer-auth-design.md` を「顧客 anon + 店舗オーナー auth + staff invite 統合設計書」に書き換え。`docs/workflow.md` の図に新 route / table ノード追加。`docs/email-templates/README.md` 完成 (canonical 運用ルール)。本 redesign の周辺 backlog 整理 (#10 顧客ログイン / #17 マルチ店舗 / #59 staging 等との依存明記)。工数: 3-4h。全 PR と並行可。
+
+合計工数: ~25h (3-4 営業日)。R2 は PR-61〜67 全 merge 後に再開。
+
 ### Pilot 開始までの推奨実施順 (2026-06-02 update — 残作業のみ)
 
 このセッション (2026-06-02) で順 1〜14 のうち user 作業大半 + Phase 4c PR (#49 PR-A/B/E/F) 全部完了。残作業のみ再掲:
@@ -157,7 +186,7 @@
 | 順 | 項目 | 工数 | 主体 | 状態 |
 |---|---|---|---|---|
 | ~~**R1**~~ | ~~**#15(a) Sentry Alert rule 設定**~~ (2026-06-03 完了) Rule 1 `New error issue` (WHEN new issue + IF level≥error → Email) / Rule 2 `Cron monitor failure` (WHEN new issue + IF tag `monitor.slug` is one of `no-show,store-hours,cleanup-anonymous-users` → Email)。Issue Alert UI 簡素化により Rule 1 は spike → 新規 error issue 検知にダウングレード。spike rule は #60 で pilot 後追加 | 10 分 | user | [x] 完了 |
-| R2 | **テスト店舗を live mode で新規作成** — `https://mocal.jp/onboarding` で user 自身が新規 sign up → admin/settings → Stripe Connect onboarding (user の銀行口座で本物の KYC) → `stripe_account_id` set | 10〜15 分 + Stripe KYC 数分 | user | #15(a) 並列可 |
+| R2 | **テスト店舗を live mode で新規作成** — `https://mocal.jp/onboarding` で user 自身が新規 sign up → admin/settings → Stripe Connect onboarding (user の銀行口座で本物の KYC) → `stripe_account_id` set | 10〜15 分 + Stripe KYC 数分 | user | **🚫 ブロック中** (2026-06-03、現行 onboarding に構造欠陥発覚 → #61〜#67 redesign 完了後に再開) |
 | R3 | テスト店舗にメニュー登録 (100-200 円 × 1-2 件) | 5 分 | user | R2 後 |
 | R4 | **#15(c) `SENTRY_AUTH_TOKEN` 登録** (source map upload 有効化) + **Sentry GitHub Integration 設定** (2026-06-03 install 済、未 configure。Settings → Integrations → GitHub → Configurations で `dtsukoshi-hue/mocal` connect + Code Mappings で `app/` 等を設定。stack trace から GitHub source へジャンプ + suspect commit 検出が有効化) | 20 分 | user | pilot 直前、いつでも可 |
 | R5 | **#51 Pilot 実機 audit** (Push iOS/Android / Realtime / L1-L10 / 図 B 8 経路) | 2〜3h | user + 私 | R2-R3 完了後 |
