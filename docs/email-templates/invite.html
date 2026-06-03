@@ -1,7 +1,7 @@
 <!--
   Supabase Auth template: Invite user
   Subject: 【mocal】店舗への招待が届きました
-  Variables: {{ .ConfirmationURL }}, {{ .Email }}, {{ .SiteURL }}, {{ .Data.<custom> }}
+  Variables: {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite&next=/admin/dashboard, {{ .Email }}, {{ .SiteURL }}, {{ .Data.<custom> }}
   Sent when: admin calls auth.admin.inviteUserByEmail()
   Note: mocal の本番招待フロー (PR-4) は Supabase invite ではなく自前 token を使うため、
         このテンプレートは Supabase admin が手動で invite した場合の fallback。
@@ -27,7 +27,7 @@
         下のボタンから参加手続きを完了してください。パスワードの設定後、店舗の管理画面にアクセスできます。
       </p>
 
-      <a href="{{ .ConfirmationURL }}"
+      <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite&next=/admin/dashboard"
          style="display:block;background:#f97316;color:#ffffff;text-align:center;padding:14px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;margin:0 0 20px;">
         招待を受ける
       </a>
@@ -36,7 +36,7 @@
         ボタンが押せない場合は、以下の URL をブラウザに貼り付けてください:
       </p>
       <p style="color:#374151;font-size:12px;line-height:1.5;margin:0 0 24px;word-break:break-all;background:#f3f4f6;padding:10px;border-radius:6px;">
-        {{ .ConfirmationURL }}
+        {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite&next=/admin/dashboard
       </p>
 
       <div style="border-top:1px solid #f3f4f6;padding-top:16px;">

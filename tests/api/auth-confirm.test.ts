@@ -13,6 +13,8 @@ import { NextRequest } from 'next/server'
 const supabaseSsrMock = vi.hoisted(() => ({
   auth: {
     verifyOtp: vi.fn(),
+    exchangeCodeForSession: vi.fn(),
+    getUser: vi.fn(),
   },
 }))
 
@@ -137,14 +139,14 @@ describe('GET /auth/confirm — type=signup', () => {
     expect(res.headers.get('location')).toContain('/onboarding?error=invalid_link')
   })
 
-  it('pending_signups 行なし → /admin/login にフォールバック', async () => {
+  it('pending_signups 行なし → /admin/dashboard へフォールバック (session 確立済のため)', async () => {
     supabaseSsrMock.auth.verifyOtp.mockResolvedValueOnce({
       data: { user: { id: 'u1' }, session: {} },
       error: null,
     })
     setupPendingSelect(null)
     const res = await GET(makeReq({ token_hash: 'xxx', type: 'signup' }))
-    expect(res.headers.get('location')).toContain('/admin/login')
+    expect(res.headers.get('location')).toContain('/admin/dashboard')
   })
 
   it('pending status=completed → idempotent: next にそのまま redirect', async () => {
@@ -252,6 +254,74 @@ describe('GET /auth/confirm — type=recovery', () => {
 describe('GET /auth/confirm — 未対応 type', () => {
   it('email_change → /onboarding?error=invalid_link', async () => {
     const res = await GET(makeReq({ token_hash: 'xxx', type: 'email_change' }))
+    expect(res.headers.get('location')).toContain('/onboarding?error=invalid_link')
+  })
+})
+
+// ============================================================================
+// PKCE Code 経路 (hotfix で追加: Supabase verify endpoint からの redirect 経由)
+// ============================================================================
+
+describe('GET /auth/confirm — PKCE code 経路', () => {
+  it('?code= 付与時は exchangeCodeForSession → pending_signups + RPC で signup 完了', async () => {
+    supabaseSsrMock.auth.exchangeCodeForSession.mockResolvedValueOnce({
+      data: { session: { user: { id: 'u-pkce-1' } } },
+      error: null,
+    })
+    setupPendingSelect({ store_name: 'Mocal', slug: 'mocal', status: 'pending', error_count: 0 })
+    supabaseServiceMock.rpc.mockResolvedValueOnce({ data: 'store-pkce-1', error: null })
+
+    const res = await GET(makeReq({ code: 'auth-code-xxx', next: '/admin/settings?welcome=1' }))
+    expect(res.status).toBe(307)
+    expect(res.headers.get('location')).toContain('/admin/settings?welcome=1')
+    expect(supabaseSsrMock.auth.exchangeCodeForSession).toHaveBeenCalledWith('auth-code-xxx')
+    expect(supabaseServiceMock.rpc).toHaveBeenCalledWith('create_store_with_owner', {
+      p_name: 'Mocal',
+      p_slug: 'mocal',
+      p_user_id: 'u-pkce-1',
+    })
+  })
+
+  it('exchangeCodeForSession 失敗 (otp_expired) → /onboarding?error=expired', async () => {
+    supabaseSsrMock.auth.exchangeCodeForSession.mockResolvedValueOnce({
+      data: { session: null }, error: { code: 'otp_expired', status: 403 },
+    })
+    const res = await GET(makeReq({ code: 'expired-code' }))
+    expect(res.headers.get('location')).toContain('/onboarding?error=expired')
+  })
+
+  it('exchangeCodeForSession 失敗 (invalid_grant = expired 扱い) → /onboarding?error=expired', async () => {
+    // PKCE auth code は invalid_grant で expired を表すため expired UI を返す
+    supabaseSsrMock.auth.exchangeCodeForSession.mockResolvedValueOnce({
+      data: { session: null }, error: { code: 'invalid_grant', status: 400 },
+    })
+    const res = await GET(makeReq({ code: 'invalid-code' }))
+    expect(res.headers.get('location')).toContain('/onboarding?error=expired')
+  })
+
+  it('exchangeCodeForSession 失敗 (code/message 不明) → /onboarding?error=invalid_link (fallback)', async () => {
+    supabaseSsrMock.auth.exchangeCodeForSession.mockResolvedValueOnce({
+      data: { session: null }, error: { code: 'something_unknown', status: 500, message: 'oops' },
+    })
+    const res = await GET(makeReq({ code: 'bad-code' }))
+    expect(res.headers.get('location')).toContain('/onboarding?error=invalid_link')
+  })
+
+  it('code 経路で pending_signups 行なし → /admin/dashboard へフォールバック (session 確立済)', async () => {
+    supabaseSsrMock.auth.exchangeCodeForSession.mockResolvedValueOnce({
+      data: { session: { user: { id: 'u-pkce-2' } } },
+      error: null,
+    })
+    setupPendingSelect(null)
+    const res = await GET(makeReq({ code: 'xxx' }))
+    expect(res.headers.get('location')).toContain('/admin/dashboard')
+  })
+
+  it('code 経路で session.user が無い (異常) → /onboarding?error=invalid_link', async () => {
+    supabaseSsrMock.auth.exchangeCodeForSession.mockResolvedValueOnce({
+      data: { session: null }, error: null,
+    })
+    const res = await GET(makeReq({ code: 'xxx' }))
     expect(res.headers.get('location')).toContain('/onboarding?error=invalid_link')
   })
 })

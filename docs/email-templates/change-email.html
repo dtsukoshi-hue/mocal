@@ -1,7 +1,7 @@
 <!--
   Supabase Auth template: Change Email Address
   Subject: 【mocal】メールアドレス変更の確認
-  Variables: {{ .ConfirmationURL }}, {{ .Email }}, {{ .NewEmail }}, {{ .SiteURL }}
+  Variables: {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email_change&next=/admin/settings, {{ .Email }}, {{ .NewEmail }}, {{ .SiteURL }}
   Sent when: user calls auth.updateUser({ email: newEmail })
   Note: 現在 mocal では email 変更 UI 未実装。将来 #65 account settings UI 着手時に有効化。
         ブランド一貫性のため先行で branded 化しておく。
@@ -29,7 +29,7 @@
         新しいアドレス: <strong style="color:#111827;">{{ .NewEmail }}</strong>
       </p>
 
-      <a href="{{ .ConfirmationURL }}"
+      <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email_change&next=/admin/settings"
          style="display:block;background:#f97316;color:#ffffff;text-align:center;padding:14px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;margin:0 0 20px;">
         メールアドレス変更を確認する
       </a>
@@ -38,7 +38,7 @@
         ボタンが押せない場合は、以下の URL をブラウザに貼り付けてください:
       </p>
       <p style="color:#374151;font-size:12px;line-height:1.5;margin:0 0 24px;word-break:break-all;background:#f3f4f6;padding:10px;border-radius:6px;">
-        {{ .ConfirmationURL }}
+        {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email_change&next=/admin/settings
       </p>
 
       <div style="border-top:1px solid #f3f4f6;padding-top:16px;">
