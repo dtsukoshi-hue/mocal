@@ -51,7 +51,7 @@ export default function OnboardingPage() {
               id="store-name"
               name="store_name"
               required
-              placeholder="例：3000DAYS BURGER"
+              placeholder="例：mocal カフェ"
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
           </div>
@@ -79,7 +79,7 @@ export default function OnboardingPage() {
                 onChange={e => setSlugValue(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                 pattern="[a-z0-9][a-z0-9\-]{1,48}[a-z0-9]"
                 title="英小文字・数字・ハイフンのみ、先頭と末尾は英数字、3文字以上"
-                placeholder="3000days-burger"
+                placeholder="mocal-cafe"
                 aria-describedby={slugError ? 'slug-error' : 'slug-hint'}
                 aria-invalid={slugError ? true : undefined}
                 className="flex-1 px-3 py-2.5 text-sm focus:outline-none bg-white"
@@ -108,7 +108,7 @@ export default function OnboardingPage() {
               type="email"
               required
               autoComplete="email"
-              placeholder="admin@example.com"
+              placeholder="admin@mocal-cafe.jp"
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
           </div>
