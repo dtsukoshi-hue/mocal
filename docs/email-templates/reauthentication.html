@@ -1,0 +1,49 @@
+<!--
+  Supabase Auth template: Reauthentication
+  Subject: 【mocal】本人確認コード
+  Variables: {{ .Token }}, {{ .Email }}, {{ .SiteURL }}
+  Sent when: user calls auth.reauthenticate() for sensitive operations
+  Note: 現在 mocal では未使用。将来パスワード変更・アカウント削除等の sensitive operation
+        で利用する想定で先行 branded 化。Token は 6 桁数字 (URL ではない)。
+-->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f9fafb;margin:0;padding:20px;">
+  <div style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+    <div style="background:#f97316;padding:24px;text-align:center;">
+      <p style="color:rgba(255,255,255,0.85);margin:0 0 4px;font-size:13px;">mocal</p>
+      <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;">本人確認</h1>
+    </div>
+    <div style="padding:28px 24px;text-align:center;">
+      <p style="color:#111827;font-size:15px;line-height:1.7;margin:0 0 8px;text-align:left;">
+        操作を続行するため、以下の確認コードを入力してください。
+      </p>
+      <p style="color:#6b7280;font-size:13px;line-height:1.7;margin:0 0 24px;text-align:left;">
+        重要な操作 (パスワード変更・アカウント設定変更等) を行うために本人確認が必要です。
+      </p>
+
+      <div style="background:#fff7ed;border:2px dashed #fb923c;border-radius:12px;padding:24px;margin:0 0 24px;">
+        <p style="color:#9a3412;font-size:12px;margin:0 0 8px;font-weight:600;letter-spacing:0.05em;">確認コード</p>
+        <p style="color:#9a3412;font-size:36px;font-weight:800;letter-spacing:0.2em;margin:0;font-family:'SF Mono',Menlo,Consolas,monospace;">{{ .Token }}</p>
+      </div>
+
+      <div style="border-top:1px solid #f3f4f6;padding-top:16px;text-align:left;">
+        <p style="color:#9ca3af;font-size:12px;line-height:1.6;margin:0;">
+          このコードは 5 分間有効です。<br>
+          心当たりがない場合は、このメールを破棄してアカウントの安全性を確認してください。
+        </p>
+      </div>
+    </div>
+    <div style="background:#fafafa;padding:16px 24px;text-align:center;">
+      <p style="color:#9ca3af;font-size:11px;margin:0;">
+        このメールは mocal が自動送信しています。<br>
+        <a href="{{ .SiteURL }}" style="color:#f97316;text-decoration:none;">{{ .SiteURL }}</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>
