@@ -346,6 +346,47 @@ export type Database = {
           },
         ]
       }
+      // ⚠️ #62 PR-2 (2026-06-03) で手動追記。migration apply 後に `npm run types:gen` で
+      // 再生成される予定。同 PR の migration: 20260603093445_pending_signups_and_rpc.sql
+      pending_signups: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_count: number
+          expires_at: string
+          id: string
+          last_error: string | null
+          slug: string
+          status: string
+          store_name: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_count?: number
+          expires_at?: string
+          id?: string
+          last_error?: string | null
+          slug: string
+          status?: string
+          store_name: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_count?: number
+          expires_at?: string
+          id?: string
+          last_error?: string | null
+          slug?: string
+          status?: string
+          store_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       processed_webhook_events: {
         Row: {
           processed_at: string
@@ -586,6 +627,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      // ⚠️ #62 PR-2 (2026-06-03) で手動追記。migration apply 後に types:gen で再生成。
+      create_store_with_owner: {
+        Args: { p_name: string; p_slug: string; p_user_id: string }
+        Returns: string
+      }
       get_user_id_by_email: { Args: { p_email: string }; Returns: string }
       should_be_open: { Args: { p_store_id: string }; Returns: boolean }
       sync_store_open_status: { Args: never; Returns: undefined }
