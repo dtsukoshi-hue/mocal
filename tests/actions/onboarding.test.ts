@@ -126,7 +126,8 @@ beforeEach(() => {
   checkRateLimitMock.mockResolvedValue(true)
   authGetUserMock.mockResolvedValue({ data: { user: null } })
   authSignUpMock.mockResolvedValue({
-    data: { user: { id: 'auth-user-1' } },
+    // 通常時: identities は配列で 1 件以上 (email provider 等)
+    data: { user: { id: 'auth-user-1', identities: [{ provider: 'email' }] } },
     error: null,
   })
 })
@@ -245,6 +246,23 @@ describe('registerStoreAction: mode=new-signup', () => {
     })
   })
 
+  it('signUp で obfuscated user (identities=[]、enumeration 防止挙動) → 既登録扱い', async () => {
+    setupNoExistingSlug()
+    // Supabase は confirmed email の signUp に対し error を返さず identities が
+    // 空の user object を返す (PR-2 hotfix で検出ロジック追加)
+    authSignUpMock.mockResolvedValueOnce({
+      data: { user: { id: 'fake-obfuscated-uuid', identities: [] } },
+      error: null,
+    })
+    const res = await registerStoreAction(undefined, fd(VALID_NEW))
+    expect(res).toMatchObject({
+      field: 'email',
+      error: expect.stringContaining('店舗を追加'),
+    })
+    // pending_signups upsert は実行されない
+    expect(supabaseServiceMock.handlers['pending_signups']).toBeUndefined()
+  })
+
   it('signUp で予期せぬエラー → general error + Sentry/logger.error', async () => {
     setupNoExistingSlug()
     authSignUpMock.mockResolvedValueOnce({
@@ -262,6 +280,30 @@ describe('registerStoreAction: mode=new-signup', () => {
     const res = await registerStoreAction(undefined, fd(VALID_NEW))
     expect(res).toMatchObject({ field: 'general' })
     expect(loggerMock.error).toHaveBeenCalled()
+  })
+
+  it('pending_signups UPSERT で FK violation (23503) → defense in depth で既登録扱い', async () => {
+    // identities=[] 検出をすり抜けた obfuscated user (将来 supabase-js が形式変更した
+    // 場合の保険) を FK violation 経由で検出
+    setupNoExistingSlug()
+    authSignUpMock.mockResolvedValueOnce({
+      // identities undefined (仮想的な変更後挙動)、user.id は実在しない UUID
+      data: { user: { id: 'fake-uuid-not-in-auth-users' } },
+      error: null,
+    })
+    setupPendingSignupsUpsert({ code: '23503', message: 'fk violation' })
+
+    const res = await registerStoreAction(undefined, fd(VALID_NEW))
+    expect(res).toMatchObject({
+      field: 'email',
+      error: expect.stringContaining('店舗を追加'),
+    })
+    // error ではなく warn (Sentry 上で error 大量発生にならないように)
+    expect(loggerMock.warn).toHaveBeenCalledWith(
+      expect.stringContaining('FK violation'),
+      expect.objectContaining({ code: '23503' })
+    )
+    expect(loggerMock.error).not.toHaveBeenCalled()
   })
 })
 

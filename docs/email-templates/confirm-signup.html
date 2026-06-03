@@ -1,8 +1,14 @@
 <!--
   Supabase Auth template: Confirm signup
   Subject: 【mocal】メールアドレスの確認
-  Variables: {{ .ConfirmationURL }}, {{ .Email }}, {{ .SiteURL }}
+  Variables: {{ .SiteURL }}, {{ .TokenHash }}, {{ .Email }}
   Sent when: user calls auth.signUp() and Confirm email is ON
+
+  ⚠️ {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next=/admin/settings を使わず {{ .SiteURL }}/auth/confirm?token_hash=...&type=signup
+  形式に変更 (PR-2 hotfix)。理由: 既定の ConfirmationURL は Supabase の verify endpoint
+  経由 (PKCE) になり、コールバックで ?code= が渡される。アプリ側 /auth/confirm 経路は
+  token_hash を期待する SSR 推奨パターンで動作させる。
+  PKCE code 経路もコード側で fallback 対応するが、本テンプレートが主経路。
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -24,7 +30,7 @@
         下のボタンをクリックしてメールアドレスの確認を完了してください。確認後、店舗の登録が完了します。
       </p>
 
-      <a href="{{ .ConfirmationURL }}"
+      <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next=/admin/settings"
          style="display:block;background:#f97316;color:#ffffff;text-align:center;padding:14px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;margin:0 0 20px;">
         メールアドレスを確認する
       </a>
@@ -33,7 +39,7 @@
         ボタンが押せない場合は、以下の URL をブラウザに貼り付けてください:
       </p>
       <p style="color:#374151;font-size:12px;line-height:1.5;margin:0 0 24px;word-break:break-all;background:#f3f4f6;padding:10px;border-radius:6px;">
-        {{ .ConfirmationURL }}
+        {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next=/admin/settings
       </p>
 
       <div style="border-top:1px solid #f3f4f6;padding-top:16px;">

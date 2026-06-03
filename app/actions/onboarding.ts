@@ -153,6 +153,18 @@ export async function registerStoreAction(
     return { error: '登録に失敗しました。しばらく経ってから再試行してください。', field: 'general' }
   }
 
+  // Supabase の "enumeration 防止" 挙動: 既に confirmed な email で signUp すると
+  // エラーは返さず、data.user に "identities が空" の obfuscated user object を返す。
+  // この場合 user.id は実在しない UUID で、そのまま pending_signups に書くと
+  // FK violation (23503) になる。explicit に検出する。
+  // (参考: https://supabase.com/docs/reference/javascript/auth-signup)
+  if (
+    Array.isArray(signUpData.user.identities) &&
+    signUpData.user.identities.length === 0
+  ) {
+    return { error: 'このメールアドレスは既に登録されています。ログインしてから「店舗を追加」してください。', field: 'email' }
+  }
+
   const userId = signUpData.user.id
 
   // pending_signups UPSERT (user_id UNIQUE で同 user の再 signup を吸収)
@@ -172,6 +184,20 @@ export async function registerStoreAction(
       { onConflict: 'user_id' }
     )
   if (pendingErr) {
+    // Defense in depth: FK violation (23503) = identities 検出を擦り抜けた obfuscated user
+    // ケース。Supabase JS が将来 identities を別形式で返してきても、この catch で UX
+    // メッセージに変換できる。
+    if ((pendingErr as { code?: string }).code === '23503') {
+      logger.warn('[onboarding] pending_signups FK violation (obfuscated user 推定)', {
+        userId,
+        code: '23503',
+        flow: 'onboarding-register-new',
+      })
+      return {
+        error: 'このメールアドレスは既に登録されています。ログインしてから「店舗を追加」してください。',
+        field: 'email',
+      }
+    }
     logger.error('[onboarding] pending_signups UPSERT 失敗', {
       error: pendingErr,
       userId,

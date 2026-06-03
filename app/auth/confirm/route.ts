@@ -5,27 +5,43 @@ import { checkRateLimitAsync } from '@/lib/rate-limit'
 import { logger } from '@/lib/logger'
 import { headers } from 'next/headers'
 
-// #62 PR-2: 確認メール (signup / invite) クリック後の callback
+// #62 PR-2 + hotfix: 確認メール (signup / invite / recovery) クリック後の callback
 //
-// 流れ (type='signup'):
-//   1. verifyOtp({ token_hash, type }) で session 確立 (cookies に set)
-//   2. pending_signups から row 取り → create_store_with_owner RPC
-//   3. 成功: pending_signups.status='completed' + redirect(next)
-//   4. slug_taken: error_count++ + redirect('/onboarding?error=slug_taken&name=...')
-//   5. その他: status='failed' + Sentry + redirect('/onboarding?resume=1')
+// 2 種類のメールリンク経路を受け付ける:
 //
-// type='invite' は #64 PR-4 で実装。本 PR では fallback redirect。
+// (A) Token Hash 経路 (推奨、PR-2 hotfix 後の email template はこちらを使用):
+//     URL: `<SiteURL>/auth/confirm?token_hash=...&type=signup&next=...`
+//     → supabase.auth.verifyOtp({ token_hash, type }) で session 確立
+//
+// (B) PKCE Code 経路 (Supabase の verify endpoint を経由する legacy 経路、
+//     {{ .ConfirmationURL }} を template に使うと自動でこの形式に):
+//     URL: `<SiteURL>/auth/confirm?code=...&next=...` (Supabase verify からの redirect)
+//     → supabase.auth.exchangeCodeForSession(code) で session 確立
+//
+// どちらの経路でも session 確立後の処理 (pending_signups SELECT + RPC) は共通。
 //
 // 設計詳細: docs/onboarding-auth-redesign.md PR-2
 
 const ONBOARDING_PATH = '/onboarding'
 const DEFAULT_NEXT = '/admin/settings?welcome=1'
 
+type EmailType = 'signup' | 'invite' | 'recovery' | 'email_change' | 'magiclink'
+
+// Supabase が返す可能性のある「token expired」相当のエラーコード。fallback は invalid_link。
+const EXPIRED_CODES = new Set(['otp_expired', 'token_expired', 'invalid_grant'])
+
+function isExpiredError(err: { code?: string; message?: string } | null | undefined): boolean {
+  if (!err) return false
+  if (err.code && EXPIRED_CODES.has(err.code)) return true
+  const msg = err.message?.toLowerCase() ?? ''
+  return msg.includes('expired') || msg.includes('invalid grant')
+}
+
 export async function GET(req: NextRequest) {
   const url = new URL(req.url)
   const tokenHash = url.searchParams.get('token_hash')
-  const type = url.searchParams.get('type') as
-    | 'signup' | 'invite' | 'recovery' | 'email_change' | 'magiclink' | null
+  const code = url.searchParams.get('code')
+  const type = url.searchParams.get('type') as EmailType | null
   const next = url.searchParams.get('next') ?? DEFAULT_NEXT
 
   // Cache-Control: token を含む URL を絶対にキャッシュさせない
@@ -41,21 +57,61 @@ export async function GET(req: NextRequest) {
     return noStore(NextResponse.redirect(new URL(`${ONBOARDING_PATH}?error=rate_limit`, req.url)))
   }
 
-  // ---------- 入力 validation ----------
+  const supabase = await createSupabaseServerClient()
+
+  // ============================================================
+  // 経路 (B): PKCE Code (Supabase verify endpoint からの redirect)
+  // ============================================================
+  if (code) {
+    const { data: exchangeData, error: exchangeErr } =
+      await supabase.auth.exchangeCodeForSession(code)
+
+    if (exchangeErr || !exchangeData.session?.user) {
+      logger.warn('[auth/confirm] exchangeCodeForSession 失敗', {
+        code: exchangeErr?.code,
+        status: exchangeErr?.status,
+        flow: 'onboarding-confirm',
+      })
+      const errorCode = isExpiredError(exchangeErr) ? 'expired' : 'invalid_link'
+      return noStore(NextResponse.redirect(new URL(`${ONBOARDING_PATH}?error=${errorCode}`, req.url)))
+    }
+
+    // PKCE 経路では type が URL に含まれないため、pending_signups の有無で
+    // signup フローか否かを判定する。signup でなければ /admin/dashboard fallback。
+    return handlePostVerify(req, exchangeData.session.user.id, next, noStore)
+  }
+
+  // ============================================================
+  // 経路 (A): Token Hash (SSR 推奨)
+  // ============================================================
   if (!tokenHash || !type) {
-    logger.warn('[auth/confirm] パラメータ不足', { hasToken: Boolean(tokenHash), type })
+    logger.warn('[auth/confirm] パラメータ不足', {
+      hasToken: Boolean(tokenHash),
+      hasCode: Boolean(code),
+      type,
+    })
     return noStore(NextResponse.redirect(new URL(`${ONBOARDING_PATH}?error=invalid_link`, req.url)))
   }
 
-  const supabase = await createSupabaseServerClient()
-
-  // ---------- type 別ルーティング ----------
   if (type === 'signup') {
-    return handleSignupConfirm(req, supabase, tokenHash, next, noStore)
+    const { data: verifyData, error: verifyErr } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: 'signup',
+    })
+    if (verifyErr || !verifyData.user) {
+      logger.warn('[auth/confirm] signup verifyOtp 失敗', {
+        code: verifyErr?.code,
+        status: verifyErr?.status,
+        flow: 'onboarding-confirm',
+      })
+      const errorCode = isExpiredError(verifyErr) ? 'expired' : 'invalid_link'
+      return noStore(NextResponse.redirect(new URL(`${ONBOARDING_PATH}?error=${errorCode}`, req.url)))
+    }
+    return handlePostVerify(req, verifyData.user.id, next, noStore)
   }
 
   if (type === 'invite') {
-    // PR-4 で実装予定。本 PR では verifyOtp だけして dashboard に redirect
+    // PR-4 で本実装、本 PR では verifyOtp + redirect のみ
     const { error: verifyErr } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'invite' })
     if (verifyErr) {
       logger.warn('[auth/confirm] invite verifyOtp 失敗', { code: verifyErr.code, status: verifyErr.status })
@@ -65,8 +121,6 @@ export async function GET(req: NextRequest) {
   }
 
   if (type === 'recovery') {
-    // password reset: Supabase が `/admin/reset-password` に直接 redirect する設定なので
-    // 通常本 route は経由しない。fallback として verifyOtp + redirect
     const { error: verifyErr } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' })
     if (verifyErr) {
       return noStore(NextResponse.redirect(new URL('/admin/login?error=reset_invalid', req.url)))
@@ -79,34 +133,19 @@ export async function GET(req: NextRequest) {
   return noStore(NextResponse.redirect(new URL(`${ONBOARDING_PATH}?error=invalid_link`, req.url)))
 }
 
-async function handleSignupConfirm(
+// ----------------------------------------------------------------------------
+// 経路 (A)(B) 共通: session 確立後の signup 処理
+//   - pending_signups 行を確認 → create_store_with_owner RPC → next へ redirect
+//   - pending 行が無い場合は signup 経由ではない (PKCE で invite 等) → /admin/dashboard fallback
+// ----------------------------------------------------------------------------
+async function handlePostVerify(
   req: NextRequest,
-  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
-  tokenHash: string,
+  userId: string,
   next: string,
   noStore: (res: NextResponse) => NextResponse
 ): Promise<NextResponse> {
-  // verifyOtp で session を確立 (cookies に set される)
-  const { data: verifyData, error: verifyErr } = await supabase.auth.verifyOtp({
-    token_hash: tokenHash,
-    type: 'signup',
-  })
-
-  if (verifyErr || !verifyData.user) {
-    // expired / invalid / already-consumed
-    logger.warn('[auth/confirm] signup verifyOtp 失敗', {
-      code: verifyErr?.code,
-      status: verifyErr?.status,
-      flow: 'onboarding-confirm',
-    })
-    const errorCode = verifyErr?.code === 'otp_expired' ? 'expired' : 'invalid_link'
-    return noStore(NextResponse.redirect(new URL(`${ONBOARDING_PATH}?error=${errorCode}`, req.url)))
-  }
-
-  const userId = verifyData.user.id
   const service = createServiceClient()
 
-  // pending_signups 読み取り
   const { data: pending, error: selectErr } = await service
     .from('pending_signups')
     .select('store_name, slug, status, error_count')
@@ -123,18 +162,20 @@ async function handleSignupConfirm(
   }
 
   if (!pending) {
-    // pending 行なし = onboarding form を経由していない (直接 verifyOtp を踏んだ等)
-    // → login page に redirect
-    logger.warn('[auth/confirm] pending_signups 行なし', { userId, flow: 'onboarding-confirm' })
-    return noStore(NextResponse.redirect(new URL('/admin/login', req.url)))
+    // signup 経由ではない (PKCE 経路で invite 等を受けた場合の fallback)。
+    // session は確立済なので dashboard へ。
+    logger.info('[auth/confirm] pending_signups 行なし → dashboard fallback', {
+      userId,
+      flow: 'onboarding-confirm',
+    })
+    return noStore(NextResponse.redirect(new URL('/admin/dashboard', req.url)))
   }
 
   if (pending.status === 'completed') {
-    // 既に store 作成済 = 二重クリック等。idempotent に next へ redirect
+    // 二重クリック等、idempotent に next へ redirect
     return noStore(NextResponse.redirect(new URL(next, req.url)))
   }
 
-  // create_store_with_owner RPC
   const { data: storeId, error: rpcErr } = await service.rpc('create_store_with_owner', {
     p_name: pending.store_name,
     p_slug: pending.slug,
@@ -149,7 +190,6 @@ async function handleSignupConfirm(
       .update({
         error_count: (pending.error_count ?? 0) + 1,
         last_error: isSlugTaken ? 'slug_taken' : (rpcErr.message ?? 'unknown'),
-        // slug_taken は user が別 slug で resume 可能 → status は pending のまま保持
         status: isSlugTaken ? 'pending' : 'failed',
       })
       .eq('user_id', userId)
@@ -172,7 +212,6 @@ async function handleSignupConfirm(
     return noStore(NextResponse.redirect(new URL(`${ONBOARDING_PATH}?error=server&resume=1`, req.url)))
   }
 
-  // 成功: pending_signups completed
   await service
     .from('pending_signups')
     .update({

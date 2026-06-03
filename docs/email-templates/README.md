@@ -32,9 +32,9 @@ Supabase Auth が template に注入する変数 ([公式](https://supabase.com/
 
 | 変数 | 内容 | 使用テンプレート |
 |---|---|---|
-| `{{ .ConfirmationURL }}` | 完全な確認 URL (token 含む) | confirm-signup / invite / reset-password / change-email |
+| `{{ .ConfirmationURL }}` | 完全な確認 URL (Supabase verify endpoint 経由 = PKCE) | **本テンプレでは使用しない** (アプリ /auth/confirm の token_hash 経路と整合させるため、明示組み立て) |
 | `{{ .Token }}` | 6 桁数字 OTP | reauthentication |
-| `{{ .TokenHash }}` | hash 形式の token | (URL を自分で組み立てたい時用、本テンプレでは未使用) |
+| `{{ .TokenHash }}` | hash 形式の token | **confirm-signup / invite / reset-password / change-email** (`{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=...` 形式で組み立て) |
 | `{{ .Email }}` | 受信者の email (現在のアドレス) | invite / change-email |
 | `{{ .NewEmail }}` | change-email 時の新アドレス | change-email |
 | `{{ .SiteURL }}` | Supabase URL Configuration の Site URL (= `https://mocal.jp`) | 全テンプレ (footer link) |
