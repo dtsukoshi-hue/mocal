@@ -42,35 +42,108 @@ Supabase Auth が template に注入する変数 ([公式](https://supabase.com/
 
 ⚠️ Liquid 変数は HTML エスケープ **されない** ことに留意 (受信者 email 等を本文に出すのは Supabase 側が制御するため通常問題ないが、`.Data.*` を出す場合は信頼境界に注意)。
 
-## Dashboard へ paste する手順
+## User 側 Dashboard 作業手順 (PR-1 受け入れチェックリスト)
 
-1. Supabase Dashboard → Project (`mocal`) → **Authentication** → **Email Templates**
-2. 各テンプレ (Confirm signup / Invite / Magic Link / Change Email Address / Reset Password / Reauthentication) を順に開く
-3. **Subject heading**: 本 README の Subject 列の値を入力
-4. **Message body**: 対応する `.html` ファイルの内容 (HTML コメント `<!-- ... -->` を含めて) を全文コピーして paste
-5. Save
-6. (Magic Link は mocal で未使用、template は default のままで OK)
+所要 ~60 分。順番厳守 (③前に②、⑤前に①②③④全部)。
 
-## 検証手順 (PR-1 完了の受け入れ基準)
+### ① Resend SMTP 用 API key 作成 (5 分)
 
-- [ ] Supabase Dashboard で 5 テンプレ全てが上記 HTML と一致 (subject + body 両方)
-- [ ] Dashboard → Authentication → SMTP Settings が以下である:
-  - Enable Custom SMTP: ON
-  - Host: `smtp.resend.com`
-  - Port: `587`
-  - Username: `resend`
-  - Password: `RESEND_API_KEY` の値
-  - Sender email: `support@mocal.jp`
-  - Sender name: `mocal`
-- [ ] Dashboard → Authentication → URL Configuration:
-  - Site URL: `https://mocal.jp`
-  - Redirect URLs に以下が含まれる:
-    - `https://mocal.jp/auth/confirm`
-    - `https://mocal.jp/auth/invite-accept`
-    - `https://mocal.jp/admin/reset-password`
-    - `http://localhost:3000/**` (dev)
-- [ ] **実 email テスト** (受け入れの中核): 自分宛 (user 個人 email) に signup → Resend ドメイン (`support@mocal.jp`) から `confirm-signup` テンプレートで届く / SPF / DKIM 両方 pass / spam folder に入っていない
-- [ ] DMARC policy 確認: `dig TXT _dmarc.mocal.jp +short` で `p=` の値を確認。`p=none` なら別 backlog (#68 として `quarantine` 化) で対応
+1. https://resend.com/api-keys
+2. **Create API Key**:
+   - Name: `mocal-supabase-smtp`
+   - Permission: **Sending access**
+   - Domain: `mocal.jp`
+3. 生成された `re_xxx` を控える
+4. **既存 `RESEND_API_KEY` (`.env.local` / Vercel、`lib/email.ts` 用) は触らない** — 漏洩 / revoke 時の影響を分離するため別 key 運用
+
+### ② Supabase Auth → SMTP Settings (10 分)
+
+`Authentication` → **`SMTP Settings`** タブ:
+
+| 項目 | 値 |
+|---|---|
+| Enable Custom SMTP | **ON** |
+| Sender email | `support@mocal.jp` |
+| Sender name | `mocal` |
+| Host | `smtp.resend.com` |
+| Port number | `587` |
+| Minimum interval between emails | `60` (default、変更不要) |
+| Username | `resend` |
+| Password | ①で生成した `re_xxx` |
+
+**Save**
+
+### ③ Email Templates (5 種、20 分)
+
+`Authentication` → **`Email Templates`** タブ。Magic Link は触らない (mocal で未使用)。
+
+各テンプレ画面で **Subject heading** と **Message body** の両方を書き換え → **Save Changes**:
+
+| Supabase テンプレ | Subject (paste) | Body (paste するファイル) |
+|---|---|---|
+| Confirm signup | `【mocal】メールアドレスの確認` | `confirm-signup.html` 全文 |
+| Invite user | `【mocal】店舗への招待が届きました` | `invite.html` 全文 |
+| Reset Password | `【mocal】パスワード再設定のご案内` | `reset-password.html` 全文 |
+| Change Email Address | `【mocal】メールアドレス変更の確認` | `change-email.html` 全文 |
+| Reauthentication | `【mocal】本人確認コード` | `reauthentication.html` 全文 |
+
+HTML 先頭の `<!-- ... -->` コメントも含めて全文 paste で OK (コメントはレンダリングされない)。
+
+### ④ URL Configuration (5 分)
+
+`Authentication` → **`URL Configuration`**:
+
+**Site URL**: `https://mocal.jp` (既に設定済の確認のみ)
+
+**Redirect URLs** allowlist に以下を**追加** (重複しているものはスキップ):
+```
+https://mocal.jp/auth/confirm
+https://mocal.jp/auth/invite-accept
+https://mocal.jp/admin/reset-password
+http://localhost:3000/**
+```
+
+**Save**
+
+### ⑤ 実 email テスト (15 分、最重要)
+
+1. プライベートウィンドウで `https://mocal.jp/onboarding` を開く
+2. 任意の自分のメール (test用) で sign up を試行
+   - 現行 onboarding は構造欠陥でエラーになるが、**メールが届けば PR-1 検証は success**
+3. 受信メールの確認項目:
+   - [ ] **送信元**: `mocal <support@mocal.jp>` (`mail.app.supabase.io` ではない)
+   - [ ] **件名**: `【mocal】メールアドレスの確認`
+   - [ ] **本文**: orange ヘッダ + ボタン + URL の mocal ブランド
+   - [ ] **配信先**: 受信ボックス (spam フォルダではない)
+   - [ ] **Gmail の場合**: メール詳細展開 → `mailed-by: mocal.jp` + `signed-by: mocal.jp` (両方 mocal.jp = SPF / DKIM 共に pass)
+4. cleanup: Supabase → Authentication → Users で作成された test user を削除
+
+### ⑥ DMARC policy 確認 (5 分)
+
+```bash
+dig TXT _dmarc.mocal.jp +short
+```
+
+- `"v=DMARC1; p=none; ..."` → `p=none` (許容、別 backlog #68 で `p=quarantine` 化を検討)
+- `"v=DMARC1; p=quarantine; ..."` または `p=reject` → 良好
+- 出力なし → DMARC 未設定 (要対応、別 backlog で追加)
+
+## 受け入れ判定
+
+✅ ⑤ で実メールが mocal ブランドで届く + SPF/DKIM pass + 非 spam  
+✅ ⑥ で DMARC policy を確認 (`p=none` でも本 PR-1 は OK、結果を共有)
+
+両方 OK で `PR-1 受け入れ完了` → PR-2 (#62 onboarding redesign 本体) merge へ進む。
+
+## トラブルシュート
+
+| 症状 | 原因候補 | 対処 |
+|---|---|---|
+| メールが届かない | SMTP 設定誤り (②) / Resend API key 権限不足 (①) | Supabase Auth Logs を Dashboard で確認、Resend Dashboard → Logs で送信記録確認 |
+| `mail.app.supabase.io` から届く | ② Enable Custom SMTP が OFF | ② を ON にして Save、再テスト |
+| spam フォルダに入る | SPF / DKIM 失敗、または DMARC `p=quarantine` で誤検知 | ⑥ DMARC 確認、`dig TXT mocal.jp +short` で SPF (`v=spf1 include:resend.com ~all` 等)、`dig TXT resend._domainkey.mocal.jp` で DKIM record 存在確認 |
+| Subject や Body が反映されない | ③ Save 漏れ / 別タブで作業した | 各 template 画面で確実に **Save Changes** ボタンを押す |
+| Confirmation link が localhost に飛ぶ | ④ Site URL が `localhost` のまま | ④ Site URL を `https://mocal.jp` に変更 + Save |
 
 ## 将来拡張
 
