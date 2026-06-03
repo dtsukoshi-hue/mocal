@@ -178,7 +178,18 @@
 - [ ] **67. PR-7: Tests + docs + backlog 整理 (本 redesign の締め)**  
   vitest 全 PR の test ファイル整備 (~40 件追加目安)。`docs/customer-auth-design.md` を「顧客 anon + 店舗オーナー auth + staff invite 統合設計書」に書き換え。`docs/workflow.md` の図に新 route / table ノード追加。`docs/email-templates/README.md` 完成 (canonical 運用ルール)。本 redesign の周辺 backlog 整理 (#10 顧客ログイン / #17 マルチ店舗 / #59 staging 等との依存明記)。工数: 3-4h。全 PR と並行可。
 
-合計工数: ~25h (3-4 営業日)。R2 は PR-61〜67 全 merge 後に再開。
+- [ ] **68. mocal.jp DMARC policy 設定 (pilot 前)** (2026-06-03 起票、PR-1 受け入れ時に DMARC 未設定を発見)  
+  `dig TXT _dmarc.mocal.jp +short` で **出力なし** = DMARC レコード未設定の状態。**SPF/DKIM は Resend で設定済 + 通過実績あり**だが、DMARC が無いと:<br>
+  - mocal.jp ドメインを誰でも spoof 可能 (詐欺メールに mocal.jp を使われても通報経路がない)<br>
+  - 一部メールプロバイダ (Yahoo 等) で DMARC 必須化が進行中 → 将来の配信率低下リスク<br>
+  - 監査時の指摘事項になりやすい<br>
+  **対応 (user 作業、DNS 編集 5 分)**: mocal.jp の DNS provider (Cloudflare / Vercel DNS 等) で TXT record 追加:<br>
+  - Name: `_dmarc.mocal.jp` (or `_dmarc`)<br>
+  - Type: TXT<br>
+  - Value: `v=DMARC1; p=none; rua=mailto:support@mocal.jp; ruf=mailto:support@mocal.jp; fo=1`<br>
+  **段階強化**: 最初 `p=none` (監視モード、SPF/DKIM 失敗してもブロックしない) で 1-2 週運用 → 週次 report で問題ないこと確認 → `p=quarantine` に強化 → さらに 1-2 週 → `p=reject` で完全防御。`rua` でレポート集計 email、`ruf` で失敗詳細。工数: DNS 5 分 + 段階強化期間で計 1 ヶ月程度。pilot 前に `p=none` まで完了が目標。
+
+合計工数: ~25h (3-4 営業日) + #68 5 分。R2 は PR-61〜67 全 merge 後に再開。
 
 ### Pilot 開始までの推奨実施順 (2026-06-02 update — 残作業のみ)
 
