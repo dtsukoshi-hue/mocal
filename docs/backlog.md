@@ -159,7 +159,7 @@
 | ~~**R1**~~ | ~~**#15(a) Sentry Alert rule 設定**~~ (2026-06-03 完了) Rule 1 `New error issue` (WHEN new issue + IF level≥error → Email) / Rule 2 `Cron monitor failure` (WHEN new issue + IF tag `monitor.slug` is one of `no-show,store-hours,cleanup-anonymous-users` → Email)。Issue Alert UI 簡素化により Rule 1 は spike → 新規 error issue 検知にダウングレード。spike rule は #60 で pilot 後追加 | 10 分 | user | [x] 完了 |
 | R2 | **テスト店舗を live mode で新規作成** — `https://mocal.jp/onboarding` で user 自身が新規 sign up → admin/settings → Stripe Connect onboarding (user の銀行口座で本物の KYC) → `stripe_account_id` set | 10〜15 分 + Stripe KYC 数分 | user | #15(a) 並列可 |
 | R3 | テスト店舗にメニュー登録 (100-200 円 × 1-2 件) | 5 分 | user | R2 後 |
-| R4 | **#15(c) `SENTRY_AUTH_TOKEN` 登録** (source map upload 有効化) | 15 分 | user | pilot 直前、いつでも可 |
+| R4 | **#15(c) `SENTRY_AUTH_TOKEN` 登録** (source map upload 有効化) + **Sentry GitHub Integration 設定** (2026-06-03 install 済、未 configure。Settings → Integrations → GitHub → Configurations で `dtsukoshi-hue/mocal` connect + Code Mappings で `app/` 等を設定。stack trace から GitHub source へジャンプ + suspect commit 検出が有効化) | 20 分 | user | pilot 直前、いつでも可 |
 | R5 | **#51 Pilot 実機 audit** (Push iOS/Android / Realtime / L1-L10 / 図 B 8 経路) | 2〜3h | user + 私 | R2-R3 完了後 |
 | R6 | **#52 Live smoke** (実カード 1 件 → 全 status 遷移 → refund) | 1〜1.5h | user + 私 | R5 通過後 |
 | R7 | **#53 Go/No-Go 判定** | 30 分 | user | 最後 |
