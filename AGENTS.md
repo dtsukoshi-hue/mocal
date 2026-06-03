@@ -24,8 +24,54 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | 8 | 顧客 push / cron / webhook の動作未確認のまま deploy | E2E が回っておらず、エンドポイントを手動疎通もしていなかった |
 | 9 | ローカル main を `git reset --hard <タグ>` で旧 main backup へ巻き戻し、origin/main を pull せず開発を 175 commit 継続。Initial commit でしか origin と繋がらない並走状態が 24h+（2026-05-18〜19） | reset 後と各セッション冒頭で `git fetch && git log HEAD..origin/main` を確認せず開発続行。origin/main にある再発防止策（.husky・scripts・AGENTS.md 拡張）が手元から消えたまま気付かなかった |
 | 10 | 2026-05-19 `git reset --hard origin/main` で 175 commit ぶんの機能（コンボ / 顧客キャンセル / FAQ / お問い合わせ / pickup type デザイン等）を消失。4 日後（2026-05-23）の指摘まで気付かず | reset 前に feature-level audit を行わず、「deploy 済み = feature-complete」と暗黙仮定。`docs/recovery-plan.md` §4 で詳細記録、§6.1 で再発防止ルール |
+| 11 | 2026-06-03 PR-2 (Onboarding redesign) merge 後の本番 smoke で PKCE callback 取りこぼし + Supabase obfuscated user (identities=[]) 未検出が連鎖発火し Sentry に FK violation を残した | 352 tests pass + typecheck pass で「完成」と短絡判断。test mock が現実の Supabase 挙動を反映していないことを smoke 前に確認せず、user に merge を促した。user の「あせらないで」「再検証」「完成を焦らない」の制止が hotfix の質を確実に上げた (4 層防御 + 8 シナリオ trace) |
 
 ## ルール（厳守）
+
+### 完成を焦らない — test pass = 動作確認ではない（2026-06-03 ルール化、事故 #11 起点）
+
+「実装完了」と「完成」を区別する。完成は **本番 smoke pass まで** 保留する。
+
+| 段階 | 完了基準 |
+|---|---|
+| 実装完了 | typecheck + test pass |
+| review 完了 | code review (self + user) + 設計書整合 |
+| **完成** | **本番 smoke 1 件 pass** + **回帰 (既存機能) 壊れていないことを実機 verify** |
+
+backlog の `[x]` を付けるのは **smoke pass 後**。それまでは `[~]` を維持する。
+
+#### push 前の自己 audit ルール
+
+実装直後に「push に進んで良いですか?」と聞く前に、必ず以下を自分で確認:
+
+- 自分の hypothesis (root cause / fix) を 1 行で言語化できるか
+- code を 1 度通読して、設計通りか
+- **mock の前提条件と実 API の挙動が一致するか** (公式 docs / cookbook の実コード例で確認)
+- edge case の漏れ (race / 二重クリック / cookie 未確立 / 拒否経路)
+- 多層防御になっているか (1 つの層が破れても次の層が catch する)
+
+audit で気になる点が出たら **push を止めるか修正する**。出力は「進めて良いですか?」ではなく audit 結果。
+
+#### user の制止 signal
+
+user が以下を発した場合は **即停止して audit 1 ラウンド** を実行:
+- 「あせらないで」
+- 「再検証」「再audit」「再確認」
+- 「完成を焦らない」「品質優先」
+- 「原則に沿って」
+
+これらは明確な warning signal。出力すべきは「了解しました、push 進めます」ではなく、自己 audit の結果 (発見した気になり点・修正案・新たに確認したいこと)。
+
+#### 適用範囲
+
+すべての PR で適用。特に厳格に守るべきは:
+- **Auth / Onboarding 系** (事故 #11 の起点)
+- **決済 / Stripe Connect 系** (`docs/payment-flow.md` 経路)
+- **RLS / DB schema 変更** (§Supabase RLS の罠 と組合せ)
+- **migration apply 必須の PR** (本番 DB 変更を伴う)
+
+詳細は memory file `feedback_no_rush_verify_thoroughly.md`。
+
 
 ### destructive な git / DB 操作の前
 
