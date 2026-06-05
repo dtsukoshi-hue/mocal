@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
 
   if (fetchErr) {
     console.error('[cron/store-hours] store_hours 取得失敗:', fetchErr)
-    monitor.error()
+    await monitor.error()
     return NextResponse.json({ error: 'サーバーエラー' }, { status: 500 })
   }
 
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
   // manual_override_until が有効な店舗はスキップ
   // → stores を一括取得して除外
   if (toOpen.length === 0 && toClose.length === 0) {
-    monitor.ok()
+    await monitor.ok()
     return NextResponse.json({ ok: true, opened: 0, closed: 0 })
   }
 
@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  monitor.ok()
+  await monitor.ok()
   return NextResponse.json({
     ok: true,
     dow: dowJST,

@@ -8,21 +8,30 @@ import * as Sentry from '@sentry/nextjs'
 //   const monitor = startCronCheckIn('no-show', '* * * * *')
 //   try {
 //     // ... cron 本体処理
-//     monitor.ok()
+//     await monitor.ok()
 //   } catch (e) {
-//     monitor.error()
+//     await monitor.error()
 //     throw e
 //   }
+//
+// ⚠️ ok() / error() は **必ず await** すること。
+//   serverless (Vercel) では function return 直後に runtime が kill され、
+//   await なしだと Sentry SDK の内部キューに event が残ったまま loss する
+//   (cron-job.org は 200 OK 受信、しかし Sentry は check-in 未着 → timeout 判定)
+//   過去事故: 2026-06-02〜06-05、no-show で 3K timeout events 蓄積。
 
 interface CronTracker {
-  ok: () => void
-  error: () => void
+  ok: () => Promise<void>
+  error: () => Promise<void>
 }
 
 const NOOP: CronTracker = {
-  ok: () => {},
-  error: () => {},
+  ok: async () => {},
+  error: async () => {},
 }
+
+// flush の timeout (ms)。Vercel function の余裕時間内に収める。
+const FLUSH_TIMEOUT_MS = 2000
 
 export function startCronCheckIn(monitorSlug: string, cronSchedule: string): CronTracker {
   if (!process.env.SENTRY_DSN) return NOOP
@@ -38,8 +47,19 @@ export function startCronCheckIn(monitorSlug: string, cronSchedule: string): Cro
     }
   )
 
+  const finish = async (status: 'ok' | 'error'): Promise<void> => {
+    Sentry.captureCheckIn({ checkInId, monitorSlug, status })
+    // serverless で event loss を防ぐため flush 必須。
+    // flush の戻り値 (sent within timeout) は無視 (best-effort、cron 処理は既に完了済)
+    try {
+      await Sentry.flush(FLUSH_TIMEOUT_MS)
+    } catch {
+      // Sentry 障害時の影響を cron 本体に波及させない
+    }
+  }
+
   return {
-    ok: () => Sentry.captureCheckIn({ checkInId, monitorSlug, status: 'ok' }),
-    error: () => Sentry.captureCheckIn({ checkInId, monitorSlug, status: 'error' }),
+    ok: () => finish('ok'),
+    error: () => finish('error'),
   }
 }
