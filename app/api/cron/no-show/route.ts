@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
   if (fetchErr) {
     console.error('[cron/no-show] 対象注文取得失敗:', fetchErr)
-    monitor.error()
+    await monitor.error()
     return NextResponse.json({ error: 'サーバーエラー' }, { status: 500 })
   }
 
@@ -115,6 +115,6 @@ export async function GET(request: NextRequest) {
     }).catch((e) => console.error('[cron] スケジュールアラート通知失敗:', e))
   }
 
-  monitor.ok()
+  await monitor.ok()
   return NextResponse.json({ ok: true, noShow: noShowCount })
 }

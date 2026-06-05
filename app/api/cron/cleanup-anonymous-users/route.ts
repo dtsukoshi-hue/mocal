@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: LIST_PAGE_SIZE })
     if (error) {
       logger.error('cleanup-anonymous-users: listUsers failed', { code: error.code, message: error.message })
-      monitor.error()
+      await monitor.error()
       return NextResponse.json({ error: 'listUsers failed', message: error.message }, { status: 500 })
     }
     const users = data?.users ?? []
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
 
   // Step 3: dry-run / feature flag off ならここで終了
   if (effectiveDryRun) {
-    monitor.ok()
+    await monitor.ok()
     return NextResponse.json({
       ok: true,
       dryRun: true,
@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
   })
 
   // Cron 全体としては成功 (deleteUser の個別 error は logger.error で記録済)
-  monitor.ok()
+  await monitor.ok()
   return NextResponse.json({
     ok: true,
     dryRun: false,
