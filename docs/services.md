@@ -10,7 +10,7 @@
 
 ### Vercel
 - **用途**: Next.js アプリのホスティング（本番・プレビュー）
-- **プラン**: Pro
+- **プラン**: 未確認（cron-job.org 暫定利用中のため現時点では Pro 未加入の可能性あり・要確認）
 - **ダッシュボード**: https://vercel.com/dtsukoshi-hues-projects/mocal
 - **環境変数**: Vercel Dashboard → Settings → Environment Variables（Sensitive 変数は `vercel env pull` で取得不可・要手動コピー）
 - **デプロイ**: `git push origin main` で自動デプロイ
@@ -49,7 +49,7 @@
 
 ### Upstash Redis
 - **用途**: レート制限（複数インスタンス間で共有）
-- **プラン**: 無料枠
+- **プラン**: 未確認
 - **ダッシュボード**: https://upstash.com
 - **環境変数**:
   - `UPSTASH_REDIS_REST_URL`
@@ -97,7 +97,7 @@
 - **環境変数**:
   - `NEXT_PUBLIC_VAPID_PUBLIC_KEY`
   - `VAPID_PRIVATE_KEY`（サーバーサイドのみ）
-  - `VAPID_SUBJECT`（`mailto:support@mocal.jp`）
+  - `VAPID_SUBJECT`（実際の値は `.env.local` を参照）
 - **鍵生成**: `npx web-push generate-vapid-keys`
 
 ---
@@ -106,7 +106,7 @@
 
 ### Sentry
 - **用途**: エラー監視・cron 死活監視（Cron Monitor）
-- **プラン**: 無料枠
+- **プラン**: 未確認
 - **ダッシュボード**: https://sentry.io
 - **Cron Monitor**: 3 ジョブ自動登録済み（`no-show` / `store-hours` / `cleanup-anonymous-users`）
 - **環境変数**:
@@ -142,7 +142,7 @@
 |---|---|
 | 本番環境変数（全件） | Vercel Dashboard（Sensitive 設定済み） |
 | ローカル開発用環境変数 | `.env.local`（gitignore 済み） |
-| 再生成不可な秘密鍵 5 件 | iCloud Keychain「mocal - ローカル env 専用キー」 |
+| 再生成不可な秘密鍵 5 件 | Secure Note「mocal - ローカル env 専用キー（2026-05-20 生成）」 |
 | 全 secret スナップショット | iCloud Drive `mocal-secrets.sparsebundle`（AES-256 暗号化） |
 
 > 詳細な復旧手順は `AGENTS.md`「ローカル `.env.local` の復旧手順」を参照。
