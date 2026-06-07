@@ -7,6 +7,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import type { Database } from '@/lib/database.types'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 
 /**
  * パスワード再設定 page.
@@ -166,9 +167,9 @@ function ResetPasswordPageInner() {
         {!verified && error && (
           <div className="bg-white rounded-2xl shadow p-8 text-center space-y-4">
             <p role="alert" className="text-sm text-red-600">{error}</p>
-            <a href="/admin/login" className="inline-block text-sm text-amber-600 hover:underline font-medium">
+            <Link href="/admin/login" className="inline-block text-sm text-amber-600 hover:underline font-medium">
               ログイン画面に戻る
-            </a>
+            </Link>
           </div>
         )}
 
