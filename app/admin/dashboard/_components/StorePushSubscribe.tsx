@@ -124,7 +124,7 @@ export default function StorePushSubscribe({ storeId }: Props) {
       disabled={loading}
       className="text-sm text-gray-500 border border-gray-300 rounded-lg px-3 py-1.5 hover:bg-stone-50 disabled:opacity-60 whitespace-nowrap shrink-0"
     >
-      {loading ? '設定中...' : <><span aria-hidden="true">🔔</span>{' '}注文通知を受け取る</>}
+      {loading ? '設定中...' : <><span aria-hidden="true">🔔</span><span className="hidden sm:inline">{' '}注文通知を受け取る</span></>}
     </button>
   )
 }
