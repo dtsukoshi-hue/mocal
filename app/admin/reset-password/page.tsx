@@ -3,7 +3,7 @@
 // nonce-based CSP（proxy.ts）が機能するよう動的レンダリングを強制
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import type { Database } from '@/lib/database.types'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -21,8 +21,23 @@ import { useRouter, useSearchParams } from 'next/navigation'
  *     と整合せず、永遠ループが発生 (実機 audit 2026-06-05 で発覚)。
  *     本 fix で email link を `/admin/reset-password?token_hash=...` 直接着地に戻し、
  *     page 内で verifyOtp + updateUser を sequential 実行する標準パターンへ。
+ *
+ * Suspense boundary: useSearchParams() を含む client component は Next.js 16
+ * の static export build で Suspense 必須 (missing-suspense-with-csr-bailout)。
  */
 export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <main id="main-content" className="min-h-screen flex items-center justify-center bg-stone-50">
+        <p className="text-sm text-gray-500">読み込み中...</p>
+      </main>
+    }>
+      <ResetPasswordPageInner />
+    </Suspense>
+  )
+}
+
+function ResetPasswordPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [password, setPassword] = useState('')
