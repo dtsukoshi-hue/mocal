@@ -128,7 +128,16 @@ function ResetPasswordPageInner() {
     setLoading(false)
 
     if (updateErr) {
-      setError('パスワードの更新に失敗しました。リンクの有効期限切れの可能性があります。再度パスワード再設定をリクエストしてください。')
+      // Supabase は同一パスワード入力時に "New password should be different from the old password." を返す
+      // (code: 'same_password' / status: 422)。それ以外は token 失効等を想定した一般文言に倒す。
+      const isSamePassword =
+        updateErr.code === 'same_password' ||
+        /different from the old password/i.test(updateErr.message)
+      setError(
+        isSamePassword
+          ? '現在と同じパスワードは利用できません。別のパスワードを入力してください。'
+          : 'パスワードの更新に失敗しました。リンクの有効期限切れの可能性があります。再度パスワード再設定をリクエストしてください。'
+      )
       return
     }
 
