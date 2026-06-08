@@ -37,12 +37,32 @@ function isExpiredError(err: { code?: string; message?: string } | null | undefi
   return msg.includes('expired') || msg.includes('invalid grant')
 }
 
+/**
+ * `next` query param を同一 origin の relative path のみに正規化する。
+ *
+ * 監査 2026-06-08 #5: `new URL(next, req.url)` は絶対URL (https://evil.com) を
+ * 優先するため、攻撃者が valid token + next=外部URL を組み合わせて session
+ * fixation + open redirect を仕掛けられた。
+ *
+ * 仕様:
+ * - `/` で始まり、`//` (protocol-relative) では始まらない値のみ許可
+ * - それ以外 (`https://evil.com`, `javascript:...`, 空文字 等) は DEFAULT_NEXT に fallback
+ */
+export function sanitizeNext(raw: string | null): string {
+  if (!raw) return DEFAULT_NEXT
+  if (!raw.startsWith('/')) return DEFAULT_NEXT
+  if (raw.startsWith('//')) return DEFAULT_NEXT
+  // backslash も blocking (一部ブラウザで / と解釈される historical bug 対策)
+  if (raw.startsWith('/\\') || raw.startsWith('\\')) return DEFAULT_NEXT
+  return raw
+}
+
 export async function GET(req: NextRequest) {
   const url = new URL(req.url)
   const tokenHash = url.searchParams.get('token_hash')
   const code = url.searchParams.get('code')
   const type = url.searchParams.get('type') as EmailType | null
-  const next = url.searchParams.get('next') ?? DEFAULT_NEXT
+  const next = sanitizeNext(url.searchParams.get('next'))
 
   // Cache-Control: token を含む URL を絶対にキャッシュさせない
   const noStore = (res: NextResponse) => {

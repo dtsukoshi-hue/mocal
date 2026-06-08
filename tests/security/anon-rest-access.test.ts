@@ -173,4 +173,66 @@ describe.skipIf(!isRealSupabase)('Security: anon REST access boundaries', () => 
   // 補足: anon INSERT のテストは実データを生成してしまうため、
   // ここでは敢えて含めない。orders_guest_insert / order_items_guest_insert の
   // policy は staging 環境または専用 fixture で検証する（#33 候補）。
+
+  // ------------------------------------------------------------
+  // 2026-06-08 監査 hardening (migration 20260608000000) の regression test
+  // ------------------------------------------------------------
+  describe('🔒 監査 2026-06-08 hardening', () => {
+    it('anon CANNOT SELECT stores.stripe_account_id (列レベル GRANT)', async () => {
+      const { status } = await fetchAnon('/stores?select=stripe_account_id&limit=1')
+      // 列に SELECT 権が無いと PostgREST は 401/403 を返す
+      expect([401, 403]).toContain(status)
+    })
+
+    it('anon CANNOT SELECT stores.manual_override_until (列レベル GRANT)', async () => {
+      const { status } = await fetchAnon('/stores?select=manual_override_until&limit=1')
+      expect([401, 403]).toContain(status)
+    })
+
+    it('anon CAN STILL SELECT stores.name/slug (公開列は維持)', async () => {
+      const { status, body } = await fetchAnon('/stores?select=id,name,slug&limit=1')
+      expect(status).toBe(200)
+      expect(Array.isArray(body)).toBe(true)
+    })
+
+    it('anon CANNOT call get_user_id_by_email RPC (email enumeration 防止)', async () => {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_user_id_by_email`, {
+        method: 'POST',
+        headers: {
+          apikey: ANON_KEY,
+          Authorization: `Bearer ${ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ p_email: 'anyone@example.com' }),
+      })
+      // REVOKE EXECUTE 後は 401/403/404 のいずれか
+      expect([401, 403, 404]).toContain(res.status)
+    })
+
+    it('anon CANNOT call should_be_open RPC (defense in depth)', async () => {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/should_be_open`, {
+        method: 'POST',
+        headers: {
+          apikey: ANON_KEY,
+          Authorization: `Bearer ${ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ p_store_id: '00000000-0000-0000-0000-000000000000' }),
+      })
+      expect([401, 403, 404]).toContain(res.status)
+    })
+
+    it('anon CANNOT call sync_store_open_status RPC (defense in depth)', async () => {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_store_open_status`, {
+        method: 'POST',
+        headers: {
+          apikey: ANON_KEY,
+          Authorization: `Bearer ${ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+      })
+      expect([401, 403, 404]).toContain(res.status)
+    })
+  })
 })
