@@ -9,6 +9,26 @@ interface Props {
 
 const LS_KEY = 'mocal_push_subscribed'
 
+// Heroicons の bell (outline) を inline SVG で。AdminNav の戻る矢印と同じ
+// stroke スタイルで統一感を保つ。色は親要素から currentColor で継承。
+function BellIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+    </svg>
+  )
+}
+
 export default function StorePushSubscribe({ storeId }: Props) {
   // クライアントマウント後にのみ Push 対応を確認（SSR では常に false）
   const [supported, setSupported] = useState(false)
@@ -107,7 +127,7 @@ export default function StorePushSubscribe({ storeId }: Props) {
   if (subscribed) {
     return (
       <span className="text-xs text-green-600 flex items-center gap-1 whitespace-nowrap shrink-0">
-        <span aria-hidden="true">🔔</span>
+        <BellIcon className="w-4 h-4" />
         <span className="hidden sm:inline">注文通知 ON</span>
         <button onClick={sendTest} disabled={testLoading} className="text-gray-400 underline ml-1 disabled:opacity-50" aria-label="テスト通知を送る">
           {testLoading ? '送信中…' : 'テスト'}
@@ -125,7 +145,12 @@ export default function StorePushSubscribe({ storeId }: Props) {
       disabled={loading}
       className="text-sm text-gray-500 border border-gray-300 rounded-lg px-3 py-1.5 hover:bg-stone-50 disabled:opacity-60 whitespace-nowrap shrink-0"
     >
-      {loading ? '設定中...' : <><span aria-hidden="true">🔔</span><span className="hidden sm:inline">{' '}注文通知を受け取る</span></>}
+      {loading ? '設定中...' : (
+        <span className="inline-flex items-center gap-1.5">
+          <BellIcon className="w-4 h-4" />
+          <span className="hidden sm:inline">注文通知を受け取る</span>
+        </span>
+      )}
     </button>
   )
 }
