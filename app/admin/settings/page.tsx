@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { verifyStoreSession } from '@/lib/dal'
+import { verifyStoreSession, isPlatformAdmin } from '@/lib/dal'
 import { createSupabaseServerClient } from '@/lib/supabase-ssr'
 import { logoutAction } from '@/app/actions/auth'
 import WaitMinutesForm from './_components/WaitMinutesForm'
@@ -19,6 +19,7 @@ interface Props {
 export default async function SettingsPage({ searchParams }: Props) {
   const session = await verifyStoreSession()
   const isOwner = session.role === 'owner'
+  const isAdmin = isPlatformAdmin(session.email)
   const supabase = await createSupabaseServerClient()
   const { stripe_connected, stripe_error, welcome } = await searchParams
 
@@ -145,10 +146,12 @@ export default async function SettingsPage({ searchParams }: Props) {
         {/* 注文通知設定（全スタッフ閲覧可・端末ごとに設定） */}
         <StorePushSettings storeId={session.storeId} />
 
-        {/* 店舗導入お問い合わせ（owner のみ） */}
-        {isOwner && (
+        {/* 店舗導入お問い合わせ（mocal platform admin のみ・運営専用 page）
+            加盟店 owner には他店舗の問い合わせ data が見えてはいけない (個人情報保護)。
+            verifyPlatformAdminSession で gate 済の /admin/inquiries への入口。 */}
+        {isAdmin && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-            <p className="text-sm font-semibold text-gray-900 mb-1">店舗導入お問い合わせ</p>
+            <p className="text-sm font-semibold text-gray-900 mb-1">店舗導入お問い合わせ <span className="ml-1 text-xs font-normal text-gray-400">(運営)</span></p>
             <p className="text-xs text-gray-500 mb-3">
               <code>/for-stores</code> から届いた問い合わせを一覧で確認できます。
             </p>
