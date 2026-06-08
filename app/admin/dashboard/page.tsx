@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { verifyStoreSession } from '@/lib/dal'
 import { createSupabaseServerClient } from '@/lib/supabase-ssr'
 import AdminNav from '../_components/AdminNav'
-import StorePushSubscribe from './_components/StorePushSubscribe'
+import StorePushIndicator from '../_components/StorePushIndicator'
 import StoreToggle from './_components/StoreToggle'
 import OrderActions from './_components/OrderActions'
 import RealtimeDashboard from './_components/RealtimeDashboard'
@@ -105,7 +105,7 @@ export default async function DashboardPage() {
                 {paidCount}
               </span>
             )}
-            <StorePushSubscribe storeId={session.storeId} />
+            <StorePushIndicator storeId={session.storeId} />
             <StoreToggle
               isOpen={storeStatus?.is_open ?? false}
               waitMinutes={storeStatus?.wait_minutes ?? 20}

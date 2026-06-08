@@ -7,6 +7,7 @@ import WaitMinutesForm from './_components/WaitMinutesForm'
 import StoreProfileForm from './_components/StoreProfileForm'
 import QRCode from './_components/QRCode'
 import StoreImageUpload from './_components/StoreImageUpload'
+import StorePushSettings from './_components/StorePushSettings'
 import AdminNav from '../_components/AdminNav'
 
 export const metadata: Metadata = { title: '店舗設定 | mocal' }
@@ -140,6 +141,9 @@ export default async function SettingsPage({ searchParams }: Props) {
             </a>
           </div>
         )}
+
+        {/* 注文通知設定（全スタッフ閲覧可・端末ごとに設定） */}
+        <StorePushSettings storeId={session.storeId} />
 
         {/* 店舗導入お問い合わせ（owner のみ） */}
         {isOwner && (
