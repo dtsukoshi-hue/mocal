@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
-import { redirect } from 'next/navigation'
-import { verifyStoreSession } from '@/lib/dal'
+import { verifyPlatformAdminSession } from '@/lib/dal'
 import { createServiceClient } from '@/lib/supabase-server'
 import AdminNav from '../_components/AdminNav'
 
@@ -8,8 +7,9 @@ export const metadata: Metadata = { title: 'お問い合わせ | mocal' }
 export const dynamic = 'force-dynamic'
 
 export default async function InquiriesPage() {
-  const session = await verifyStoreSession()
-  if (session.role !== 'owner') redirect('/admin/dashboard')
+  // platform admin (mocal 運営) のみアクセス可。加盟店 owner は他店舗の問い合わせ
+  // (name / email / store_name / message = 個人情報含む) を見てはいけない。
+  const session = await verifyPlatformAdminSession()
 
   // store_inquiries は service_role のみアクセス可 (migration で RLS 有効・ポリシー無し)
   const supabase = createServiceClient()
