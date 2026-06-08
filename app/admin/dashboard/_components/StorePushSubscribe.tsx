@@ -107,7 +107,8 @@ export default function StorePushSubscribe({ storeId }: Props) {
   if (subscribed) {
     return (
       <span className="text-xs text-green-600 flex items-center gap-1 whitespace-nowrap shrink-0">
-        <span aria-hidden="true">🔔</span> 注文通知 ON
+        <span aria-hidden="true">🔔</span>
+        <span className="hidden sm:inline">注文通知 ON</span>
         <button onClick={sendTest} disabled={testLoading} className="text-gray-400 underline ml-1 disabled:opacity-50" aria-label="テスト通知を送る">
           {testLoading ? '送信中…' : 'テスト'}
         </button>
