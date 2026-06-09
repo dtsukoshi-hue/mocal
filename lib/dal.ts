@@ -4,12 +4,29 @@ import { redirect } from 'next/navigation'
 import { createSupabaseServerClient } from './supabase-ssr'
 
 // 店舗メンバーのセッション検証（React render パス内で重複呼び出しをキャッシュ）
-export const verifyStoreSession = cache(async () => {
+//
+// MFA enforcement (2026-06-08, Stripe 申告書 §1 二段階認証 採用):
+// - user が verified MFA factor を持つ場合、AAL2 を満たさないと
+//   /admin/mfa-challenge へ強制 redirect する
+// - MFA 未 enroll の user は AAL1 のまま admin にアクセス可 (移行期間)
+// - skipMfaCheck=true で /admin/mfa-challenge 自身からの再帰 redirect を回避
+export const verifyStoreSession = cache(async (opts?: { skipMfaCheck?: boolean }) => {
   const supabase = await createSupabaseServerClient()
   const { data: { user }, error } = await supabase.auth.getUser()
 
   if (error || !user) {
     redirect('/admin/login')
+  }
+
+  // MFA AAL enforcement
+  if (!opts?.skipMfaCheck) {
+    const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    // currentLevel: 現在の session の AAL ('aal1' | 'aal2')
+    // nextLevel: user の factor が要求する最高 AAL
+    // currentLevel < nextLevel → 未完了 challenge あり
+    if (aalData?.currentLevel && aalData?.nextLevel && aalData.currentLevel !== aalData.nextLevel) {
+      redirect('/admin/mfa-challenge')
+    }
   }
 
   // 所属店舗を取得
