@@ -8,6 +8,7 @@ import StoreProfileForm from './_components/StoreProfileForm'
 import QRCode from './_components/QRCode'
 import StoreImageUpload from './_components/StoreImageUpload'
 import StorePushSettings from './_components/StorePushSettings'
+import MfaSettings from './_components/MfaSettings'
 import AdminNav from '../_components/AdminNav'
 
 export const metadata: Metadata = { title: '店舗設定 | mocal' }
@@ -145,6 +146,9 @@ export default async function SettingsPage({ searchParams }: Props) {
 
         {/* 注文通知設定（全スタッフ閲覧可・端末ごとに設定） */}
         <StorePushSettings storeId={session.storeId} />
+
+        {/* 二段階認証 (TOTP) — Stripe 申告書 §1 要件 (2026-06-08) */}
+        <MfaSettings />
 
         {/* 店舗導入お問い合わせ（mocal platform admin のみ・運営専用 page）
             加盟店 owner には他店舗の問い合わせ data が見えてはいけない (個人情報保護)。
