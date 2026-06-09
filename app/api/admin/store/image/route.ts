@@ -38,7 +38,15 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = createServiceClient()
-  const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+  // 拡張子は MIME type から決定 (user の file.name を信頼しない / 監査 2026-06-08 #7)。
+  // 既に ALLOWED_TYPES で MIME type は validate 済なので、map で安全に解決できる。
+  const EXT_BY_MIME: Record<string, string> = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/gif': 'gif',
+  }
+  const ext = EXT_BY_MIME[file.type] ?? 'jpg'
   const path = `${session.storeId}/${type}.${ext}`
 
   const buffer = await file.arrayBuffer()
