@@ -348,6 +348,17 @@
   - 決済前に `accounts.retrieve` で last_check (TTL cache)<br>
   pilot 開始後に運用観点で必要性を判断。約 1 日。
 
+- [ ] **77. MFA UX 強化: Passkey + Recovery codes + Remember device** (2026-06-08 起票、PR #76 TOTP 実装の続編)  
+  **背景**: PR #76 で Stripe 申告書 §1 二段階認証要件のため TOTP を最速実装したが、production 運用 UX としては改善余地が大きい。「6 桁手入力」を毎日繰り返す店舗オペレーション摩擦、Authenticator 端末紛失時の復旧手段なし、staff デバイス追加時の煩雑さ。<br>
+  **方針** (最上の選択):<br>
+  - **(a) Passkey / WebAuthn 対応** (2-3 日、最優先): Supabase Auth は experimental ながら passkey 対応済。Face ID / Touch ID / iCloud Keychain 経由で 1 秒 login。フィッシング耐性 (HW key 同等)。iCloud Keychain は同 Apple ID の全端末 sync = mocal の複数 staff 端末利用にぴったり。enroll / 解除 / challenge UI を `app/admin/passkey/` 配下に新設、settings page に section 追加。TOTP と coexist (どちらでも可)<br>
+  - **(b) Recovery codes 発行** (1 日、高優先): enroll 時に 8 個の使い切りコードを生成し画面表示 + 印刷推奨。端末紛失で詰まないための safety net。`user_recovery_codes` テーブル (hashed)、消費フラグで一回限り。設定 page から再発行可能 (古いコード一括失効)<br>
+  - **(c) Remember device 30 days** (1 日、中優先): trusted device cookie で 30 日間 MFA skip。日常的に同じ端末を使う店舗オペで摩擦緩和。cookie は HMAC 署名 + UA fingerprint + IP 範囲で固定。「この端末を信頼」checkbox を challenge page に追加<br>
+  - **(d) Email OTP fallback** (1 日、低優先): TOTP / Passkey / Recovery code すべて失敗時の最終 fallback。Supabase signInWithOtp の email magic link で AAL2 まで進めるロジック。security 的に弱いので opt-in (本人確認質問付き)。あるいは廃案<br>
+  **Stripe 申告書との関係**: Passkey/WebAuthn は規格上 MFA 該当。実装後も申告内容「二段階認証あり」は維持される。むしろ手入力 TOTP より明確に「強い 2FA」と説明可能。<br>
+  **実施タイミング**: Pilot 開始 → 1〜2 か月運用フィードバック収集 → 本格 production 移行前に展開 (#71 と統合)。Pilot 中は PR #76 の TOTP で運用。<br>
+  工数合計: a+b+c で 4-5 日 (d は 1 日追加)。
+
 ## 🟢 長期（Phase 3）
 
 - [ ] **17. マルチ店舗対応**  
