@@ -201,11 +201,14 @@ export default function MfaSettings() {
             </ol>
 
             <div className="flex flex-col items-center gap-3 py-2">
-              {/* Supabase が返す qr_code は SVG 文字列 */}
-              <div
+              {/* Supabase が返す qr_code は data:image/svg+xml;utf-8,<svg>... の data URI */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={qrCode}
+                alt="二段階認証用 QR コード"
+                width={200}
+                height={200}
                 className="bg-white p-3 rounded border border-stone-200"
-                style={{ width: 200, height: 200 }}
-                dangerouslySetInnerHTML={{ __html: qrCode }}
               />
               <details className="w-full">
                 <summary className="text-xs text-gray-500 cursor-pointer">QR が読めない場合: シークレットを手入力</summary>
