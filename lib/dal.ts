@@ -18,13 +18,20 @@ export const verifyStoreSession = cache(async (opts?: { skipMfaCheck?: boolean }
     redirect('/admin/login')
   }
 
-  // MFA AAL enforcement
+  // MFA AAL enforcement (fail-closed)
   if (!opts?.skipMfaCheck) {
-    const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    const { data: aalData, error: aalError } =
+      await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    // fail-closed: Supabase 一時障害 / network エラー時に MFA 強制を skip しない。
+    // session 再取得 (= /admin/login への redirect) で safe 側に倒す。
+    // Stripe 申告書 §1「二段階認証または二要素認証を採用する」の運用適合のため。
+    if (aalError || !aalData) {
+      redirect('/admin/login')
+    }
     // currentLevel: 現在の session の AAL ('aal1' | 'aal2')
     // nextLevel: user の factor が要求する最高 AAL
-    // currentLevel < nextLevel → 未完了 challenge あり
-    if (aalData?.currentLevel && aalData?.nextLevel && aalData.currentLevel !== aalData.nextLevel) {
+    // nextLevel='aal2' なら user は MFA enroll 済 = challenge 必須
+    if (aalData.nextLevel === 'aal2' && aalData.currentLevel !== 'aal2') {
       redirect('/admin/mfa-challenge')
     }
   }
