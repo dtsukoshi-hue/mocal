@@ -3,6 +3,20 @@ import { cache } from 'react'
 import { redirect } from 'next/navigation'
 import { createSupabaseServerClient } from './supabase-ssr'
 
+// ============================================================
+// 設計原則: 全 security check は **fail-closed**
+//
+// Supabase API call (auth.getUser / from(...).single() / mfa.* 等) が
+// network 障害 / 503 / timeout で `{ data: null, error: Error }` を返した時、
+// security check を silent に skip しないこと。
+//
+// 必ず `const { data, error } = await call()` で error も分割代入し、
+// `if (error || !data) redirect('/admin/login')` で safe 側に倒す。
+//
+// 規制要件: Stripe 申告書 §1 二段階認証要件、加盟店データ分離の保証。
+// 詳細経緯: PR #80 (2026-06-11) MFA fail-open 修正と同じ pattern。
+// ============================================================
+
 // 店舗メンバーのセッション検証（React render パス内で重複呼び出しをキャッシュ）
 //
 // MFA enforcement (2026-06-08, Stripe 申告書 §1 二段階認証 採用):
@@ -36,14 +50,14 @@ export const verifyStoreSession = cache(async (opts?: { skipMfaCheck?: boolean }
     }
   }
 
-  // 所属店舗を取得
-  const { data: membership } = await supabase
+  // 所属店舗を取得 (fail-closed: error / data=null で /admin/login へ)
+  const { data: membership, error: membershipError } = await supabase
     .from('store_members')
     .select('store_id, role')
     .eq('user_id', user.id)
     .single()
 
-  if (!membership) {
+  if (membershipError || !membership) {
     redirect('/admin/login')
   }
 
@@ -56,9 +70,11 @@ export const verifyStoreSession = cache(async (opts?: { skipMfaCheck?: boolean }
 })
 
 // セッション取得のみ（リダイレクトしない・proxy.ts 用）
+// fail-closed: getUser の error 時も null を返す (= 未認証扱い)。
 export const getSession = cache(async () => {
   const supabase = await createSupabaseServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error) return null
   return user ?? null
 })
 
@@ -88,16 +104,18 @@ export const verifyPlatformAdminSession = cache(async () => {
 
 // API ルート用: セッション無効時に redirect しない代わりに null を返す
 // 本流の getSessionPayload と同じ用途（401 を返したい場合に使う）
+// fail-closed: getUser / membership query の error 時も null を返す
+// (caller が 401 を返すことで safe 側に倒れる)。
 export const getStoreSession = cache(async () => {
   const supabase = await createSupabaseServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-  const { data: membership } = await supabase
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  if (userError || !user) return null
+  const { data: membership, error: membershipError } = await supabase
     .from('store_members')
     .select('store_id, role')
     .eq('user_id', user.id)
     .single()
-  if (!membership) return null
+  if (membershipError || !membership) return null
   return {
     userId: user.id,
     email: user.email!,

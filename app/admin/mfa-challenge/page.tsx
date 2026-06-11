@@ -26,9 +26,10 @@ export const dynamic = 'force-dynamic'
  */
 export default async function MfaChallengePage() {
   const supabase = await createSupabaseServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  // fail-closed: getUser の error 時も /admin/login へ。
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
 
-  if (!user) {
+  if (userError || !user) {
     redirect('/admin/login')
   }
 

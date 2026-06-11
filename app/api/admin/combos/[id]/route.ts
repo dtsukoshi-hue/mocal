@@ -22,12 +22,13 @@ async function authorize(id: string) {
   if (!session) return { error: '認証が必要です。', status: 401 as const }
 
   const supabase = createServiceClient()
-  const { data: combo } = await supabase
+  // fail-closed: DB error 時に「権限なし」として扱う (404 で情報漏えい回避)。
+  const { data: combo, error: comboError } = await supabase
     .from('combo_offers')
     .select('id, store_id')
     .eq('id', id)
     .single()
-  if (!combo) return { error: '見つかりません', status: 404 as const }
+  if (comboError || !combo) return { error: '見つかりません', status: 404 as const }
   if (combo.store_id !== session.storeId) return { error: '権限がありません。', status: 403 as const }
 
   return { session, supabase }
