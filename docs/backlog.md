@@ -359,6 +359,32 @@
   **実施タイミング**: Pilot 開始 → 1〜2 か月運用フィードバック収集 → 本格 production 移行前に展開 (#71 と統合)。Pilot 中は PR #76 の TOTP で運用。<br>
   工数合計: a+b+c で 4-5 日 (d は 1 日追加)。
 
+- [ ] **78. 注文受取予定時刻の動的更新 + 顧客通知** (2026-06-11 起票、Phase 2 smoke 中の発見)  
+  **背景**: 現状 `paid → accepted` 遷移時 (受理 button tap) でのみ `waitMinutes` が設定され `estimated_ready_at` が計算される。受理後にキッチン混雑等で予定が遅延しても、店舗側に **時刻を更新する手段が無い** (OrderActions.tsx の accepted / preparing state に該当 UI なし)。<br>
+  **影響**: 遅延発生時に顧客に伝える術が無く、表示時刻を過ぎてもそのままになり、ノーショウ扱いリスク。Pilot 中は初期見積を長めに設定する運用カバーで凌げるが、本格運用前に必須。<br>
+  **実装内容**:<br>
+  - **UI**: `app/admin/dashboard/_components/OrderActions.tsx` の accepted / preparing state に「⏰ 受取時刻を更新」 button 追加。tap で +10 / +15 / +20 / +30 分 などの delta or 絶対時刻入力。<br>
+  - **API**: `app/api/orders/[id]/route.ts` PATCH を拡張して `{waitMinutes}` 単独 (status 変更なし) の update を受理。server で `estimated_ready_at = now + waitMinutes × 60s` に再計算。<br>
+  - **顧客通知**: push (web push) で「受取時刻が変更されました (XX:XX)」を送信。`notifyOrder` に新規 payload type 追加。<br>
+  - **Realtime**: 顧客 status page の「受取予定」表示が Supabase Realtime で即更新 (既存の仕組みで自動カバーされるはず)。<br>
+  - **店舗側 UX**: 遅延通知後の累計遅延を表示 (例: 「合計 +25 分遅延」) — 任意。<br>
+  **工数**: 2-3 時間 + tests + PR。<br>
+  **実施タイミング**: **Pilot 完了 → 各機能ローカル test 完了 → Phase 2 で実装** (2026-06-11 user 合意)。
+
+- [ ] **79. 注文 status state machine 簡素化 (受付 = 調理開始 統合)** (2026-06-11 起票、Phase 2 smoke 中の UX 発見)  
+  **背景**: 現状 `paid → accepted → preparing → ready → completed` の 4 step 遷移。Phase 2 smoke で「受付した時点で実質調理開始だから、accepted と preparing を分ける意味が薄い」という user 観察。<br>
+  **現状の問題**: 店舗側 tap が冗長 (受理 → 調理開始 → 準備完了 → 受取確認 = 4 回)、顧客側も "受付済" と "調理中" の中間 step が情報価値低い。<br>
+  **実装案** (どちらか):<br>
+  - **A. UI 統合 (低リスク)**: `OrderActions.tsx` の paid state で「受理する」 button tap 時に server-side で `paid → accepted → preparing` を 2-hop で内部遷移 (連続 PATCH 2 回 or 1 リクエストで status='preparing' 直行)。state machine は不変。後方互換高い。<br>
+  - **B. State machine 簡素化 (clean)**: `lib/validation.ts` の status 定義から `accepted` を削除し、`paid → [preparing, cancelled]` のみ許可。code 全体で accepted 参照 (DB 既存 row / 顧客 status page / email / push) を順次整理。schema は `accepted_at` 列を残すが運用上書かれない。<br>
+  **影響**:<br>
+  - 既存注文の `accepted_at` 列の扱い (B 案で書かれなくなる)。<br>
+  - 顧客 status page の step 表示 (5 → 4 段階)。<br>
+  - 通知 timing: 現状 accepted 時に「注文を受け付けました」push 送信。簡素化後は preparing 時に「ご注文を受け付け、調理を開始しました」に統合文言。<br>
+  **設計判断ポイント**: 業務上「受理だけして、まだ調理開始してない (材料準備中等)」状態が必要か? 不要なら統合 OK。<br>
+  **工数**: A 案 1-2 時間、B 案 半日 (テスト + migration 検討込み)。<br>
+  **実施タイミング**: **Pilot 完了 → 各機能 test 完了 → Phase 2 で #78 と一緒に実装** (#78 とほぼ同領域、同時 PR 推奨)。
+
 ## 🟢 長期（Phase 3）
 
 - [ ] **17. マルチ店舗対応**  
