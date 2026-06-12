@@ -26,21 +26,32 @@ export const dynamic = 'force-dynamic'
  */
 export default async function MfaChallengePage() {
   const supabase = await createSupabaseServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  // fail-closed: getUser の error 時も /admin/login へ。
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
 
-  if (!user) {
+  if (userError || !user) {
     redirect('/admin/login')
   }
 
-  // 既に AAL2 達成済なら dashboard へ
-  const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
-  if (aalData?.currentLevel === aalData?.nextLevel) {
+  // 既に AAL2 達成済なら dashboard へ。エラーは fail-closed (再 login へ)。
+  const { data: aalData, error: aalError } =
+    await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+  if (aalError || !aalData) {
+    redirect('/admin/login')
+  }
+  if (aalData.currentLevel === aalData.nextLevel) {
     redirect('/admin/dashboard')
   }
 
-  // user の verified factors を取得 (data.totp は verified のみ含む)
-  const { data: factorsData } = await supabase.auth.mfa.listFactors()
-  const totp = factorsData?.totp?.[0]
+  // user の verified factors を取得 (data.totp は verified のみ含む)。
+  // listFactors の error も fail-closed (再 login へ)。これを silent に
+  // dashboard へ素通しすると MFA enforcement bypass になるため。
+  const { data: factorsData, error: factorsError } =
+    await supabase.auth.mfa.listFactors()
+  if (factorsError || !factorsData) {
+    redirect('/admin/login')
+  }
+  const totp = factorsData.totp?.[0]
 
   if (!totp) {
     // factor 無し = MFA 不要 (post-login challenge 不要)

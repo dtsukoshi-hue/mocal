@@ -9,12 +9,13 @@ async function authorize(id: string) {
   const session = await getStoreSession()
   if (!session) return { error: '認証が必要です。', status: 401 }
   const supabase = createServiceClient()
-  const { data: item } = await supabase
+  // fail-closed: DB error 時に「権限なし」として扱う (404 で情報漏えい回避)。
+  const { data: item, error: itemError } = await supabase
     .from('menu_items')
     .select('id, store_id')
     .eq('id', id)
     .single()
-  if (!item) return { error: '見つかりません', status: 404 }
+  if (itemError || !item) return { error: '見つかりません', status: 404 }
   if (item.store_id !== session.storeId) return { error: '権限がありません。', status: 403 }
   return { session, supabase }
 }
